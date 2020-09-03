@@ -42,53 +42,6 @@ public class ProjectSetupAction {
     }
   }
 
-  int extractApkVersion( String apkFile ) {
-    int[] apkVersion = new int[0];
-    apkVersion[0] = -1;
-    try (FileSystem fileSystem = FileSystems.newFileSystem(Paths.get(apkFile), null)) {
-      Path fileToExtract = fileSystem.getPath("AndroidManifest.xml");
-
-      SAXParserFactory factory = SAXParserFactory.newInstance();
-      SAXParser saxParser = factory.newSAXParser();
-      saxParser.parse(fileToExtract.toFile(), new DefaultHandler() {
-        @Override
-        public void startElement(String uri, String localName, String qName, Attributes attr) throws SAXException {
-          if (qName.equals("manifest")) {
-            String version = attr.getValue("android:versionCode");
-            if (version != null) {
-              apkVersion[0] = Integer.parseInt(version);
-              throw new SAXException(""); // abort parsing bc we have all we wanted
-            }
-          }
-        }
-      });
-
-    } catch (SAXException e) {
-      if(! e.getMessage().equals("") ) {
-        e.printStackTrace();
-      }
-    } catch (ParserConfigurationException | IOException e) {
-      e.printStackTrace();
-    }
-
-    return apkVersion[0];
-  }
-
-
-  private boolean downloadAndroidjar(int apkVersion, String targetPath) {
-    try (BufferedInputStream in = new BufferedInputStream(new URL("https://github.com/Sable/android-platforms/blob/master/android-"+apkVersion+"/android.jar").openStream());
-         FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
-      byte[] dataBuffer = new byte[1024];
-      int bytesRead;
-      while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
-        fileOutputStream.write(dataBuffer, 0, bytesRead);
-      }
-    } catch (IOException e) {
-      return false;
-    }
-    return true;
-  }
-
 
   void askUser(String foundArchive) {
 
@@ -119,11 +72,11 @@ public class ProjectSetupAction {
 
     // TODO: ask before downloading respective jar if not existing
     // TODO: get existing androidjar from config
-    int apkVersion = extractApkVersion(archivePath);
-    String lspServerDir =  System.getProperty("user.dir");
+    int apkVersion = ApkAndAndroidjar.extractApkVersion(archivePath);
+    String lspServerDir = System.getProperty("user.dir");
     final String androidJarPath = lspServerDir + "/android/" + apkVersion + "/android.jar";
     if( !Files.exists(Paths.get(androidJarPath) )){
-      final boolean res = downloadAndroidjar(apkVersion, androidJarPath);
+      final boolean res = ApkAndAndroidjar.downloadAndroidjar(apkVersion, androidJarPath);
       if( !res ){
         JimpleLanguageServer.getClient()
                 .logMessage(
