@@ -129,7 +129,7 @@ public class ProjectSetupAction {
                         // FIXME: choose workspacefolder: use the first if multiple are given
                         changeList.add(
                                 Either.forRight(
-                                        new CreateFile("TODO-file-uri", new CreateFileOptions(false, true))));
+                                        new CreateFile("./jimple/" + file.relativize(extractionDir), new CreateFileOptions(false, true))));
                       });
     } catch (IOException e) {
       e.printStackTrace();
