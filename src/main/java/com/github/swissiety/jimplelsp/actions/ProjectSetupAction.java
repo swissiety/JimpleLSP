@@ -2,23 +2,37 @@ package com.github.swissiety.jimplelsp.actions;
 
 import com.github.swissiety.jimplelsp.JimpleLanguageServer;
 import com.google.common.collect.Lists;
+
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URL;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 import soot.Main;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 /** Helps the User extracting jimple code to his working directory */
 public class ProjectSetupAction {
 
   /** Search for .jimple files in the workspace */
   void scanWorkspace() {
+
+    final CompletableFuture<List<WorkspaceFolder>> listCompletableFuture = JimpleLanguageServer.getClient().workspaceFolders();
+
+
 
     boolean jimpleExists = false;
     String foundArchive = null;
@@ -28,6 +42,54 @@ public class ProjectSetupAction {
     }
   }
 
+  int extractApkVersion( String apkFile ) {
+    int[] apkVersion = new int[0];
+    apkVersion[0] = -1;
+    try (FileSystem fileSystem = FileSystems.newFileSystem(Paths.get(apkFile), null)) {
+      Path fileToExtract = fileSystem.getPath("AndroidManifest.xml");
+
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      SAXParser saxParser = factory.newSAXParser();
+      saxParser.parse(fileToExtract.toFile(), new DefaultHandler() {
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attr) throws SAXException {
+          if (qName.equals("manifest")) {
+            String version = attr.getValue("android:versionCode");
+            if (version != null) {
+              apkVersion[0] = Integer.parseInt(version);
+              throw new SAXException(""); // abort parsing bc we have all we wanted
+            }
+          }
+        }
+      });
+
+    } catch (SAXException e) {
+      if(! e.getMessage().equals("") ) {
+        e.printStackTrace();
+      }
+    } catch (ParserConfigurationException | IOException e) {
+      e.printStackTrace();
+    }
+
+    return apkVersion[0];
+  }
+
+
+  private boolean downloadAndroidjar(int apkVersion, String targetPath) {
+    try (BufferedInputStream in = new BufferedInputStream(new URL("https://github.com/Sable/android-platforms/blob/master/android-"+apkVersion+"/android.jar").openStream());
+         FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
+      byte[] dataBuffer = new byte[1024];
+      int bytesRead;
+      while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
+        fileOutputStream.write(dataBuffer, 0, bytesRead);
+      }
+    } catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
+
+
   void askUser(String foundArchive) {
 
     final ShowMessageRequestParams requestParams = new ShowMessageRequestParams();
@@ -35,7 +97,7 @@ public class ProjectSetupAction {
     requestParams.setMessage(
         "JimpleLanguage Server has no \".jimple\" files detected in your workspace. But we found "
             + foundArchive
-            + ". Shall we extract Jimple from that file?");
+            + ". Do you want to extract Jimple from that file?");
     requestParams.setActions(
         Lists.newArrayList(
             new MessageActionItem("Extract Jimple"),
@@ -55,21 +117,27 @@ public class ProjectSetupAction {
 
   void extractJimple(String archivePath) {
 
-    // TODO: get android*.jar path from client config
-    String androidJar = "";
-
-    if (androidJar.isEmpty()) {
-      JimpleLanguageServer.getClient()
-          .logMessage(
-              new MessageParams(
-                  MessageType.Error,
-                  "Can not Extract Jimple from the APK.\n"
-                      + "Please set the path, where we can find the respective android.jar.\n"
-                      + "Config key: jimplelsp.android-jars "));
-      return;
+    // TODO: ask before downloading respective jar if not existing
+    // TODO: get existing androidjar from config
+    int apkVersion = extractApkVersion(archivePath);
+    String lspServerDir =  System.getProperty("user.dir");
+    final String androidJarPath = lspServerDir + "/android/" + apkVersion + "/android.jar";
+    if( !Files.exists(Paths.get(androidJarPath) )){
+      final boolean res = downloadAndroidjar(apkVersion, androidJarPath);
+      if( !res ){
+        JimpleLanguageServer.getClient()
+                .logMessage(
+                        new MessageParams(
+                                MessageType.Error,
+                                "Can not extract Jimple from the APK. android.jar can not be downloaded. \n"
+                                //  + "Please set the path, where we can find the respective android.jar.\n"
+                                //  + "Config key: jimplelsp.android-jars "
+                        ));
+        return;
+      }
     }
 
-    // extract in temporary
+    // extract jimple files to temporary dir
     final Path extractionDir;
     try {
       extractionDir = Files.createTempDirectory("LspServerExtract");
@@ -80,20 +148,20 @@ public class ProjectSetupAction {
 
     // generate with old soot
     String rtJar =
-        System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
+            System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
 
     // TODO: adapt Soots cli params
     String[] options =
-        new String[] {
-          "-cp",
-          archivePath + File.pathSeparator + rtJar,
-          "-android-jars",
-          androidJar,
-          "-hierarchy-dirs",
-          "-f",
-          "jimple",
-          archivePath
-        };
+            new String[] {
+                    "-cp",
+                    archivePath + File.pathSeparator + rtJar,
+                    "-android-jars",
+                    androidJarPath,
+                    "-hierarchy-dirs",
+                    "-f",
+                    "jimple",
+                    archivePath
+            };
     Main.main(options);
 
     // create files under workspace via lsp
@@ -103,13 +171,13 @@ public class ProjectSetupAction {
 
     try {
       Files.walk(extractionDir)
-          .forEach(
-              file -> {
-                // FIXME: choose workspacefolder: use the first if multiple are given
-                changeList.add(
-                    Either.forRight(
-                        new CreateFile("TODO-file-uri", new CreateFileOptions(false, true))));
-              });
+              .forEach(
+                      file -> {
+                        // FIXME: choose workspacefolder: use the first if multiple are given
+                        changeList.add(
+                                Either.forRight(
+                                        new CreateFile("TODO-file-uri", new CreateFileOptions(false, true))));
+                      });
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -122,4 +190,6 @@ public class ProjectSetupAction {
     // TODO: cleanup nonempty tempdir?
 
   }
+
+
 }
