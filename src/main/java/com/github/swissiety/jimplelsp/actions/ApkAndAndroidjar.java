@@ -11,10 +11,7 @@ import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 public class ApkAndAndroidjar {
 
@@ -52,6 +49,14 @@ public class ApkAndAndroidjar {
 
 
   public static boolean downloadAndroidjar(int apkVersion, String targetPath) {
+
+    final Path path = Paths.get(targetPath);
+    try {
+      Files.createDirectories(path.getParent());
+    } catch (IOException e) {
+      return false;
+    }
+
     try (BufferedInputStream in = new BufferedInputStream(new URL("https://github.com/Sable/android-platforms/blob/master/android-" + apkVersion + "/android.jar").openStream());
          FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
       byte[] dataBuffer = new byte[1024];
