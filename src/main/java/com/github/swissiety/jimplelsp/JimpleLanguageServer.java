@@ -5,8 +5,7 @@ import com.github.swissiety.jimplelsp.actions.ProjectSetupAction;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -15,6 +14,18 @@ import org.eclipse.lsp4j.services.*;
 
 public class JimpleLanguageServer implements LanguageServer, LanguageClientAware {
 
+  private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+  private void pool(Runnable runnable) {
+    CompletableFuture.runAsync(() -> {
+      try {
+        runnable.run();
+      } catch (Throwable e) {
+        e.printStackTrace();
+      }
+    }, executor);
+  }
+
   @Nonnull
   private final TextDocumentService textService;
   @Nonnull
@@ -22,6 +33,7 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
   @Nullable
   private LanguageClient client = null;
   private InitializeParams params;
+  private CompletableFuture<Boolean> initialized = new CompletableFuture<>();
 
   public LanguageClient getClient() {
     return client;
@@ -30,6 +42,7 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
   public JimpleLanguageServer() {
     textService = new JimpleTextDocumentService(this, client);
     workspaceService = new JimpleWorkspaceService();
+
   }
 
   public ClientCapabilities getClientCapabilities() {
@@ -66,23 +79,22 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     //    capabilities.setDocumentSymbolProvider(Boolean.TRUE);
     //		capabilities.setCodeLensProvider(new CodeLensOptions(true));
 
-    return CompletableFuture.completedFuture(new InitializeResult(capabilities));
-  }
 
-  @Override
-  public void initialized(InitializedParams params) {
-    init();
-  }
+    final Iterable<? extends WorkspaceFolder> workspaceFolders = Collections.singleton(new WorkspaceFolder(""));
+    final boolean workspaceEditSupport = params.getCapabilities().getWorkspace().getApplyEdit();
 
-  void init() {
+    pool(() -> {
 
+      try {
+        initialized.get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
 
-    getClient().showMessage(new MessageParams(MessageType.Info, "Hello, it's me!"));
+      assert getClient() != null;
+      ProjectSetupAction.scanWorkspace(client, workspaceFolders, workspaceEditSupport);
 
-
-    //    getClient().showMessage(new MessageParams(MessageType.Info, "indexing jimple data.."));
-
-    /* TODO: check if its supported before requesting
+          /* TODO: check if its supported before requesting
     final CompletableFuture<List<WorkspaceFolder>> listCompletableFuture =
             JimpleLanguageServer.getClient().workspaceFolders();
     final List<WorkspaceFolder> workspaceFolders;
@@ -92,12 +104,16 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
       e.printStackTrace();
       return;
     }
-*/
-    final Iterable<? extends WorkspaceFolder> workspaceFolders = Collections.singleton(new WorkspaceFolder(""));
-    final boolean workspaceEditSupport = params.getCapabilities().getWorkspace().getApplyEdit().booleanValue();
+    */
 
-    ProjectSetupAction.scanWorkspace(client, workspaceFolders, workspaceEditSupport);
+    });
 
+    return CompletableFuture.completedFuture(new InitializeResult(capabilities));
+  }
+
+  @Override
+  public void initialized(InitializedParams params) {
+    initialized.complete(true);
   }
 
   @Override
@@ -123,6 +139,5 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
   @Override
   public void connect(LanguageClient client) {
     this.client = client;
-    init();
   }
 }

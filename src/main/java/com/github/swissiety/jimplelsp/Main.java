@@ -31,7 +31,7 @@ public class Main {
 
         while (true) {
           Socket socket = serverSocket.accept();
-          System.out.println("new Connection");
+          System.out.println(">new Connection from " + socket.getInetAddress());
 
           final JimpleLanguageServer server = new JimpleLanguageServer();
           Launcher<LanguageClient> launcher =
@@ -43,11 +43,11 @@ public class Main {
                           .setExecutorService(Executors.newCachedThreadPool())
                           .traceMessages(new PrintWriter(System.out))     // TODO
                           .create();
-          launcher.startListening().get();
+          launcher.startListening();
           server.connect(launcher.getRemoteProxy());
         }
 
-      } catch (IOException | InterruptedException | ExecutionException exception) {
+      } catch (IOException exception) {
         exception.printStackTrace();
       }
 
