@@ -1,19 +1,19 @@
 package com.github.swissiety.jimplelsp.actions;
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
-public class ApkAndAndroidjar {
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+class ApkAndAndroidjar {
 
   static int extractApkVersion(String apkFile) {
     int[] apkVersion = new int[1];
@@ -23,18 +23,21 @@ public class ApkAndAndroidjar {
 
       SAXParserFactory factory = SAXParserFactory.newInstance();
       SAXParser saxParser = factory.newSAXParser();
-      saxParser.parse(fileToExtract.toFile(), new DefaultHandler() {
-        @Override
-        public void startElement(String uri, String localName, String qName, Attributes attr) throws SAXException {
-          if (qName.equals("manifest")) {
-            String version = attr.getValue("android:versionCode");
-            if (version != null) {
-              apkVersion[0] = Integer.parseInt(version);
-              throw new SAXException(""); // abort parsing bc we have all we wanted
-            }
-          }
-        }
-      });
+      saxParser.parse(
+              fileToExtract.toFile(),
+              new DefaultHandler() {
+                @Override
+                public void startElement(String uri, String localName, String qName, Attributes attr)
+                        throws SAXException {
+                  if (qName.equals("manifest")) {
+                    String version = attr.getValue("android:versionCode");
+                    if (version != null) {
+                      apkVersion[0] = Integer.parseInt(version);
+                      throw new SAXException(""); // abort parsing bc we have all we wanted
+                    }
+                  }
+                }
+              });
 
     } catch (SAXException e) {
       if (!e.getMessage().equals("")) {
@@ -47,7 +50,6 @@ public class ApkAndAndroidjar {
     return apkVersion[0];
   }
 
-
   public static boolean downloadAndroidjar(int apkVersion, String targetPath) {
 
     final Path path = Paths.get(targetPath);
@@ -57,7 +59,13 @@ public class ApkAndAndroidjar {
       return false;
     }
 
-    try (BufferedInputStream in = new BufferedInputStream(new URL("https://github.com/Sable/android-platforms/blob/master/android-" + apkVersion + "/android.jar").openStream());
+    try (BufferedInputStream in =
+                 new BufferedInputStream(
+                         new URL(
+                                 "https://github.com/Sable/android-platforms/blob/master/android-"
+                                         + apkVersion
+                                         + "/android.jar")
+                                 .openStream());
          FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
       byte[] dataBuffer = new byte[1024];
       int bytesRead;
@@ -69,5 +77,4 @@ public class ApkAndAndroidjar {
     }
     return true;
   }
-
 }

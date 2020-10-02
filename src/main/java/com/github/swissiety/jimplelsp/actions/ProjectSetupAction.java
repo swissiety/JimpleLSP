@@ -2,90 +2,104 @@ package com.github.swissiety.jimplelsp.actions;
 
 import com.github.swissiety.jimplelsp.JimpleLanguageServer;
 import com.google.common.collect.Lists;
-
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.eclipse.lsp4j.services.LanguageClient;
 import soot.Main;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-/** Helps the User extracting jimple code to his working directory */
+/**
+ * Helps the User extracting jimple code to his working directory
+ */
 public class ProjectSetupAction {
 
-  /** Search for .jimple files in the workspace */
-  void scanWorkspace() {
+  /** Search for .jimple files in the workspace
+   * @param workspaceFolders
+   * @param workspaceEditSupport*/
+  public static void scanWorkspace(LanguageClient client, Iterable<? extends WorkspaceFolder> workspaceFolders, boolean workspaceEditSupport) {
 
-    final CompletableFuture<List<WorkspaceFolder>> listCompletableFuture = JimpleLanguageServer.getClient().workspaceFolders();
+    List<Path> jimpleFiles = new ArrayList<>();
+    List<Path> apkFiles = new ArrayList<>();
 
+    for (WorkspaceFolder workspaceFolder : workspaceFolders) {
 
+      // jimple
+      try (Stream<Path> paths = Files.walk(Paths.get(workspaceFolder.getUri()))) {
+        paths.filter(f -> f.endsWith(".jimple")).forEach(jimpleFiles::add);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
 
-    boolean jimpleExists = false;
-    String foundArchive = null;
+      // apk
+      try (Stream<Path> paths = Files.walk(Paths.get(workspaceFolder.getUri()), 1)) {
+        paths.filter(f -> f.endsWith(".apk")).forEach(apkFiles::add);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
 
-    if (!jimpleExists && foundArchive != null) {
-      askUser(foundArchive);
+    client.showMessage(
+            new MessageParams(
+                    MessageType.Info, " " + workspaceFolders + "\n" + jimpleFiles.toString()));
+
+    if (jimpleFiles.isEmpty() && apkFiles.size() == 1) {
+      final String foundArchive = apkFiles.get(0).toString();
+      if (askUser(client, foundArchive)) {
+        extractJimple(client, foundArchive);
+      }
     }
   }
 
-
-  void askUser(String foundArchive) {
+  static boolean askUser(LanguageClient client, String foundArchive) {
 
     final ShowMessageRequestParams requestParams = new ShowMessageRequestParams();
     requestParams.setType(MessageType.Info);
     requestParams.setMessage(
-        "JimpleLanguage Server has no \".jimple\" files detected in your workspace. But we found "
-            + foundArchive
-            + ". Do you want to extract Jimple from that file?");
+            "JimpleLanguage Server has no \".jimple\" files detected in your workspace. But we found "
+                    + foundArchive
+                    + ". Do you want to extract Jimple from that file?");
     requestParams.setActions(
-        Lists.newArrayList(
-            new MessageActionItem("Extract Jimple"),
+            Lists.newArrayList(
+                    new MessageActionItem("Extract Jimple"),
             new MessageActionItem("No") /*, new MessageActionItem("Don't ask again.") */));
     final CompletableFuture<MessageActionItem> messageActionItemCompletableFuture =
-        JimpleLanguageServer.getClient().showMessageRequest(requestParams);
+            client.showMessageRequest(requestParams);
 
     try {
       final MessageActionItem messageActionItem = messageActionItemCompletableFuture.get();
-      if (messageActionItem.getTitle().startsWith("Extract")) {
-        extractJimple(foundArchive);
-      }
+      return messageActionItem.getTitle().startsWith("Extract");
+
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
+      return false;
     }
   }
 
-  void extractJimple(String archivePath) {
+  static void extractJimple(LanguageClient client, String archivePath) {
 
     // TODO: ask before downloading respective jar if not existing
     // TODO: get existing androidjar from config
     int apkVersion = ApkAndAndroidjar.extractApkVersion(archivePath);
     String lspServerDir = System.getProperty("user.dir");
     final String androidJarPath = lspServerDir + "/android/" + apkVersion + "/android.jar";
-    if( !Files.exists(Paths.get(androidJarPath) )){
+    if (!Files.exists(Paths.get(androidJarPath))) {
       final boolean res = ApkAndAndroidjar.downloadAndroidjar(apkVersion, androidJarPath);
-      if( !res ){
-        JimpleLanguageServer.getClient()
-                .logMessage(
-                        new MessageParams(
-                                MessageType.Error,
-                                "Can not extract Jimple from the APK. android.jar can not be downloaded. \n"
-                                //  + "Please set the path, where we can find the respective android.jar.\n"
-                                //  + "Config key: jimplelsp.android-jars "
-                        ));
+      if (!res) {
+        client.logMessage(
+                new MessageParams(
+                        MessageType.Error,
+                        "Can not extract Jimple from the APK. android.jar can not be downloaded. \n"
+                        //  + "Please set the path, where we can find the respective android.jar.\n"
+                        //  + "Config key: jimplelsp.android-jars "
+                ));
         return;
       }
     }
@@ -105,7 +119,7 @@ public class ProjectSetupAction {
 
     // TODO: adapt Soots cli params
     String[] options =
-            new String[] {
+            new String[]{
                     "-cp",
                     archivePath + File.pathSeparator + rtJar,
                     "-android-jars",
@@ -129,7 +143,9 @@ public class ProjectSetupAction {
                         // FIXME: choose workspacefolder: use the first if multiple are given
                         changeList.add(
                                 Either.forRight(
-                                        new CreateFile("./jimple/" + file.relativize(extractionDir), new CreateFileOptions(false, true))));
+                                        new CreateFile(
+                                                "./jimple/" + file.relativize(extractionDir),
+                                                new CreateFileOptions(false, true))));
                       });
     } catch (IOException e) {
       e.printStackTrace();
@@ -138,11 +154,9 @@ public class ProjectSetupAction {
     edit.setDocumentChanges(changeList);
     params.setEdit(edit);
     params.setLabel("extract Source Archive.");
-    JimpleLanguageServer.getClient().applyEdit(params);
+    client.applyEdit(params);
 
     // TODO: cleanup nonempty tempdir?
 
   }
-
-
 }
