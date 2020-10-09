@@ -1,26 +1,32 @@
 package com.github.swissiety.jimplelsp;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.TextDocumentService;
+import ppg.code.Code;
+
+import javax.annotation.Nonnull;
 
 public class JimpleTextDocumentService implements TextDocumentService {
 
-  private final JimpleLanguageServer jimpleLanguageServer;
-  private LanguageClient client;
+  @Nonnull
+  private final JimpleLanguageServer server;
+  @Nonnull
   private final Map<String, JimpleDocument> docs = Collections.synchronizedMap(new HashMap<>());
+  @Nonnull
   private final Map<String, Integer> documentVersions = new HashMap<>();
 
-  public JimpleTextDocumentService(JimpleLanguageServer jimpleLanguageServer, LanguageClient client) {
-    this.jimpleLanguageServer = jimpleLanguageServer;
-    this.client = client;
+  public JimpleTextDocumentService(@Nonnull JimpleLanguageServer server) {
+    this.server = server;
+  }
+
+  public LanguageClient getClient() {
+    return server.getClient();
   }
 
   /*
@@ -139,34 +145,28 @@ public class JimpleTextDocumentService implements TextDocumentService {
   }
 
   */
-  /*
-  	@Override
-  	public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-  		String docUri = params.getTextDocument().getUri();
-  		return CompletableFuture.supplyAsync(() ->
-  			params.getContext().getDiagnostics().stream()
-  			.map(diagnostic -> {
-  				List<CodeAction> res = new ArrayList<>();
-  				CodeAction removeAction = new CodeAction("Enlever ce troncon");
-  				removeAction.setKind(CodeActionKind.QuickFix);
-  				Integer docVersion = this.documentVersions.get(docUri);
-  				removeAction.setEdit(new WorkspaceEdit(Collections.singletonList(Either.forLeft(
-  						new TextDocumentEdit(new VersionedTextDocumentIdentifier(docUri, docVersion),
-  								Collections.singletonList(
-  										new TextEdit(diagnostic.getRange(), "")))))));
-  				removeAction.setDiagnostics(Collections.singletonList(diagnostic));
-  				res.add(removeAction);
-  				return res;
-  			})
-  			.flatMap(Collection::stream)
-  			.map(codeAction -> {
-  				Either<Command, CodeAction> either = Either.forRight(codeAction);
-  				return either;
-  			}).collect(Collectors.toList())
-  		);
-  	}
 
-  	@Override
+  @Override
+  public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
+    String docUri = params.getTextDocument().getUri();
+    final CodeAction codeAction = new CodeAction("Ralph machs heile");
+    codeAction.setDiagnostics(null); // FIXME
+// TODO: hö?      codeAction.setCommand( new Command(, ));
+
+    final Command command = new Command();
+    command.setTitle("commando wuff");
+//      command.setCommand();
+//      command.setArguments();
+
+    return CompletableFuture.completedFuture(Collections.singletonList(Either.forRight(codeAction)));
+  }
+
+  private void pool(Runnable r) {
+    server.pool(r);
+  }
+
+  /*
+  @Override
   	public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
   		return CompletableFuture.completedFuture(Collections.emptyList());
   		// TODO IDE feature change
@@ -203,14 +203,16 @@ public class JimpleTextDocumentService implements TextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
-    JimpleDocument model = new JimpleDocument(params.getTextDocument().getText());
-    this.docs.put(params.getTextDocument().getUri(), model);
-    CompletableFuture.runAsync(
-            () ->
-                    client
-                            .publishDiagnostics(
-                                    new PublishDiagnosticsParams(
-                                            params.getTextDocument().getUri(), validate(model))));
+    JimpleDocument doc = new JimpleDocument(params.getTextDocument().getUri(), params.getTextDocument().getText());
+    this.docs.put(params.getTextDocument().getUri(), doc);
+    server.pool(
+            () -> {
+              final LanguageClient client = getClient();
+              client
+                      .publishDiagnostics(
+                              new PublishDiagnosticsParams(
+                                      params.getTextDocument().getUri(), validate(doc)));
+            });
   }
 
   @Override
@@ -218,13 +220,13 @@ public class JimpleTextDocumentService implements TextDocumentService {
     // modify internal state
     this.documentVersions.put(
             params.getTextDocument().getUri(), params.getTextDocument().getVersion() + 1);
-    JimpleDocument model = new JimpleDocument(params.getContentChanges().get(0).getText());
+    JimpleDocument model = new JimpleDocument(params.getTextDocument().getUri(), params.getContentChanges().get(0).getText());
     this.docs.put(params.getTextDocument().getUri(), model);
     // send notification
     CompletableFuture.runAsync(
             () -> {
               List<Diagnostic> diagnostics = validate(model);
-              client
+              getClient()
                       .publishDiagnostics(
                               new PublishDiagnosticsParams(params.getTextDocument().getUri(), diagnostics));
             });
@@ -232,18 +234,32 @@ public class JimpleTextDocumentService implements TextDocumentService {
 
   private List<Diagnostic> validate(JimpleDocument model) {
     List<Diagnostic> res = new ArrayList<>();
-    if (false) {
-      /*
-      Diagnostic diagnostic = new Diagnostic();
-      diagnostic.setSeverity(DiagnosticSeverity.Error);
-      diagnostic.setMessage("The .jimple file contains an Error");
-      diagnostic.setRange(new Range(
-      				new Position(line, charOffset),
-      				new Position(line, charOffset + length)));
 
-      res.add(diagnostic);
-      */
-    }
+    Diagnostic diagnostic = new Diagnostic();
+    diagnostic.setSeverity(DiagnosticSeverity.Error);
+    diagnostic.setMessage("The .jimple file contains an Error");
+    int line = 5;
+    int charOffset = 4;
+    int length = 10;
+    diagnostic.setRange(new Range(
+            new Position(line, charOffset),
+            new Position(line, charOffset + length)));
+
+    final ArrayList<DiagnosticRelatedInformation> relatedInformation = new ArrayList<>();
+    relatedInformation.add(new DiagnosticRelatedInformation(
+            new Location(model.getUri(),
+                    new Range(new Position(1, 5), new Position(2, 0))),
+            "here is sth strange"));
+
+    String uri = "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/" + (model.getUri().endsWith("helloworld.jimple") ? "another" : "helloworld") + ".jimple";
+    relatedInformation.add(new DiagnosticRelatedInformation(
+            new Location(uri,
+                    new Range(new Position(2, 0), new Position(3, 0))),
+            "more strangeness"));
+    diagnostic.setRelatedInformation(relatedInformation);
+
+    res.add(diagnostic);
+
     return res;
   }
 

@@ -1,6 +1,5 @@
 package com.github.swissiety.jimplelsp.actions;
 
-import com.github.swissiety.jimplelsp.JimpleLanguageServer;
 import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.services.LanguageClient;
 import soot.Main;
 
@@ -33,29 +31,36 @@ public class ProjectSetupAction {
 
       // jimple
       try (Stream<Path> paths = Files.walk(Paths.get(workspaceFolder.getUri()))) {
-        paths.filter(f -> f.endsWith(".jimple")).forEach(jimpleFiles::add);
+        paths.filter(f -> f.toString().endsWith(".jimple")).forEach(jimpleFiles::add);
       } catch (IOException e) {
         e.printStackTrace();
       }
 
       // apk
-      try (Stream<Path> paths = Files.walk(Paths.get(workspaceFolder.getUri()), 1)) {
-        paths.filter(f -> f.endsWith(".apk")).forEach(apkFiles::add);
+      try (Stream<Path> paths = Files.walk(Paths.get(workspaceFolder.getUri()), 2)) {
+        paths.filter(f -> f.toString().endsWith(".apk")).limit(2).forEach(apkFiles::add);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
-    client.showMessage(
-            new MessageParams(
-                    MessageType.Info, " " + workspaceFolders + "\n" + jimpleFiles.toString()));
-
+    /*
     if (jimpleFiles.isEmpty() && apkFiles.size() == 1) {
       final String foundArchive = apkFiles.get(0).toString();
       if (askUser(client, foundArchive)) {
-        extractJimple(client, foundArchive);
+        boolean ret = extractJimple(foundArchive);
+        if( ! ret ){
+          client.logMessage(
+                  new MessageParams(
+                          MessageType.Error,
+                          "Can not extract Jimple from the APK. The android.jar can not be downloaded. \n"
+                          //  + "Please set the path, where we can find the respective android.jar.\n"
+                          //  + "Config key: jimplelsp.android-jars "
+                  ));
+        }
       }
     }
+    */
   }
 
   static boolean askUser(LanguageClient client, String foundArchive) {
@@ -63,13 +68,14 @@ public class ProjectSetupAction {
     final ShowMessageRequestParams requestParams = new ShowMessageRequestParams();
     requestParams.setType(MessageType.Info);
     requestParams.setMessage(
-            "JimpleLanguage Server has no \".jimple\" files detected in your workspace. But we found "
-                    + foundArchive
-                    + ". Do you want to extract Jimple from that file?");
+            "We found no \".jimple\" files detected in your workspace.\n" +
+                    "But we found \"" + foundArchive + "\".\n" +
+                    "Do you want to extract Jimple from that file?");
     requestParams.setActions(
             Lists.newArrayList(
                     new MessageActionItem("Extract Jimple"),
-            new MessageActionItem("No") /*, new MessageActionItem("Don't ask again.") */));
+                    new MessageActionItem("No")
+                    /*, new MessageActionItem("Don't ask again.") */));
     final CompletableFuture<MessageActionItem> messageActionItemCompletableFuture =
             client.showMessageRequest(requestParams);
 
@@ -83,7 +89,7 @@ public class ProjectSetupAction {
     }
   }
 
-  static void extractJimple(LanguageClient client, String archivePath) {
+  static boolean extractJimple(String archivePath) {
 
     // TODO: ask before downloading respective jar if not existing
     // TODO: get existing androidjar from config
@@ -93,14 +99,7 @@ public class ProjectSetupAction {
     if (!Files.exists(Paths.get(androidJarPath))) {
       final boolean res = ApkAndAndroidjar.downloadAndroidjar(apkVersion, androidJarPath);
       if (!res) {
-        client.logMessage(
-                new MessageParams(
-                        MessageType.Error,
-                        "Can not extract Jimple from the APK. android.jar can not be downloaded. \n"
-                        //  + "Please set the path, where we can find the respective android.jar.\n"
-                        //  + "Config key: jimplelsp.android-jars "
-                ));
-        return;
+        return false;
       }
     }
 
@@ -110,7 +109,7 @@ public class ProjectSetupAction {
       extractionDir = Files.createTempDirectory("LspServerExtract");
     } catch (IOException e) {
       e.printStackTrace();
-      return;
+      return false;
     }
 
     // generate with old soot
@@ -131,6 +130,7 @@ public class ProjectSetupAction {
             };
     Main.main(options);
 
+    /*
     // create files under workspace via lsp
     final ApplyWorkspaceEditParams params = new ApplyWorkspaceEditParams();
     final WorkspaceEdit edit = new WorkspaceEdit();
@@ -156,7 +156,9 @@ public class ProjectSetupAction {
     params.setLabel("extract Source Archive.");
     client.applyEdit(params);
 
-    // TODO: cleanup nonempty tempdir?
+     */
 
+    // TODO: cleanup nonempty tempdir?
+    return true;
   }
 }

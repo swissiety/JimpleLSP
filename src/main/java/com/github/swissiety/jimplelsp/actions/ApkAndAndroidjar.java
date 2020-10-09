@@ -1,30 +1,35 @@
 package com.github.swissiety.jimplelsp.actions;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 class ApkAndAndroidjar {
 
-  static int extractApkVersion(String apkFile) {
+  public static int extractApkVersion(String apkFile) {
     int[] apkVersion = new int[1];
     apkVersion[0] = -1;
     try (FileSystem fileSystem = FileSystems.newFileSystem(Paths.get(apkFile), null)) {
       Path fileToExtract = fileSystem.getPath("AndroidManifest.xml");
 
+      // FIXME: this does not work for a compiled AndroidManifest...
+
       SAXParserFactory factory = SAXParserFactory.newInstance();
       SAXParser saxParser = factory.newSAXParser();
+      InputStream input = fileSystem.provider().newInputStream(fileToExtract);
+
+      System.out.println(IOUtils.toString(input, Charset.defaultCharset()));
       saxParser.parse(
-              fileToExtract.toFile(),
+              input,
               new DefaultHandler() {
                 @Override
                 public void startElement(String uri, String localName, String qName, Attributes attr)
