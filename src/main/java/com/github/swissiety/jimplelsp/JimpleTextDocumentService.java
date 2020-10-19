@@ -233,11 +233,13 @@ public class JimpleTextDocumentService implements TextDocumentService {
   }
 
   private List<Diagnostic> validate(JimpleDocument model) {
-    List<Diagnostic> res = new ArrayList<>();
 
+    List<Diagnostic> res = new ArrayList<>();
+// test
     Diagnostic diagnostic = new Diagnostic();
     diagnostic.setSeverity(DiagnosticSeverity.Error);
     diagnostic.setMessage("The .jimple file contains an Error");
+    diagnostic.setSource("JimpleParser");
     int line = 5;
     int charOffset = 4;
     int length = 10;
