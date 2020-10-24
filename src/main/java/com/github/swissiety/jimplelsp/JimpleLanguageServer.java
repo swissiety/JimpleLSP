@@ -65,7 +65,6 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
   @Nonnull
   private Map<String, SootClass> fileToClassMapping = new HashMap<>();
 
-
   @Nullable
   SootClass quarantineInput(String uri, String content) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
@@ -151,9 +150,6 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
     this.params = params;
 
-    // TODO: check if lsp4j allows sending requests that the client cant handle due to
-    // ClientCapabilities
-
     final ServerCapabilities sCapabilities = new ServerCapabilities();
     //		sCapabilities.setCodeActionProvider(new CodeActionOptions());
     //		sCapabilities.setDefinitionProvider(Boolean.TRUE);
@@ -164,6 +160,8 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     textDocumentSync.setOpenClose(true);
     textDocumentSync.setChange(TextDocumentSyncKind.Full);
     sCapabilities.setTextDocumentSync(textDocumentSync);
+
+    //sCapabilities.setWorkspaceSymbolProvider( false);
 
     //    sCapabilities.setDocumentSymbolProvider(Boolean.TRUE);
     //		sCapabilities.setCodeLensProvider(new CodeLensOptions(true));

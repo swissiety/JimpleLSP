@@ -21,6 +21,7 @@ import org.eclipse.lsp4j.services.LanguageClient;
 
 public class Main {
 
+  /*
   public static void main(@Nonnull String[] args) {
 
     if (args.length > 0) {
@@ -66,6 +67,7 @@ public class Main {
       server.connect(l.getRemoteProxy());
     }
   }
+   */
 
   static InputStream logStream(InputStream is, String logFileName) {
     File log;

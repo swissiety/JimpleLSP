@@ -225,17 +225,16 @@ public class JimpleTextDocumentService implements TextDocumentService {
     // send notification
     CompletableFuture.runAsync(
             () -> {
-              List<Diagnostic> diagnostics = validate(model);
               getClient()
                       .publishDiagnostics(
-                              new PublishDiagnosticsParams(params.getTextDocument().getUri(), diagnostics));
+                              new PublishDiagnosticsParams(params.getTextDocument().getUri(), validate(model)));
             });
   }
 
   private List<Diagnostic> validate(JimpleDocument model) {
 
     List<Diagnostic> res = new ArrayList<>();
-// test
+
     Diagnostic diagnostic = new Diagnostic();
     diagnostic.setSeverity(DiagnosticSeverity.Error);
     diagnostic.setMessage("The .jimple file contains an Error");
@@ -253,14 +252,32 @@ public class JimpleTextDocumentService implements TextDocumentService {
                     new Range(new Position(1, 5), new Position(2, 0))),
             "here is sth strange"));
 
-    String uri = "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/" + (model.getUri().endsWith("helloworld.jimple") ? "another" : "helloworld") + ".jimple";
+    boolean uriOne = model.getUri().endsWith("helloworld.jimple");
+    String uriA = "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/" + (uriOne ? "another" : "helloworld") + ".jimple";
+    String uriB = "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/" + (!uriOne ? "another" : "helloworld") + ".jimple";
+
     relatedInformation.add(new DiagnosticRelatedInformation(
-            new Location(uri,
+            new Location(uriA,
                     new Range(new Position(2, 0), new Position(3, 0))),
             "more strangeness"));
     diagnostic.setRelatedInformation(relatedInformation);
 
     res.add(diagnostic);
+
+    Diagnostic diagnostic2 = new Diagnostic();
+    diagnostic2.setMessage("This is a Jimple Error. ");
+    diagnostic2.setRange(new Range(new Position(2, 0), new Position(2, 10)));
+    diagnostic2.setSource("Jimpleparser");
+    diagnostic2.setCode("403 Forbidden");
+    diagnostic2.setSeverity(DiagnosticSeverity.Error);
+
+    List<DiagnosticRelatedInformation> related = new ArrayList<>();
+    related.add(new DiagnosticRelatedInformation(new Location(uriA, new Range(new Position(4, 4), new Position(4, 10))), "problem A"));
+    related.add(new DiagnosticRelatedInformation(new Location(uriB, new Range(new Position(6, 6), new Position(6, 12))), "another problem: B"));
+    related.add(new DiagnosticRelatedInformation(new Location(uriA, new Range(new Position(8, 8), new Position(8, 14))), "problem C"));
+    diagnostic2.setRelatedInformation(related);
+
+    res.add(diagnostic2);
 
     return res;
   }

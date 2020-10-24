@@ -12,7 +12,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolKind;
 
-public class JimpleDocumentSymbol extends JimpleBaseListener {
+public class JimpleSemanticHighlightingProvider extends JimpleBaseListener {
 
   // FIXME: ms started this functionality with semantic highlighting in mind.. recheck!
 
@@ -52,7 +52,7 @@ public class JimpleDocumentSymbol extends JimpleBaseListener {
   public void enterField(JimpleParser.FieldContext ctx) {
     symbols.add(
             new DocumentSymbol(
-                    ctx.IDENTIFIER().getText(),
+                    ctx.identifier().getText(),
                     SymbolKind.Field,
                     convertRange(ctx.start, ctx.stop),
                     convertRange(ctx.start, ctx.stop)));

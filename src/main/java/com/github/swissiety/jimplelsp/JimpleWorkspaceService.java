@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import de.upb.swt.soot.core.jimple.basic.NoPositionInformation;
+import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.model.SootField;
 import de.upb.swt.soot.core.model.SootMethod;
 import org.eclipse.lsp4j.*;
@@ -33,20 +33,20 @@ public class JimpleWorkspaceService implements WorkspaceService {
         if (list.size() >= limit) {
           return;
         }
-        findSymbolsInClass(list, query, clazz);
+        retrieveSymbolsInClass(list, query, clazz);
       });
     }
     return CompletableFuture.completedFuture(list);
   }
 
-  private void findSymbolsInClass(List<SymbolInformation> resultList, String query, de.upb.swt.soot.core.model.SootClass clazz) {
-    // find classes;
+  private void retrieveSymbolsInClass(List<SymbolInformation> resultList, String query, SootClass clazz) {
+    // retrieve classes
     if (clazz.getName().toLowerCase().startsWith(query)) {
       Location location = new Location(server.classToUri(clazz), server.positionToRange(clazz.getPosition()));
       resultList.add(new SymbolInformation(clazz.getName(), SymbolKind.Class, location));
     }
 
-    // methods
+    // retrieve methods
     for (SootMethod method : clazz.getMethods()) {
       if (method.getName().toLowerCase().startsWith(query)) {
         Location location = new Location(server.classToUri(clazz), server.positionToRange(method.getPosition()));
@@ -54,7 +54,7 @@ public class JimpleWorkspaceService implements WorkspaceService {
       }
     }
 
-    // fields
+    // retrieve fields
     for (SootField field : clazz.getFields()) {
       if (field.getName().toLowerCase().startsWith(query)) {
         Location location = new Location(server.classToUri(clazz), server.positionToRange(field.getPosition()));
