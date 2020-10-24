@@ -1,18 +1,14 @@
 package magpiebridge.jimplelsp;
 
 import de.upb.swt.soot.core.model.SootClass;
-import de.upb.swt.soot.core.model.SootField;
-import de.upb.swt.soot.core.model.SootMethod;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieWorkspaceService;
+import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 public class JimpleWorkspaceService extends MagpieWorkspaceService {
   public JimpleWorkspaceService(MagpieServer server) {
@@ -33,7 +29,7 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
       final String query = params.getQuery().trim().toLowerCase();
 
       if (query.length() > 1) {
-        ((JimpleLspServer) server).getView().getClasses().forEach(clazz -> {
+        getServer().getView().getClasses().forEach(clazz -> {
           if (list.size() >= limit) {
             return;
           }

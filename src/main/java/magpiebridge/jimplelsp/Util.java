@@ -25,4 +25,5 @@ public class Util {
   public static Range positionToRange(Position position) {
     return new Range(new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()), new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
+
 }

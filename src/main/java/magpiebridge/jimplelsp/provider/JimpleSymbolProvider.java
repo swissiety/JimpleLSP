@@ -1,8 +1,9 @@
-package magpiebridge.jimplelsp;
+package magpiebridge.jimplelsp.provider;
 
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.model.SootField;
 import de.upb.swt.soot.core.model.SootMethod;
+import magpiebridge.jimplelsp.Util;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -13,7 +14,7 @@ import java.util.List;
 
 public class JimpleSymbolProvider {
 
-  static void retrieveAndFilterSymbolsFromClass(@Nonnull List<SymbolInformation> resultList, String query, @Nonnull SootClass clazz, @Nonnull SymbolKindCapabilities symbolKind) {
+  public static void retrieveAndFilterSymbolsFromClass(@Nonnull List<SymbolInformation> resultList, String query, @Nonnull SootClass clazz, @Nonnull SymbolKindCapabilities symbolKind) {
     final List<SymbolKind> clientSupportedSymbolKinds = symbolKind.getValueSet();
 
     if (clientSupportedSymbolKinds.contains(SymbolKind.Class)) {

@@ -4,24 +4,19 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.stream.Stream;
-import javax.annotation.Nonnull;
 
-import com.github.swissiety.jimplelsp.actions.ProjectSetupAction;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+import javax.annotation.Nonnull;
+
 public class Main {
 
-  /*
+
   public static void main(@Nonnull String[] args) {
 
     if (args.length > 0) {
@@ -67,7 +62,6 @@ public class Main {
       server.connect(l.getRemoteProxy());
     }
   }
-   */
 
   static InputStream logStream(InputStream is, String logFileName) {
     File log;

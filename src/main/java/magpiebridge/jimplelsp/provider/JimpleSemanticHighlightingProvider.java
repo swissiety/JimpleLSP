@@ -1,4 +1,4 @@
-package com.github.swissiety.jimplelsp.languagefeatures;
+package magpiebridge.jimplelsp.provider;
 
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;

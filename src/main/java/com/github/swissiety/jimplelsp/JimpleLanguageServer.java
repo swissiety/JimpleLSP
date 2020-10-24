@@ -1,6 +1,5 @@
 package com.github.swissiety.jimplelsp;
 
-import com.github.swissiety.jimplelsp.actions.ProjectSetupAction;
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.frontend.SootClassSource;
 import de.upb.swt.soot.core.inputlocation.AnalysisInputLocation;
@@ -187,7 +186,7 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
       workspaceFolders.forEach(folder -> addInputLocation(folder.getUri()));
 
       // file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/helloworld.jimple
-      ProjectSetupAction.scanWorkspace(client, workspaceFolders, workspaceEditSupport);
+      // TODO: ProjectSetupAction.scanWorkspace(client, workspaceFolders, workspaceEditSupport);
 
     });
 
