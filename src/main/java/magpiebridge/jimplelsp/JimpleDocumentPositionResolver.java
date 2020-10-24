@@ -30,8 +30,8 @@ import java.util.*;
  * @author Markus Schmidt
  */
 public class JimpleDocumentPositionResolver {
-  Collection<Signature> occurences = new ArrayList<>();
-  private String fileUri;
+  private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
+  private final String fileUri;
 
   public JimpleDocumentPositionResolver(String fileUri, String contents) {
     this.fileUri = fileUri;
@@ -46,8 +46,14 @@ public class JimpleDocumentPositionResolver {
       }
     });
 
-    parser.file();
+    final SignatureOccurenceAggregator signatureOccurenceAggregator = new SignatureOccurenceAggregator();
+    parser.file().enterRule(signatureOccurenceAggregator);
 
+  }
+
+  @Nullable
+  public Signature resolve(int position) {
+    return occurences.resolve(position);
   }
 
   private final class SignatureOccurenceAggregator extends JimpleBaseListener {
@@ -128,6 +134,10 @@ public class JimpleDocumentPositionResolver {
     public void enterImportItem(JimpleParser.ImportItemContext ctx) {
       util.addImport(ctx, fileUri);
       super.enterImportItem(ctx);
+    }
+
+    Signature resolve(int position) {
+      return positionContainer.resolve(position).getLeft();
     }
   }
 
