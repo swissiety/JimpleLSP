@@ -6,6 +6,7 @@ import de.upb.swt.soot.core.signatures.FieldSignature;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
+import fj.F;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
@@ -118,6 +119,22 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
     // TODO: find usages of methods|ClassType|(Locals?)
     return null;
+  }
+
+
+  @Override
+  public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+    return getServer().pool(() -> {
+
+      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(Util.uritoClasstype(params.getTextDocument().getUri()));
+      if (aClass.isPresent()) {
+        SootClass sc = (SootClass) aClass.get();
+        List<FoldingRange> fr = new ArrayList<>();
+        sc.getMethods().forEach(m -> fr.add(new FoldingRange(m.getPosition().getFirstLine(), m.getPosition().getLastLine())));
+        return fr;
+      }
+      return null;
+    });
   }
 
   @Override
