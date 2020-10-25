@@ -27,6 +27,7 @@ import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import org.antlr.v4.runtime.*;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import soot.jimple.InvokeExpr;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -369,13 +370,22 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   for (SootMethod method : sc.getMethods()) {
                     final Body body = method.getBody();
                     for (Stmt stmt : body.getStmtGraph().nodes()) {
-                      if (stmt instanceof JInvokeStmt
-                          || (stmt instanceof JAssignStmt
-                              && ((JAssignStmt) stmt).getRightOp() instanceof AbstractInvokeExpr)) {
+                      AbstractInvokeExpr invokeExpr;
+                      if (stmt instanceof JInvokeStmt) {
+                        invokeExpr = stmt.getInvokeExpr();
+                      } else if (stmt instanceof JAssignStmt
+                              && ((JAssignStmt) stmt).getRightOp() instanceof AbstractInvokeExpr) {
+                        invokeExpr = (AbstractInvokeExpr) ((JAssignStmt) stmt).getRightOp();
+                      }else{
+                        continue;
+                      }
+
+                      if (invokeExpr.getMethodSignature().equals(sig)) {
                         list.add(
-                            new Location(
-                                Util.classToUri(sc),
-                                Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
+                                new Location(
+                                        Util.classToUri(sc),
+                                        Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
+
                       }
                     }
                   }
@@ -512,7 +522,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
 
               // possibilities: fold imports | fold multiline comments
-
               return null;
             });
   }
