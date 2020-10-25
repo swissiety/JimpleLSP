@@ -1,18 +1,24 @@
 package magpiebridge.jimplelsp;
 
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
+import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.model.*;
 import de.upb.swt.soot.core.signatures.FieldSignature;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
-import fj.F;
+import de.upb.swt.soot.jimple.JimpleLexer;
+import de.upb.swt.soot.jimple.JimpleParser;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
+import magpiebridge.jimplelsp.provider.JimpleLabelLinkProvider;
+import org.antlr.v4.runtime.*;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -20,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Markus Schmidt
  */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
-  private Map<String, JimpleDocumentPositionResolver> docPosResolver = new HashMap<>();
+  private Map<String, SignaturePositionResolver> docPosResolver = new HashMap<>();
 
   /**
    * Instantiates a new magpie text document service.
@@ -41,7 +47,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     super.didOpen(params);
 
     // calculate and cache positions
-    docPosResolver.put(params.getTextDocument().getUri(), new JimpleDocumentPositionResolver(params.getTextDocument().getUri(), params.getTextDocument().getText()));
+    docPosResolver.put(params.getTextDocument().getUri(), new SignaturePositionResolver(params.getTextDocument().getUri(), params.getTextDocument().getText()));
   }
 
   @Override
@@ -104,23 +110,119 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
     // TODO: resolve position to: Variable/FieldSignature/MethodSignature/TypeSignature - get its type -> return its definition position
+    return getServer().pool(() -> {
+      return null;
+    });
+  }
 
+  @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> declaration(TextDocumentPositionParams params) {
+    // TODO: find local declaration
+    return getServer().pool(() -> {
+      String fileUri = params.getTextDocument().getUri();
 
-    return null;
+      // TODO: getClass - getMethods; find Method surrounding
+      params.getPosition();
+      // TODO: parse usages of local in this method -> return declarations ; class: LocalDeclarationResolver
+      /*
+      try {
+        JimpleLexer lexer = new JimpleLexer(CharStreams.fromPath(Paths.get(fileUri)));
+        TokenStream tokens = new CommonTokenStream(lexer);
+        JimpleParser parser = new JimpleParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new BaseErrorListener() {
+          public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+            throw new ResolveException("Jimple Syntaxerror: " + msg, fileUri, new de.upb.swt.soot.core.model.Position(line, charPositionInLine, -1, -1));
+          }
+        });
+
+        final JimpleDocumentPositionResolver.SignatureOccurenceAggregator signatureOccurenceAggregator = new JimpleDocumentPositionResolver.SignatureOccurenceAggregator();
+        parser.file().enterRule(signatureOccurenceAggregator);
+
+      } catch (IOException exception) {
+        exception.printStackTrace();
+      }*/
+      return null;
+    });
   }
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> implementation(TextDocumentPositionParams position) {
     // TODO implement: resolve position to MethodSignature/Type and retrieve respective subclasses
-    return null;
+    return getServer().pool(() -> {
+      return null;
+    });
   }
 
   @Override
   public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
     // TODO: find usages of methods|ClassType|(Locals?)
-    return null;
+    return getServer().pool(() -> {
+      return null;
+    });
   }
 
+
+  // TODO: make labels clickable
+  @Override
+  public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
+
+    return getServer().pool(() -> {
+
+      try {
+        final String fileUri = params.getTextDocument().getUri();
+        JimpleLexer lexer = new JimpleLexer(CharStreams.fromPath(Paths.get(fileUri)));
+        TokenStream tokens = new CommonTokenStream(lexer);
+        JimpleParser parser = new JimpleParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(new BaseErrorListener() {
+          public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+            throw new ResolveException("Jimple Syntaxerror: " + msg, fileUri, new de.upb.swt.soot.core.model.Position(line, charPositionInLine, -1, -1));
+          }
+        });
+
+        parser.file().enterRule(new JimpleLabelLinkProvider());
+
+      } catch (IOException exception) {
+        exception.printStackTrace();
+      }
+
+      return null;
+    });
+  }
+
+/*
+  @Override
+  public CompletableFuture<TypeHierarchyItem> resolveTypeHierarchy(ResolveTypeHierarchyItemParams params) {
+    // TODO:
+    return getServer().pool(() -> {
+      params.getDirection();
+      params.getItem();
+      params.getResolve();
+      return null;
+    });
+  }
+
+  @Override
+  public CompletableFuture<TypeHierarchyItem> typeHierarchy(TypeHierarchyParams params) {
+    // TODO:
+    return getServer().pool(() -> {
+      params.getDirection();
+      params.getResolve();
+      return null;
+    });
+  }
+
+  @Override
+  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
+    // TODO: implement it for local usage
+    return getServer().pool(() -> {
+      position.getTextDocument().getUri();
+
+      return null;
+    });
+  }
+*/
 
   @Override
   public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
@@ -129,10 +231,18 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(Util.uritoClasstype(params.getTextDocument().getUri()));
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
-        List<FoldingRange> fr = new ArrayList<>();
-        sc.getMethods().forEach(m -> fr.add(new FoldingRange(m.getPosition().getFirstLine(), m.getPosition().getLastLine())));
-        return fr;
+        List<FoldingRange> frList = new ArrayList<>();
+        sc.getMethods().forEach(m -> {
+          final FoldingRange fr = new FoldingRange(m.getPosition().getFirstLine(), m.getPosition().getLastLine());
+          fr.setKind("region");
+          frList.add(fr);
+        });
+        return frList;
       }
+
+      // fold imports
+      // fold multiline comments
+
       return null;
     });
   }
