@@ -117,9 +117,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
+              final SignaturePositionResolver resolver = docSignaturePositionResolver
+                      .get(position.getTextDocument().getUri());
+              if (resolver == null) {
+                return null;
+              }
               final Signature sig =
-                  docSignaturePositionResolver
-                      .get(position.getTextDocument().getUri())
+                  resolver
                       .resolve(position.getPosition());
               if (sig == null) {
                 // here is nothing to resolve
@@ -223,6 +227,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               List<Location> list = new ArrayList<>();
               final SignaturePositionResolver resolver =
                   docSignaturePositionResolver.get(position.getTextDocument().getUri());
+              if (resolver == null) {
+                return null;
+              }
               final Signature sig = resolver.resolve(position.getPosition());
               if (sig == null) {
                 return null;
@@ -285,6 +292,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               List<Location> list = new ArrayList<>();
               final SignaturePositionResolver resolver =
                   docSignaturePositionResolver.get(params.getTextDocument().getUri());
+              if (resolver == null) {
+                return null;
+              }
               final Signature sig = resolver.resolve(params.getPosition());
               if (sig == null) {
                 return null;
@@ -451,14 +461,15 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         return null;
       });
     }
-
+*/
+  /*
     @Override
     public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
         if( params == null ){
         return null;
       }
 
-      // TODO: implement it for local usage
+      // TODO: implement it for local usage | signatures | ?
       return getServer().pool(() -> {
         position.getTextDocument().getUri();
 
