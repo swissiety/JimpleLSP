@@ -11,6 +11,10 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import javax.annotation.Nonnull;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,21 +22,29 @@ import java.util.concurrent.CompletableFuture;
 
 public class Util {
 
-  public static String classToUri(SootClass clazz) {
-    return "file://" + clazz.getClassSource().getSourcePath();
+  @Nonnull
+  public static String classToUri(@Nonnull SootClass clazz) {
+    return pathToUri(clazz.getClassSource().getSourcePath());
   }
 
-  public static ClassType uritoClasstype(String strUri) {
+  @Nonnull
+  public static String pathToUri(@Nonnull Path sourcePath) {
+    return "file://" + sourcePath.toString();
+  }
+
+  @Nonnull
+  public static ClassType uritoClasstype(@Nonnull String strUri) {
     final String baseName = FilenameUtils.getBaseName(strUri);
     return JavaIdentifierFactory.getInstance().getClassType(baseName);
   }
 
-  public static Range positionToRange(Position position) {
+  @Nonnull
+  public static Range positionToRange(@Nonnull Position position) {
     return new Range(new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()), new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
 
-  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocation(Position position) {
-    // FIXME implement
-    return null;
+  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocation(@Nonnull String uri, @Nonnull Position position) {
+    return Either.forLeft(Collections.singletonList(new Location(uri, positionToRange(position))));
   }
+
 }
