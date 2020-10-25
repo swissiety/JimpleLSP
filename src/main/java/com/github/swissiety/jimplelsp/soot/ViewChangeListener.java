@@ -15,5 +15,4 @@ public interface ViewChangeListener {
   void methodChanged(SootMethod oldMethod, SootMethod newMethod);
 
   void methodRemoved(SootMethod m);
-
 }

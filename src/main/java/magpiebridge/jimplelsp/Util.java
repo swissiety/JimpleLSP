@@ -4,21 +4,15 @@ import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.java.core.JavaIdentifierFactory;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nonnull;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import java.nio.file.Path;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class Util {
 
@@ -40,11 +34,13 @@ public class Util {
 
   @Nonnull
   public static Range positionToRange(@Nonnull Position position) {
-    return new Range(new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()), new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
+    return new Range(
+        new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
+        new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
 
-  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocation(@Nonnull String uri, @Nonnull Position position) {
+  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocation(
+      @Nonnull String uri, @Nonnull Position position) {
     return Either.forLeft(Collections.singletonList(new Location(uri, positionToRange(position))));
   }
-
 }

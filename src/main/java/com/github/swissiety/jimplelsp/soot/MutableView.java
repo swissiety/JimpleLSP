@@ -10,17 +10,14 @@ import de.upb.swt.soot.core.model.SootMethod;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.AbstractView;
 import de.upb.swt.soot.core.views.View;
-
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
 
-/**
- * author: Markus Schmidt
- */
+/** author: Markus Schmidt */
 public class MutableView<V extends View> extends AbstractView {
 
   private final V wrappedView;
@@ -33,7 +30,6 @@ public class MutableView<V extends View> extends AbstractView {
     super(project);
     this.wrappedView = view;
   }
-
 
   void fireChange(SootClass oldClass, SootClass newClass) {
     edits.incrementAndGet();
@@ -84,14 +80,16 @@ public class MutableView<V extends View> extends AbstractView {
   @Nonnull
   @Override
   public Collection<? extends AbstractClass<? extends AbstractClassSource>> getClasses() {
-    final Collection<? extends AbstractClass<? extends AbstractClassSource>> classes = wrappedView.getClasses();
+    final Collection<? extends AbstractClass<? extends AbstractClassSource>> classes =
+        wrappedView.getClasses();
     lastFullResolve = edits.get();
     return classes;
   }
 
   @Nonnull
   @Override
-  public Optional<? extends AbstractClass<? extends AbstractClassSource>> getClass(@Nonnull ClassType classType) {
+  public Optional<? extends AbstractClass<? extends AbstractClassSource>> getClass(
+      @Nonnull ClassType classType) {
     return wrappedView.getClass(classType);
   }
 
@@ -117,5 +115,4 @@ public class MutableView<V extends View> extends AbstractView {
   public String quotedNameOf(@Nonnull String s) {
     return wrappedView.quotedNameOf(s);
   }
-
 }

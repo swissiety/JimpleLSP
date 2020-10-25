@@ -5,17 +5,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
-
+import javax.annotation.Nonnull;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 
-import javax.annotation.Nonnull;
-
 public class Main {
-
 
   public static void main(@Nonnull String[] args) {
 
@@ -36,14 +33,14 @@ public class Main {
 
           final JimpleLanguageServer server = new JimpleLanguageServer();
           Launcher<LanguageClient> launcher =
-                  new Launcher.Builder<LanguageClient>()
-                          .setLocalService(server)
-                          .setRemoteInterface(LanguageClient.class)
-                          .setInput(logStream(socket.getInputStream(), "serverOut"))
-                          .setOutput(logStream(socket.getOutputStream(), "serverIn"))
-                          .setExecutorService(Executors.newCachedThreadPool())
-                          .traceMessages(new PrintWriter(System.out))     // TODO
-                          .create();
+              new Launcher.Builder<LanguageClient>()
+                  .setLocalService(server)
+                  .setRemoteInterface(LanguageClient.class)
+                  .setInput(logStream(socket.getInputStream(), "serverOut"))
+                  .setOutput(logStream(socket.getOutputStream(), "serverIn"))
+                  .setExecutorService(Executors.newCachedThreadPool())
+                  .traceMessages(new PrintWriter(System.out)) // TODO
+                  .create();
           launcher.startListening();
           server.connect(launcher.getRemoteProxy());
         }
@@ -56,8 +53,8 @@ public class Main {
       System.out.println(">STDINOUT");
       JimpleLanguageServer server = new JimpleLanguageServer();
       Launcher<LanguageClient> l =
-              LSPLauncher.createServerLauncher(
-                      server, logStream(System.in, "serverOut"), logStream(System.out, "serverIn"));
+          LSPLauncher.createServerLauncher(
+              server, logStream(System.in, "serverOut"), logStream(System.out, "serverIn"));
       l.startListening();
       server.connect(l.getRemoteProxy());
     }

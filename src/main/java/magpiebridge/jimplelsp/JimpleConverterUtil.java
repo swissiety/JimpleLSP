@@ -10,12 +10,11 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.StringTools;
 import de.upb.swt.soot.java.core.JavaIdentifierFactory;
 import de.upb.swt.soot.jimple.JimpleParser;
+import java.util.*;
+import javax.annotation.Nonnull;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-
-import javax.annotation.Nonnull;
-import java.util.*;
 
 // TODO: move up into to Soot
 /**
@@ -40,23 +39,34 @@ public class JimpleConverterUtil {
   public Type getType(String typename) {
     typename = StringTools.getUnEscapedStringOf(typename);
     PackageName packageName = imports.get(typename);
-    return packageName == null ? identifierFactory.getType(typename) : identifierFactory.getType(packageName.getPackageName() + "." + typename);
+    return packageName == null
+        ? identifierFactory.getType(typename)
+        : identifierFactory.getType(packageName.getPackageName() + "." + typename);
   }
 
   public ClassType getClassType(String typename) {
     typename = StringTools.getUnEscapedStringOf(typename);
     PackageName packageName = this.imports.get(typename);
-    return packageName == null ? this.identifierFactory.getClassType(typename) : this.identifierFactory.getClassType(typename, packageName.getPackageName());
+    return packageName == null
+        ? this.identifierFactory.getClassType(typename)
+        : this.identifierFactory.getClassType(typename, packageName.getPackageName());
   }
 
   @Nonnull
   public static Range buildRangeFromCtx(@Nonnull ParserRuleContext ctx) {
-    return new Range(new Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()), new Position(ctx.stop.getLine(), ctx.stop.getCharPositionInLine()));
+    return new Range(
+        new Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()),
+        new Position(ctx.stop.getLine(), ctx.stop.getCharPositionInLine()));
   }
 
   @Nonnull
-  public static de.upb.swt.soot.core.model.Position buildPositionFromCtx(@Nonnull ParserRuleContext ctx) {
-    return new de.upb.swt.soot.core.model.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.stop.getLine(), ctx.stop.getCharPositionInLine());
+  public static de.upb.swt.soot.core.model.Position buildPositionFromCtx(
+      @Nonnull ParserRuleContext ctx) {
+    return new de.upb.swt.soot.core.model.Position(
+        ctx.start.getLine(),
+        ctx.start.getCharPositionInLine(),
+        ctx.stop.getLine(),
+        ctx.stop.getCharPositionInLine());
   }
 
   public void addImport(JimpleParser.ImportItemContext item, @Nonnull String fileuri) {
@@ -64,23 +74,30 @@ public class JimpleConverterUtil {
       return;
     }
     final ClassType classType = identifierFactory.getClassType(item.location.getText());
-    final PackageName duplicate = imports.putIfAbsent(classType.getClassName(), classType.getPackageName());
+    final PackageName duplicate =
+        imports.putIfAbsent(classType.getClassName(), classType.getPackageName());
     if (duplicate != null) {
-      throw new ResolveException("Multiple Imports for the same ClassName can not be resolved!", fileuri, buildPositionFromCtx(item));
+      throw new ResolveException(
+          "Multiple Imports for the same ClassName can not be resolved!",
+          fileuri,
+          buildPositionFromCtx(item));
     }
   }
 
   @Nonnull
-  public MethodSignature getMethodSignature(JimpleParser.Method_signatureContext ctx, ParserRuleContext parentCtx) {
+  public MethodSignature getMethodSignature(
+      JimpleParser.Method_signatureContext ctx, ParserRuleContext parentCtx) {
     if (ctx == null) {
-      throw new ResolveException("MethodSignature is missing.", fileUri, buildPositionFromCtx(parentCtx));
+      throw new ResolveException(
+          "MethodSignature is missing.", fileUri, buildPositionFromCtx(parentCtx));
     }
 
     JimpleParser.IdentifierContext class_name = ctx.class_name;
     JimpleParser.TypeContext typeCtx = ctx.method_subsignature().type();
     JimpleParser.Method_nameContext method_nameCtx = ctx.method_subsignature().method_name();
     if (class_name == null || typeCtx == null || method_nameCtx == null) {
-      throw new ResolveException("MethodSignature is not well formed.", fileUri, buildPositionFromCtx(ctx));
+      throw new ResolveException(
+          "MethodSignature is not well formed.", fileUri, buildPositionFromCtx(ctx));
     }
     String classname = class_name.getText();
     Type type = getType(typeCtx.getText());
@@ -112,7 +129,6 @@ public class JimpleConverterUtil {
     return list;
   }
 
-
   public List<ClassType> getClassTypeList(JimpleParser.Type_listContext type_list) {
     if (type_list == null) {
       return Collections.emptyList();
@@ -128,5 +144,4 @@ public class JimpleConverterUtil {
     }
     return list;
   }
-
 }

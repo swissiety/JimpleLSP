@@ -8,36 +8,29 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerConfiguration;
-import org.antlr.v4.runtime.CharStreams;
-import org.eclipse.lsp4j.*;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerConfiguration;
+import org.antlr.v4.runtime.CharStreams;
+import org.eclipse.lsp4j.*;
 
 // FIXME: sth with sourcefilemanager
 public class JimpleLspServer extends MagpieServer {
 
-  @Nonnull
-  final AnalysisInputLocation dummyInputLocation = new EagerInputLocation();
+  @Nonnull final AnalysisInputLocation dummyInputLocation = new EagerInputLocation();
   private boolean validCache = false;
 
   private View view;
-  @Nonnull
-  private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
+  @Nonnull private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
   private Map<TextDocumentIdentifier, SootClassSource> docClassMapping = new HashMap<>();
 
-  @Nonnull
-  List<Diagnostic> diagnostics = new ArrayList<>();
-
+  @Nonnull List<Diagnostic> diagnostics = new ArrayList<>();
 
   public JimpleLspServer(ServerConfiguration config) {
     super(config);
@@ -47,14 +40,16 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
   public <T> CompletableFuture<T> pool(Callable<T> lambda) {
-    return CompletableFuture.supplyAsync(() -> {
-      try {
-        return lambda.call();
-      } catch (Throwable e) {
-        e.printStackTrace();
-        return null;
-      }
-    }, THREAD_POOL);
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try {
+            return lambda.call();
+          } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+          }
+        },
+        THREAD_POOL);
   }
 
   @Nonnull
@@ -81,12 +76,15 @@ public class JimpleLspServer extends MagpieServer {
   SootClassSource quarantineInput(String uri, String content) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource scs = jimpleConverter.run(CharStreams.fromString(content, uri), dummyInputLocation, Paths.get(uri));
+      SootClassSource scs =
+          jimpleConverter.run(
+              CharStreams.fromString(content, uri), dummyInputLocation, Paths.get(uri));
       // input is clean
       return scs;
     } catch (ResolveException e) {
       // feed error into diagnostics
-      // FIXME uncomment addDiagnostic(uri, new Diagnostic(positionToRange(e.getRange()), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser"));
+      // FIXME uncomment addDiagnostic(uri, new Diagnostic(positionToRange(e.getRange()),
+      // e.getMessage(), DiagnosticSeverity.Error, "JimpleParser"));
       return null;
     }
   }
@@ -124,12 +122,10 @@ public class JimpleLspServer extends MagpieServer {
     }
     // TODO:    workspaceFolders.forEach();
 
-
     // nice2have: implement asking to extract jimple from an apk with old soot
   }
 
   public ClassType docIdentifierToClassType(TextDocumentIdentifier textDocument) {
     return docClassMapping.get(textDocument).getClassType();
   }
-
 }

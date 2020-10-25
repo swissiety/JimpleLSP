@@ -6,14 +6,11 @@ import de.upb.swt.soot.core.inputlocation.AnalysisInputLocation;
 import de.upb.swt.soot.core.inputlocation.ClassLoadingOptions;
 import de.upb.swt.soot.core.inputlocation.EagerInputLocation;
 import de.upb.swt.soot.core.views.View;
-
-import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 
-/**
- * author: Markus Schmidt
- */
+/** author: Markus Schmidt */
 public class MutableProject<P extends Project, V extends View> extends Project {
 
   private final P project;
@@ -21,7 +18,11 @@ public class MutableProject<P extends Project, V extends View> extends Project {
 
   public MutableProject(P project) {
     // FIXME: we need to provide a reference to this class to forward getInputLocations to here..
-    super(project.getLanguage(), Collections.emptyList(), project.getIdentifierFactory(), project.getSourceTypeSpecifier());
+    super(
+        project.getLanguage(),
+        Collections.emptyList(),
+        project.getIdentifierFactory(),
+        project.getSourceTypeSpecifier());
     this.project = project;
 
     /*
@@ -87,5 +88,4 @@ public class MutableProject<P extends Project, V extends View> extends Project {
   public View createView(Scope scope) {
     return new MutableView<>(project, project.createView(scope));
   }
-
 }

@@ -1,35 +1,31 @@
 package magpiebridge.jimplelsp.provider;
 
-import com.google.common.util.concurrent.RateLimiter;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
-import magpiebridge.jimplelsp.JimpleConverterUtil;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.DocumentLink;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
-
-import javax.annotation.Nonnull;
-import javax.swing.event.DocumentListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import magpiebridge.jimplelsp.JimpleConverterUtil;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.DocumentLink;
+import org.eclipse.lsp4j.Range;
 
 /**
- * This listener implementation lists all label usage positions when its passed into the Jimple Parser
+ * This listener implementation lists all label usage positions when its passed into the Jimple
+ * Parser
  *
  * @author Markus Schmidt
  */
 public class JimpleLabelLinkProvider extends JimpleBaseListener {
-  @Nonnull
-  private final Map<String, Range> labelTargets = new HashMap<>();
-  @Nonnull
-  private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
+  @Nonnull private final Map<String, Range> labelTargets = new HashMap<>();
+  @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
 
   @Nonnull
   public List<DocumentLink> getLinks(String fileUri) {
-    // traverse label usages and assign the respective target (which is in the same file and method).
+    // traverse label usages and assign the respective target (which is in the same file and
+    // method).
     List<DocumentLink> links = new ArrayList<>();
     for (Pair<String, Range> usage : labelUsage) {
       final Range position = labelTargets.get(usage.getLeft());
@@ -50,10 +46,10 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
     super.enterStatement(ctx);
   }
 
-
   @Override
   public void enterGoto_stmt(JimpleParser.Goto_stmtContext ctx) {
-    // adds the labels of all branching stmts (goto,if,switch) -> JimpleParser.Goto_stmtContext is part of all of these stmts!
+    // adds the labels of all branching stmts (goto,if,switch) -> JimpleParser.Goto_stmtContext is
+    // part of all of these stmts!
     final JimpleParser.IdentifierContext labelCtx = ctx.label_name;
     if (labelCtx != null) {
       labelUsage.add(Pair.of(labelCtx.getText(), JimpleConverterUtil.buildRangeFromCtx(labelCtx)));

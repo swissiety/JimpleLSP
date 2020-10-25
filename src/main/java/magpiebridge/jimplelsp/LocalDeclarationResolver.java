@@ -1,18 +1,10 @@
 package magpiebridge.jimplelsp;
 
-import de.upb.swt.soot.core.frontend.ResolveException;
-import de.upb.swt.soot.jimple.JimpleBaseListener;
-import de.upb.swt.soot.jimple.JimpleLexer;
-import de.upb.swt.soot.jimple.JimpleParser;
 import org.antlr.v4.runtime.*;
-
-import javax.swing.text.Position;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LocalDeclarationResolver {
 
-/*
+  /*
   LocalDeclarationResolver() {
     JimpleLexer lexer = new JimpleLexer(CharStreams.fromString(contents));
     TokenStream tokens = new CommonTokenStream(lexer);

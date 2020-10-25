@@ -9,20 +9,23 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
 import soot.Main;
 
-/**
- * Helps the User extracting jimple code to his working directory
- */
+/** Helps the User extracting jimple code to his working directory */
 public class ProjectSetupAction {
 
-  /** Search for .jimple files in the workspace
+  /**
+   * Search for .jimple files in the workspace
+   *
    * @param workspaceFolders
-   * @param workspaceEditSupport*/
-  public static void scanWorkspace(LanguageClient client, Iterable<? extends WorkspaceFolder> workspaceFolders, boolean workspaceEditSupport) {
+   * @param workspaceEditSupport
+   */
+  public static void scanWorkspace(
+      LanguageClient client,
+      Iterable<? extends WorkspaceFolder> workspaceFolders,
+      boolean workspaceEditSupport) {
 
     List<Path> jimpleFiles = new ArrayList<>();
     List<Path> apkFiles = new ArrayList<>();
@@ -68,16 +71,17 @@ public class ProjectSetupAction {
     final ShowMessageRequestParams requestParams = new ShowMessageRequestParams();
     requestParams.setType(MessageType.Info);
     requestParams.setMessage(
-            "We found no \".jimple\" files detected in your workspace.\n" +
-                    "But we found \"" + foundArchive + "\".\n" +
-                    "Do you want to extract Jimple from that file?");
+        "We found no \".jimple\" files detected in your workspace.\n"
+            + "But we found \""
+            + foundArchive
+            + "\".\n"
+            + "Do you want to extract Jimple from that file?");
     requestParams.setActions(
-            Lists.newArrayList(
-                    new MessageActionItem("Extract Jimple"),
-                    new MessageActionItem("No")
-                    /*, new MessageActionItem("Don't ask again.") */));
+        Lists.newArrayList(
+            new MessageActionItem("Extract Jimple"), new MessageActionItem("No")
+            /*, new MessageActionItem("Don't ask again.") */ ));
     final CompletableFuture<MessageActionItem> messageActionItemCompletableFuture =
-            client.showMessageRequest(requestParams);
+        client.showMessageRequest(requestParams);
 
     try {
       final MessageActionItem messageActionItem = messageActionItemCompletableFuture.get();
@@ -114,20 +118,20 @@ public class ProjectSetupAction {
 
     // generate with old soot
     String rtJar =
-            System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
+        System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
 
     // TODO: adapt Soots cli params
     String[] options =
-            new String[]{
-                    "-cp",
-                    archivePath + File.pathSeparator + rtJar,
-                    "-android-jars",
-                    androidJarPath,
-                    "-hierarchy-dirs",
-                    "-f",
-                    "jimple",
-                    archivePath
-            };
+        new String[] {
+          "-cp",
+          archivePath + File.pathSeparator + rtJar,
+          "-android-jars",
+          androidJarPath,
+          "-hierarchy-dirs",
+          "-f",
+          "jimple",
+          archivePath
+        };
     Main.main(options);
 
     /*

@@ -13,13 +13,6 @@ import de.upb.swt.soot.java.core.JavaIdentifierFactory;
 import de.upb.swt.soot.jimple.parser.JimpleAnalysisInputLocation;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
-import org.antlr.v4.runtime.CharStreams;
-import org.apache.commons.io.FilenameUtils;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.services.*;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -27,6 +20,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import org.antlr.v4.runtime.CharStreams;
+import org.apache.commons.io.FilenameUtils;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.services.*;
 
 public class JimpleLanguageServer implements LanguageServer, LanguageClientAware {
 
@@ -35,44 +34,47 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
   private boolean validCache = false;
 
   public void pool(Runnable runnable) {
-    CompletableFuture.runAsync(() -> {
-      try {
-        runnable.run();
-      } catch (Throwable e) {
-        e.printStackTrace();
-      }
-    }, executor);
+    CompletableFuture.runAsync(
+        () -> {
+          try {
+            runnable.run();
+          } catch (Throwable e) {
+            e.printStackTrace();
+          }
+        },
+        executor);
   }
 
-  @Nonnull
-  private final TextDocumentService textService;
-  @Nonnull
-  private final WorkspaceService workspaceService;
-  @Nullable
-  private LanguageClient client = null;
+  @Nonnull private final TextDocumentService textService;
+  @Nonnull private final WorkspaceService workspaceService;
+  @Nullable private LanguageClient client = null;
   private InitializeParams params;
   private CompletableFuture<Boolean> initialized = new CompletableFuture<>();
 
   List<Diagnostic> diagnostics = new ArrayList<>();
 
+  @Nonnull List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
+  @Nonnull private Collection<SootClass> classes = Collections.emptyList();
 
-  @Nonnull
-  List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
-  @Nonnull
-  private Collection<SootClass> classes = Collections.emptyList();
-
-  @Nonnull
-  private Map<String, SootClass> fileToClassMapping = new HashMap<>();
+  @Nonnull private Map<String, SootClass> fileToClassMapping = new HashMap<>();
 
   @Nullable
   SootClass quarantineInput(String uri, String content) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource scs = jimpleConverter.run(CharStreams.fromString(content, uri), dummyInputLocation, Paths.get(uri));
+      SootClassSource scs =
+          jimpleConverter.run(
+              CharStreams.fromString(content, uri), dummyInputLocation, Paths.get(uri));
       return scs.buildClass(SourceType.Application);
     } catch (ResolveException e) {
       // feed error into diagnostics
-      addDiagnostic(uri, new Diagnostic(positionToRange(e.getRange()), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser"));
+      addDiagnostic(
+          uri,
+          new Diagnostic(
+              positionToRange(e.getRange()),
+              e.getMessage(),
+              DiagnosticSeverity.Error,
+              "JimpleParser"));
       return null;
     }
   }
@@ -82,14 +84,12 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     // TODO: refresh
   }
 
-
   View updateAndReplaceView(View v, SootClassSource sc) {
     // FIXME
     analysisInputLocations.add(new EagerInputLocation());
     final JimpleProject project = new JimpleProject(analysisInputLocations);
     return project.createOnDemandView();
   }
-
 
   public LanguageClient getClient() {
     return client;
@@ -100,10 +100,7 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     workspaceService = new JimpleWorkspaceService(this);
   }
 
-
-  /**
-   * wants an uri returns an (absolute) path as String
-   */
+  /** wants an uri returns an (absolute) path as String */
   private String determineInputLocationRoot(String inputUri) {
     // FIXME: implement more fault tolerant solution.. think about subfolder/package matching
     return "/home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/";
@@ -123,7 +120,8 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
 
   private void addInputLocation(String inputPath) {
     inputPath = determineInputLocationRoot(inputPath);
-    final JimpleAnalysisInputLocation analysisInputLocation = new JimpleAnalysisInputLocation(Paths.get(inputPath));
+    final JimpleAnalysisInputLocation analysisInputLocation =
+        new JimpleAnalysisInputLocation(Paths.get(inputPath));
     if (!analysisInputLocations.contains(analysisInputLocation)) {
       analysisInputLocations.add(analysisInputLocation);
       validCache = false;
@@ -134,7 +132,6 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     analysisInputLocations.remove(new JimpleAnalysisInputLocation(Paths.get(inputPath)));
     validCache = false;
   }
-
 
   public ClientCapabilities getClientCapabilities() {
     // TODO: adapt so that dynamically registered caps are listed, too
@@ -160,39 +157,40 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     textDocumentSync.setChange(TextDocumentSyncKind.Full);
     sCapabilities.setTextDocumentSync(textDocumentSync);
 
-    //sCapabilities.setWorkspaceSymbolProvider( false);
+    // sCapabilities.setWorkspaceSymbolProvider( false);
 
     //    sCapabilities.setDocumentSymbolProvider(Boolean.TRUE);
     //		sCapabilities.setCodeLensProvider(new CodeLensOptions(true));
-
 
     final ClientCapabilities cCapabilities = params.getCapabilities();
     final WorkspaceClientCapabilities workspace = cCapabilities.getWorkspace();
     final boolean workspaceEditSupport = workspace.getApplyEdit();
 
-    pool(() -> {
+    pool(
+        () -> {
+          try {
+            initialized.get();
+          } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return;
+          }
 
-      try {
-        initialized.get();
-      } catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
-        return;
-      }
+          if (params.getRootUri() != null) {
+            addInputLocation(params.getRootUri());
+          }
+          final List<? extends WorkspaceFolder> workspaceFolders =
+              params.getWorkspaceFolders() == null
+                  ? Collections.emptyList()
+                  : params.getWorkspaceFolders();
+          workspaceFolders.forEach(folder -> addInputLocation(folder.getUri()));
 
-      if (params.getRootUri() != null) {
-        addInputLocation(params.getRootUri());
-      }
-      final List<? extends WorkspaceFolder> workspaceFolders = params.getWorkspaceFolders() == null ? Collections.emptyList() : params.getWorkspaceFolders();
-      workspaceFolders.forEach(folder -> addInputLocation(folder.getUri()));
+          // file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/helloworld.jimple
+          // TODO: ProjectSetupAction.scanWorkspace(client, workspaceFolders, workspaceEditSupport);
 
-      // file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/helloworld.jimple
-      // TODO: ProjectSetupAction.scanWorkspace(client, workspaceFolders, workspaceEditSupport);
-
-    });
+        });
 
     return CompletableFuture.completedFuture(new InitializeResult(sCapabilities));
   }
-
 
   private AnalysisInputLocation uriToAnalysisInputLocation(String uri) {
     // TODO: check if path exists (on this machine) ?
@@ -239,7 +237,6 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
     return JavaIdentifierFactory.getInstance().getClassType(baseName);
   }
 
-
   public Collection<SootClass> getClasses() {
     if (!validCache) {
       refreshClasses(true);
@@ -259,11 +256,18 @@ public class JimpleLanguageServer implements LanguageServer, LanguageClientAware
       }
     } catch (ResolveException e) {
       // TODO: clear old diagnostics for this file
-      diagnostics.add(new Diagnostic(positionToRange(e.getRange()), e.getMessage(), DiagnosticSeverity.Error, e.getInputUri()));
+      diagnostics.add(
+          new Diagnostic(
+              positionToRange(e.getRange()),
+              e.getMessage(),
+              DiagnosticSeverity.Error,
+              e.getInputUri()));
     }
   }
 
   public Range positionToRange(Position position) {
-    return new Range(new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()), new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
+    return new Range(
+        new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
+        new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
 }

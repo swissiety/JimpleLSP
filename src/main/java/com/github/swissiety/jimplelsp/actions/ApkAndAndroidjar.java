@@ -7,7 +7,6 @@ import java.nio.file.*;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -29,20 +28,20 @@ class ApkAndAndroidjar {
 
       System.out.println(IOUtils.toString(input, Charset.defaultCharset()));
       saxParser.parse(
-              input,
-              new DefaultHandler() {
-                @Override
-                public void startElement(String uri, String localName, String qName, Attributes attr)
-                        throws SAXException {
-                  if (qName.equals("manifest")) {
-                    String version = attr.getValue("android:versionCode");
-                    if (version != null) {
-                      apkVersion[0] = Integer.parseInt(version);
-                      throw new SAXException(""); // abort parsing bc we have all we wanted
-                    }
-                  }
+          input,
+          new DefaultHandler() {
+            @Override
+            public void startElement(String uri, String localName, String qName, Attributes attr)
+                throws SAXException {
+              if (qName.equals("manifest")) {
+                String version = attr.getValue("android:versionCode");
+                if (version != null) {
+                  apkVersion[0] = Integer.parseInt(version);
+                  throw new SAXException(""); // abort parsing bc we have all we wanted
                 }
-              });
+              }
+            }
+          });
 
     } catch (SAXException e) {
       if (!e.getMessage().equals("")) {
@@ -65,13 +64,13 @@ class ApkAndAndroidjar {
     }
 
     try (BufferedInputStream in =
-                 new BufferedInputStream(
-                         new URL(
-                                 "https://github.com/Sable/android-platforms/blob/master/android-"
-                                         + apkVersion
-                                         + "/android.jar")
-                                 .openStream());
-         FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
+            new BufferedInputStream(
+                new URL(
+                        "https://github.com/Sable/android-platforms/blob/master/android-"
+                            + apkVersion
+                            + "/android.jar")
+                    .openStream());
+        FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
       byte[] dataBuffer = new byte[1024];
       int bytesRead;
       while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
