@@ -343,6 +343,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                               new Location(
                                   Util.classToUri(sc),
                                   Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
+                          // list a stmt just once even if the classtype occures multiple times in a single stmt.
+                          break;
                         }
                       }
                     }
