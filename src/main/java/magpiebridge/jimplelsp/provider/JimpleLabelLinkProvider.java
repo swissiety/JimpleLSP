@@ -16,6 +16,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This listener implementation lists all label usage positions when its passed into the Jimple Parser
+ *
+ * @author Markus Schmidt
+ */
 public class JimpleLabelLinkProvider extends JimpleBaseListener {
   @Nonnull
   private final Map<String, Range> labelTargets = new HashMap<>();
@@ -24,17 +29,21 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
 
   @Nonnull
   public List<DocumentLink> getLinks(String fileUri) {
+    // traverse label usages and assign the respective target (which is in the same file and method).
     List<DocumentLink> links = new ArrayList<>();
     for (Pair<String, Range> usage : labelUsage) {
       final Range position = labelTargets.get(usage.getLeft());
-      String target = fileUri + ":" + position.getStart().getLine();
-      links.add(new DocumentLink(usage.getRight(), target));
+      if (position != null) {
+        String target = fileUri + "#" + position.getStart().getLine();
+        links.add(new DocumentLink(usage.getRight(), target));
+      }
     }
     return links;
   }
 
   @Override
   public void enterStatement(JimpleParser.StatementContext ctx) {
+    // add label preceeding a stmt as target into the map
     if (ctx.label_name != null && ctx.label_name.getText().length() > 0) {
       labelTargets.put(ctx.label_name.getText(), JimpleConverterUtil.buildRangeFromCtx(ctx));
     }
@@ -44,6 +53,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
 
   @Override
   public void enterGoto_stmt(JimpleParser.Goto_stmtContext ctx) {
+    // adds the labels of all branching stmts (goto,if,switch) -> JimpleParser.Goto_stmtContext is part of all of these stmts!
     final JimpleParser.IdentifierContext labelCtx = ctx.label_name;
     if (labelCtx != null) {
       labelUsage.add(Pair.of(labelCtx.getText(), JimpleConverterUtil.buildRangeFromCtx(labelCtx)));
@@ -52,6 +62,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
 
   @Override
   public void enterTrap_clause(JimpleParser.Trap_clauseContext ctx) {
+    // add labes usage from catch clause
     final JimpleParser.IdentifierContext from = ctx.from;
     if (from != null) {
       labelUsage.add(Pair.of(from.getText(), JimpleConverterUtil.buildRangeFromCtx(from)));

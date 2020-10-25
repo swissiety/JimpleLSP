@@ -18,6 +18,11 @@ import javax.annotation.Nonnull;
 import java.util.*;
 
 // TODO: move up into to Soot
+/**
+ * This Utility class provides common used methods in context with parsing Jimple.
+ *
+ * @author Markus Schmidt
+ */
 public class JimpleConverterUtil {
 
   private final IdentifierFactory identifierFactory = JavaIdentifierFactory.getInstance();

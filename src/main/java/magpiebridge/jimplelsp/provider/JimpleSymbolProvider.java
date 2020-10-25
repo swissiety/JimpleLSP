@@ -12,6 +12,11 @@ import org.eclipse.lsp4j.SymbolKindCapabilities;
 import javax.annotation.Nonnull;
 import java.util.List;
 
+/**
+ * The JimpleSymbolProvider retrieves symbols for WorkspaceSymbolRequest and DocumentSymbolRequest
+ *
+ * @author Markus Schmidt
+ */
 public class JimpleSymbolProvider {
 
   public static void retrieveAndFilterSymbolsFromClass(@Nonnull List<SymbolInformation> resultList, String query, @Nonnull SootClass clazz, @Nonnull SymbolKindCapabilities symbolKind) {
