@@ -74,12 +74,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
-    if (params == null) {
+    super.didOpen(params);
+    if (params == null || params.getTextDocument() == null || params.getTextDocument().getUri() == null || params.getTextDocument().getText() == null) {
       return;
     }
-
-    super.didOpen(params);
-
     // calculate and cache positions
     docSignaturePositionResolver.put(
         params.getTextDocument().getUri(),
@@ -89,11 +87,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
-    if (params == null) {
+    super.didClose(params);
+    if (params == null || params.getTextDocument() == null || params.getTextDocument().getUri() == null) {
       return;
     }
-
-    super.didClose(params);
     // clear position cache
     docSignaturePositionResolver.remove(params.getTextDocument().getUri());
   }
@@ -101,9 +98,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     super.didChange(params);
-    // FIXME: analyze in quarantine and add to a new view
-    // getServer().quarantineInput(params.getTextDocument() )
 
+    //FIXME: analyze in quarantine and add to a new view
+    // getServer().quarantineInput(params.getTextDocument().getUri(), params.getContentChanges(). );
   }
 
   @Override
@@ -581,4 +578,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               return resultList;
             });
   }
+
+  /*
+  @Override
+  private String inferLanguage(String uri) {
+    if (uri.endsWith(".jimple")) {
+      return "jimple";
+    }
+    super.inferLanguage(uri);
+  }
+  */
 }
