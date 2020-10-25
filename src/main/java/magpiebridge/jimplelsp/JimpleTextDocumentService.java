@@ -163,10 +163,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
 
-  // TODO: make labels clickable
   @Override
   public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
-
+    // make labels clickable to get to the label
     return getServer().pool(() -> {
 
       try {
@@ -181,8 +180,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
           }
         });
 
-        parser.file().enterRule(new JimpleLabelLinkProvider());
+        final JimpleLabelLinkProvider listener = new JimpleLabelLinkProvider();
+        parser.file().enterRule(listener);
 
+        return listener.getLinks(fileUri);
       } catch (IOException exception) {
         exception.printStackTrace();
       }
