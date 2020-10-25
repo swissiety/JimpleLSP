@@ -5,11 +5,16 @@ import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.java.core.JavaIdentifierFactory;
 import org.apache.commons.io.FilenameUtils;
+import org.eclipse.lsp4j.Location;
+import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class Util {
 
@@ -26,4 +31,8 @@ public class Util {
     return new Range(new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()), new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
 
+  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocation(Position position) {
+    // FIXME implement
+    return null;
+  }
 }

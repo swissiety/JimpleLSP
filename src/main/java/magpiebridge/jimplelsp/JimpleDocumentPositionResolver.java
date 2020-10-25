@@ -4,7 +4,6 @@ package magpiebridge.jimplelsp;
 import de.upb.swt.soot.core.IdentifierFactory;
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.model.Modifier;
-import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.signatures.FieldSignature;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.PackageName;
@@ -19,6 +18,7 @@ import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import org.antlr.v4.runtime.*;
 import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -42,7 +42,7 @@ public class JimpleDocumentPositionResolver {
     parser.removeErrorListeners();
     parser.addErrorListener(new BaseErrorListener() {
       public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-        throw new ResolveException("Jimple Syntaxerror: " + msg, fileUri, new Position(line, charPositionInLine, -1, -1));
+        throw new ResolveException("Jimple Syntaxerror: " + msg, fileUri, new de.upb.swt.soot.core.model.Position(line, charPositionInLine, -1, -1));
       }
     });
 
@@ -52,7 +52,7 @@ public class JimpleDocumentPositionResolver {
   }
 
   @Nullable
-  public Signature resolve(int position) {
+  public Signature resolve(org.eclipse.lsp4j.Position position) {
     return occurences.resolve(position);
   }
 
@@ -70,11 +70,11 @@ public class JimpleDocumentPositionResolver {
       }
       String classname = StringTools.getUnEscapedStringOf(ctx.classname.getText());
       clazz = util.getClassType(classname);
-      positionContainer.add(ctx.classname.start.getStartIndex(), ctx.classname.stop.getStopIndex(), clazz, null);
+      positionContainer.add(ctx.classname.start, ctx.classname.stop, clazz, null);
 
       if (ctx.extends_clause() != null) {
         ClassType superclass = util.getClassType(ctx.extends_clause().classname.getText());
-        positionContainer.add(ctx.extends_clause().start.getStartIndex(), ctx.extends_clause().stop.getStopIndex(), superclass, null);
+        positionContainer.add(ctx.extends_clause().start, ctx.extends_clause().stop, superclass, null);
       }
 
       if (ctx.implements_clause() != null) {
@@ -82,7 +82,7 @@ public class JimpleDocumentPositionResolver {
         for (int i = 0, interfacesSize = interfaces.size(); i < interfacesSize; i++) {
           ClassType anInterface = interfaces.get(i);
           final JimpleParser.TypeContext interfaceToken = ctx.implements_clause().type_list().type(i);
-          positionContainer.add(interfaceToken.start.getStartIndex(), interfaceToken.stop.getStopIndex(), anInterface, null);
+          positionContainer.add(interfaceToken.start, interfaceToken.stop, anInterface, null);
         }
       }
 
@@ -104,13 +104,13 @@ public class JimpleDocumentPositionResolver {
 
       List<Type> params = util.getTypeList(ctx.type_list());
       MethodSignature methodSignature = util.identifierFactory.getMethodSignature(StringTools.getUnEscapedStringOf(methodname), clazz, type, params);
-      positionContainer.add(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), methodSignature, null);
+      positionContainer.add(ctx.start, ctx.stop, methodSignature, null);
 
       if (ctx.throws_clause() != null) {
         List<ClassType> exceptions = util.getClassTypeList(ctx.throws_clause().type_list());
         for (int i = 0, exceptionsSize = exceptions.size(); i < exceptionsSize; i++) {
           final JimpleParser.TypeContext typeContext = ctx.throws_clause().type_list().type(i);
-          positionContainer.add(typeContext.start.getStartIndex(), typeContext.stop.getStopIndex(), exceptions.get(i), null);
+          positionContainer.add(typeContext.start, typeContext.stop, exceptions.get(i), null);
         }
       }
 
@@ -119,14 +119,14 @@ public class JimpleDocumentPositionResolver {
 
     @Override
     public void enterMethod_signature(JimpleParser.Method_signatureContext ctx) {
-      positionContainer.add(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), util.getMethodSignature(ctx, null), null);
+      positionContainer.add(ctx.start, ctx.stop, util.getMethodSignature(ctx, null), null);
       super.enterMethod_signature(ctx);
     }
 
 
     @Override
     public void enterField_signature(JimpleParser.Field_signatureContext ctx) {
-      positionContainer.add(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), util.getFieldSignature(ctx), null);
+      positionContainer.add(ctx.start, ctx.stop, util.getFieldSignature(ctx), null);
       super.enterField_signature(ctx);
     }
 
@@ -136,35 +136,43 @@ public class JimpleDocumentPositionResolver {
       super.enterImportItem(ctx);
     }
 
-    Signature resolve(int position) {
-      return positionContainer.resolve(position).getLeft();
+    Signature resolve(org.eclipse.lsp4j.Position position) {
+      final Pair<Signature, String> resolve = positionContainer.resolve(position);
+      if (resolve == null) {
+        return null;
+      }
+      return resolve.getLeft();
     }
   }
 
   private final class SmartDatastructure {
 
     @Nonnull
-    List<Integer> startPositions = new ArrayList<>();
+    List<Position> startPositions = new ArrayList<>();
     @Nonnull
-    List<Integer> endPositions = new ArrayList<>();
+    List<Position> endPositions = new ArrayList<>();
     @Nonnull
     List<Pair<Signature, String>> signaturesAndIdentifiers = new ArrayList<>();
 
-    void add(int start, int end, Signature sig, @Nullable String identifier) {
-      final int idx = Collections.binarySearch(startPositions, start);      // not necessary in sorted building / linear processing of tokens: just append
-      startPositions.add(idx, start);
-      endPositions.add(idx, end);
+    Comparator<Position> comp = new PositionComparator();
+
+    void add(Token start, Token end, Signature sig, @Nullable String identifier) {
+      final Position startPos = new Position(start.getLine(), start.getCharPositionInLine());
+      final int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
+      startPositions.add(idx, startPos);
+      endPositions.add(idx, new Position(end.getLine(), end.getCharPositionInLine()));
       signaturesAndIdentifiers.add(idx, Pair.of(sig, identifier));
     }
 
     @Nullable
-    Pair<Signature, String> resolve(int position) {
-      int index = Collections.binarySearch(startPositions, position);
+    Pair<Signature, String> resolve(org.eclipse.lsp4j.Position position) {
+      int index = Collections.binarySearch(startPositions, position, new PositionComparator());
+
       if (index < 0 || index >= startPositions.size()) {
         // not exactly found;
         index = -index + 1;
       }
-      if (startPositions.get(index) <= position && position <= endPositions.get(index)) {
+      if (comp.compare(startPositions.get(index), position) <= 0 && comp.compare(position, endPositions.get(index)) <= 0) {
         return signaturesAndIdentifiers.get(index);
       }
       return null;
@@ -192,8 +200,8 @@ public class JimpleDocumentPositionResolver {
     }
 
     @Nonnull
-    private Position buildPositionFromCtx(@Nonnull ParserRuleContext ctx) {
-      return new Position(ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.stop.getLine(), ctx.stop.getCharPositionInLine());
+    private de.upb.swt.soot.core.model.Position buildPositionFromCtx(@Nonnull ParserRuleContext ctx) {
+      return new de.upb.swt.soot.core.model.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine(), ctx.stop.getLine(), ctx.stop.getCharPositionInLine());
     }
 
     public void addImport(JimpleParser.ImportItemContext item, @Nonnull String fileuri) {
@@ -266,5 +274,20 @@ public class JimpleDocumentPositionResolver {
       return list;
     }
 
+  }
+
+  private static final class PositionComparator implements Comparator<Position> {
+    @Override
+    public int compare(Position o1, Position o2) {
+      if (o1.getLine() < o2.getLine()) {
+        return -1;
+      } else if (o1.getLine() == o2.getLine()) {
+        if (o1.getCharacter() < o2.getCharacter()) {
+          return -1;
+        }
+        return 0;
+      }
+      return 1;
+    }
   }
 }
