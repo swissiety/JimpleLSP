@@ -13,9 +13,12 @@ import de.upb.swt.soot.core.signatures.FieldSignature;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
+import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.jimple.JimpleLexer;
 import de.upb.swt.soot.jimple.JimpleParser;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -485,7 +488,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
-              /*
+              // warning: removes comments!
               final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(Util.uritoClasstype(params.getTextDocument().getUri()));
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
@@ -496,10 +499,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 printer.printTo(sc, writer);
                 writer.close();
 
-                // FIXME: set to replace the whole file
-                return Collections.singletonList(new TextEdit(new Range(new Position(0,0), new Position(-1,-1)), out.toString() ));
+                return Collections.singletonList(new TextEdit(new Range(new Position(0,0), new Position(sc.getPosition().getLastLine(),sc.getPosition().getLastCol())), out.toString() ));
               }
-              */
               return null;
             });
   }
