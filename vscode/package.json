@@ -1,0 +1,91 @@
+{
+	"name": "jimplelsp",
+	"description": "A Java language server for Soots Jimple with the MagpieBridge framework.",
+	"author": "Markus Schmidt",
+	"license": "MIT",
+	"version": "0.0.1",
+	"homepage": "https://github.com/swissiety/JimpleLSP/blob/master/README.md",
+	"bugs": {
+		"url": "https://github.com/swissiety/JimpleLSP/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/swissiety/JimpleLSP"
+	},
+	"publisher": "MarkusSchmidt",
+	"categories": ["Programming Languages"],
+	"keywords": [
+		"Soot, Jimple, Language Server, LSP, .jimple"
+	],
+	"engines": {
+		"vscode": "^1.30.0"
+	},
+	"activationEvents": [
+		"onLanguage:jimple"
+	],
+	"main": "./out/extension",
+	"contributes": {
+		"configuration": {
+			"title": "JimpleLSP",
+			"properties": {
+				"JimpleLSP.trace.server": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"default": "off",
+					"description": "Traces the communication between VS Code and the language server."
+				},
+				"JimpleLSP.auto": {
+					"scope": "window",
+					"type": "boolean",
+					"default": true,
+					"description": "Specifies if JimpleLSP should be ran automatically when the user is idle."
+				},
+				"JimpleLSP.timeout": {
+					"scope": "window",
+					"type": "integer",
+					"default": 5,
+					"description": "Specifies the time to wait for idle when Auto is enabled."
+				},
+				"JimpleLSP.dockerImage": {
+					"scope": "window",
+					"type": "string",
+					"default": "",
+					"description": "Specifies the docker image to be used."
+				},
+				"JimpleLSP.lspTransport": {
+					"scope": "window",
+					"type": "string",
+					"enum": [
+						"stdio",
+						"socket"
+					],
+					"default": "stdio",
+					"description": "Specifies the mode of transport used to communicate with the Jimple language server."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "cp ../target/JimpleLSP-0.0.1.jar JimpleLSP-0.0.1.jar && npm run compile",
+		"compile": "tsc -b",
+		"watch": "tsc -b -w",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"build": "vsce package"
+	},
+	"dependencies": {
+		"vscode-languageclient": "^5.2.1"
+	},
+	"devDependencies": {
+		"vscode": "^1.1.33",
+		"@types/mocha": "^5.2.6",
+		"@types/node": "^11.13.0",
+		"tslint": "^5.15.0",
+		"typescript": "^3.4.2",
+		"vsce": "^1.75.0"
+	}
+}
