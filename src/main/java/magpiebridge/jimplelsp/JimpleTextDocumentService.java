@@ -27,11 +27,11 @@ import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.jimplelsp.provider.JimpleLabelLinkProvider;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
+import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.antlr.v4.runtime.*;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import soot.jimple.InvokeExpr;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -563,10 +563,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return null;
               }
 
+              final ClassType classType = getServer().docIdentifierToClassType(params.getTextDocument().getUri());
+              if( classType == null){
+                return null;
+              }
               final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                   getServer()
                       .getView()
-                      .getClass(getServer().docIdentifierToClassType(params.getTextDocument()));
+                      .getClass(classType);
               if (!aClass.isPresent()) {
                 return null;
               }
