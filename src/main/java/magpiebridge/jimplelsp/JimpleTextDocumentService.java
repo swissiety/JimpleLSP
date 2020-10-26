@@ -26,6 +26,7 @@ import magpiebridge.jimplelsp.provider.JimpleLabelLinkProvider;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import org.antlr.v4.runtime.*;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import soot.jimple.InvokeExpr;
 
@@ -579,13 +580,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
-  /*
   @Override
-  private String inferLanguage(String uri) {
+  protected String inferLanguage(String uri) {
     if (uri.endsWith(".jimple")) {
       return "jimple";
     }
-    super.inferLanguage(uri);
+    return super.inferLanguage(uri);
   }
-  */
+
 }

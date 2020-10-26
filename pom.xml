@@ -46,19 +46,6 @@
             <artifactId>soot.callgraph</artifactId>
             <version>4.0.0-SNAPSHOT</version>
         </dependency>
-
-        <!--
-                <dependency>
-                    <groupId>org.eclipse.lsp4j</groupId>
-                    <artifactId>org.eclipse.lsp4j</artifactId>
-                    <version>0.6.0</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.eclipse.lsp4j</groupId>
-                    <artifactId>org.eclipse.lsp4j.jsonrpc</artifactId>
-                    <version>0.9.0</version>
-                </dependency>
-                -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -72,9 +59,9 @@
             <version>4.2.1</version>
         </dependency>
         <dependency>
-            <groupId>magpiebridge</groupId>
+            <groupId>com.github.magpiebridge</groupId>
             <artifactId>magpiebridge</artifactId>
-            <version>0.0.8</version>
+            <version>0.0.9</version>
         </dependency>
 
         <!-- TODO: revisit - copied from magpie:finfer -->
