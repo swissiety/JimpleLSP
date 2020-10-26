@@ -5,6 +5,7 @@ import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.java.core.JavaIdentifierFactory;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -24,6 +25,11 @@ public class Util {
   @Nonnull
   public static String pathToUri(@Nonnull Path sourcePath) {
     return "file://" + sourcePath.toString();
+  }
+
+  @Nonnull
+  public static Path uriToPath(String uri) {
+    return Paths.get(uri);
   }
 
   @Nonnull

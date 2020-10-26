@@ -1,4 +1,4 @@
-package magpiebridge.jimplelsp;
+package magpiebridge.jimplelsp.resolver;
 
 import org.antlr.v4.runtime.*;
 

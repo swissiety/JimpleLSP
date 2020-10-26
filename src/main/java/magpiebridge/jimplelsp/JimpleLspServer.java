@@ -8,15 +8,21 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.ServerConfiguration;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.eclipse.lsp4j.*;
 
@@ -26,11 +32,9 @@ public class JimpleLspServer extends MagpieServer {
   @Nonnull final AnalysisInputLocation dummyInputLocation = new EagerInputLocation();
   private boolean validCache = false;
 
-  private View view;
+  @Nonnull private View view;
   @Nonnull private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
-  private Map<TextDocumentIdentifier, SootClassSource> docClassMapping = new HashMap<>();
-
-  @Nonnull List<Diagnostic> diagnostics = new ArrayList<>();
+  @Nonnull private Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
 
   public JimpleLspServer(ServerConfiguration config) {
     super(config);
@@ -66,19 +70,29 @@ public class JimpleLspServer extends MagpieServer {
   }
 
   @Nonnull
-  View recreateView() {
+  private View recreateView() {
+    //FIXME: use cached classources to rebuild
     analysisInputLocations.add(new EagerInputLocation());
     final JimpleProject project = new JimpleProject(analysisInputLocations);
     return project.createOnDemandView();
   }
 
   @Nullable
-  SootClassSource quarantineInput(String uri, String content) throws ResolveException {
+  public SootClassSource quarantineInput(@Nonnull String uri) throws ResolveException, IOException {
+    return quarantineInput(uri, CharStreams.fromPath(Util.uriToPath(uri)));
+  }
+
+  @Nullable
+  public SootClassSource quarantineInput(@Nonnull String uri, String content) throws ResolveException {
+    return quarantineInput(uri, CharStreams.fromString(content));
+  }
+
+    @Nullable
+  private SootClassSource quarantineInput(@Nonnull String uri, @Nonnull CharStream charStream ) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
       SootClassSource scs =
-          jimpleConverter.run(
-              CharStreams.fromString(content, uri), dummyInputLocation, Paths.get(uri));
+          jimpleConverter.run(charStream, dummyInputLocation, Paths.get(uri));
       // input is clean
       return scs;
     } catch (ResolveException e) {
@@ -116,16 +130,63 @@ public class JimpleLspServer extends MagpieServer {
   @Override
   public void initialized(InitializedParams params) {
     super.initialized(params);
+    // scan workspace all jimple files <-> classes
+    // hint: its expensive - maybe do it asynchrounous?
+    List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
+    rootPath.ifPresent(rootpaths::add);
 
-    if (rootPath.isPresent()) {
-      // TODO scan workspace jimple files <-> classes
+    workspaceFolders.forEach(f -> {
+      final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
+      if (!rootpaths.stream().anyMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
+        // add workspace folder if its not a subdirectory of an already existing path
+        rootpaths.add(path);
+      }
+    });
+    List<Path> apkFiles = new ArrayList<>();
+    List<Path> jimpleFiles = new ArrayList<>();
+
+    // scan all workspaces in depth for jimple files
+    for (Path rootpath : rootpaths) {
+      // jimple
+      try (Stream<Path> paths = Files.walk(rootpath)) {
+        paths.filter(f -> f.toString().endsWith(".jimple")).forEach(jimpleFiles::add);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
-    // TODO:    workspaceFolders.forEach();
 
-    // nice2have: implement asking to extract jimple from an apk with old soot
+    // TODO: nice2have: implement asking to extract jimple from an apk with old soot
+    /* find apk in top levels/first level subdir
+    if(jimpleFiles.isEmpty()){
+      for (Path rootpath : rootpaths) {
+        // find apk
+        try (Stream<Path> paths = Files.walk(rootpath)) {
+          paths.filter(f -> f.toString().endsWith(".apk")).forEach(apkFiles::add);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    */
+
+    for (Path jimpleFile : jimpleFiles) {
+      final SootClassSource sootClassSource;
+      try {
+        sootClassSource = quarantineInput(jimpleFile.toString());
+        textDocumentClassMapping.put(jimpleFile.toString(), sootClassSource);
+      } catch (IOException exception) {
+        exception.printStackTrace();
+      }
+    }
+
   }
 
-  public ClassType docIdentifierToClassType(TextDocumentIdentifier textDocument) {
-    return docClassMapping.get(textDocument).getClassType();
+  @Nullable
+  public ClassType docIdentifierToClassType(@Nonnull String textDocument) {
+    final SootClassSource sootClassSource = textDocumentClassMapping.get(textDocument);
+    if(sootClassSource == null){
+      return null;
+    }
+    return sootClassSource.getClassType();
   }
 }
