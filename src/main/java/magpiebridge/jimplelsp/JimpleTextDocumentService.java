@@ -94,13 +94,26 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       return;
     }
 
-    final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
-    if(valid) {
-      // calculate and cache interesting i.e.signature positions of the opened file
-      docSignaturePositionResolver.put(
-              uri,
-              new SignaturePositionResolver(Util.uriToPath(uri), text));
+    analyzeFile(uri, text);
+  }
+
+  @Override
+  public void didSave(DidSaveTextDocumentParams params) {
+    super.didSave(params);
+
+    if (params == null || params.getTextDocument() == null) {
+      return;
     }
+    final String uri = params.getTextDocument().getUri();
+    if (uri == null) {
+      return;
+    }
+    final String text = params.getText();
+    if (text == null) {
+      return;
+    }
+    // update classes
+    analyzeFile(uri, text);
   }
 
   @Override
@@ -113,20 +126,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     docSignaturePositionResolver.remove(params.getTextDocument().getUri());
   }
 
-
-  @Override
-  public void didSave(DidSaveTextDocumentParams params) {
-    super.didSave(params);
-
-    // update classes
-    final String text = params.getText();
-    getServer().quarantineInputOrUpdate(params.getTextDocument().getUri(), text);
-  }
-
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     super.didChange(params);
     // later: getServer().quarantineInput(params.getTextDocument().getUri(), );
+  }
+
+  private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
+    final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
+    if(valid) {
+      // calculate and cache interesting i.e.signature positions of the opened file
+      docSignaturePositionResolver.put(
+              uri,
+              new SignaturePositionResolver(Util.uriToPath(uri), text));
+    }
   }
 
   @Override

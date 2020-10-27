@@ -82,9 +82,9 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
   private View recreateView() {
-    //FIXME: use cached classources to rebuild
-    analysisInputLocations.add(new EagerInputLocation());
-    final JimpleProject project = new JimpleProject(analysisInputLocations);
+    Map<ClassType, AbstractClassSource> map = new HashMap<>();
+    textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
+    final JimpleProject project = new JimpleProject(new EagerInputLocation( map));
     return project.createOnDemandView();
   }
 
