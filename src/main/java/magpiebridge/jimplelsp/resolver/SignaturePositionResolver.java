@@ -13,7 +13,6 @@ import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import magpiebridge.jimplelsp.JimpleConverterUtil;
 import org.antlr.v4.runtime.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;

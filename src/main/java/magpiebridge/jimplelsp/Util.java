@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
+
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
@@ -16,6 +18,13 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class Util {
+
+  @Nonnull
+  public static Range buildRangeFromCtx(@Nonnull ParserRuleContext ctx) {
+    return new Range(
+            new org.eclipse.lsp4j.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()),
+            new org.eclipse.lsp4j.Position(ctx.stop.getLine(), ctx.stop.getCharPositionInLine()));
+  }
 
   @Nonnull
   public static String classToUri(@Nonnull SootClass clazz) {

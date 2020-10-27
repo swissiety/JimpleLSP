@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
-import magpiebridge.jimplelsp.JimpleConverterUtil;
+
+import magpiebridge.jimplelsp.Util;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.Range;
@@ -41,7 +42,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
   public void enterStatement(JimpleParser.StatementContext ctx) {
     // add label preceeding a stmt as target into the map
     if (ctx.label_name != null && ctx.label_name.getText().length() > 0) {
-      labelTargets.put(ctx.label_name.getText(), JimpleConverterUtil.buildRangeFromCtx(ctx));
+      labelTargets.put(ctx.label_name.getText(), Util.buildRangeFromCtx(ctx));
     }
     super.enterStatement(ctx);
   }
@@ -52,7 +53,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
     // part of all of these stmts!
     final JimpleParser.IdentifierContext labelCtx = ctx.label_name;
     if (labelCtx != null) {
-      labelUsage.add(Pair.of(labelCtx.getText(), JimpleConverterUtil.buildRangeFromCtx(labelCtx)));
+      labelUsage.add(Pair.of(labelCtx.getText(), Util.buildRangeFromCtx(labelCtx)));
     }
   }
 
@@ -61,15 +62,15 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
     // add labes usage from catch clause
     final JimpleParser.IdentifierContext from = ctx.from;
     if (from != null) {
-      labelUsage.add(Pair.of(from.getText(), JimpleConverterUtil.buildRangeFromCtx(from)));
+      labelUsage.add(Pair.of(from.getText(), Util.buildRangeFromCtx(from)));
     }
     final JimpleParser.IdentifierContext to = ctx.to;
     if (to != null) {
-      labelUsage.add(Pair.of(to.getText(), JimpleConverterUtil.buildRangeFromCtx(to)));
+      labelUsage.add(Pair.of(to.getText(), Util.buildRangeFromCtx(to)));
     }
     final JimpleParser.IdentifierContext with = ctx.with;
     if (with != null) {
-      labelUsage.add(Pair.of(with.getText(), JimpleConverterUtil.buildRangeFromCtx(with)));
+      labelUsage.add(Pair.of(with.getText(), Util.buildRangeFromCtx(with)));
     }
     super.enterTrap_clause(ctx);
   }
