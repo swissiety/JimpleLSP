@@ -82,7 +82,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (params == null || params.getTextDocument() == null || params.getTextDocument().getUri() == null || params.getTextDocument().getText() == null) {
       return;
     }
-    // calculate and cache positions
+    // calculate and cache interesting i.e.signature positions of the opened file
     docSignaturePositionResolver.put(
         params.getTextDocument().getUri(),
         new SignaturePositionResolver(
@@ -99,12 +99,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     docSignaturePositionResolver.remove(params.getTextDocument().getUri());
   }
 
+
+  @Override
+  public void didSave(DidSaveTextDocumentParams params) {
+    super.didSave(params);
+
+    // update classes
+    final String text = params.getText();
+    getServer().quarantineInput(params.getTextDocument().getUri(), text);
+  }
+
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     super.didChange(params);
-
-    //FIXME: analyze in quarantine and add to a new view
-    // getServer().quarantineInput(params.getTextDocument().getUri(), params.getContentChanges(). );
+    // later: getServer().quarantineInput(params.getTextDocument().getUri(), );
   }
 
   @Override

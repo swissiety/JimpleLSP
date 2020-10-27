@@ -4,6 +4,8 @@ import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.java.core.JavaIdentifierFactory;
+
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -20,31 +22,31 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 public class Util {
 
   @Nonnull
-  public static Range buildRangeFromCtx(@Nonnull ParserRuleContext ctx) {
-    return new Range(
-            new org.eclipse.lsp4j.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()),
-            new org.eclipse.lsp4j.Position(ctx.stop.getLine(), ctx.stop.getCharPositionInLine()));
-  }
-
-  @Nonnull
   public static String classToUri(@Nonnull SootClass clazz) {
     return pathToUri(clazz.getClassSource().getSourcePath());
   }
 
   @Nonnull
   public static String pathToUri(@Nonnull Path sourcePath) {
-    return "file://" + sourcePath.toString();
+    return sourcePath.toAbsolutePath().toUri().toString();
   }
 
   @Nonnull
-  public static Path uriToPath(String uri) {
-    return Paths.get(uri);
+  public static Path uriToPath(@Nonnull String uri) {
+    return Paths.get(URI.create(uri));
   }
 
   @Nonnull
   public static ClassType uritoClasstype(@Nonnull String strUri) {
     final String baseName = FilenameUtils.getBaseName(strUri);
     return JavaIdentifierFactory.getInstance().getClassType(baseName);
+  }
+
+  @Nonnull
+  public static Range ctxToRange(@Nonnull ParserRuleContext ctx) {
+    return new Range(
+            new org.eclipse.lsp4j.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()),
+            new org.eclipse.lsp4j.Position(ctx.stop.getLine(), ctx.stop.getCharPositionInLine()));
   }
 
   @Nonnull

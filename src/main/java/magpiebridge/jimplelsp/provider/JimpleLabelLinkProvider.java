@@ -42,7 +42,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
   public void enterStatement(JimpleParser.StatementContext ctx) {
     // add label preceeding a stmt as target into the map
     if (ctx.label_name != null && ctx.label_name.getText().length() > 0) {
-      labelTargets.put(ctx.label_name.getText(), Util.buildRangeFromCtx(ctx));
+      labelTargets.put(ctx.label_name.getText(), Util.ctxToRange(ctx));
     }
     super.enterStatement(ctx);
   }
@@ -53,7 +53,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
     // part of all of these stmts!
     final JimpleParser.IdentifierContext labelCtx = ctx.label_name;
     if (labelCtx != null) {
-      labelUsage.add(Pair.of(labelCtx.getText(), Util.buildRangeFromCtx(labelCtx)));
+      labelUsage.add(Pair.of(labelCtx.getText(), Util.ctxToRange(labelCtx)));
     }
   }
 
@@ -62,15 +62,15 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
     // add labes usage from catch clause
     final JimpleParser.IdentifierContext from = ctx.from;
     if (from != null) {
-      labelUsage.add(Pair.of(from.getText(), Util.buildRangeFromCtx(from)));
+      labelUsage.add(Pair.of(from.getText(), Util.ctxToRange(from)));
     }
     final JimpleParser.IdentifierContext to = ctx.to;
     if (to != null) {
-      labelUsage.add(Pair.of(to.getText(), Util.buildRangeFromCtx(to)));
+      labelUsage.add(Pair.of(to.getText(), Util.ctxToRange(to)));
     }
     final JimpleParser.IdentifierContext with = ctx.with;
     if (with != null) {
-      labelUsage.add(Pair.of(with.getText(), Util.buildRangeFromCtx(with)));
+      labelUsage.add(Pair.of(with.getText(), Util.ctxToRange(with)));
     }
     super.enterTrap_clause(ctx);
   }
