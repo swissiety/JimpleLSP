@@ -8,6 +8,7 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.StringTools;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleLexer;
+import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import de.upb.swt.soot.jimple.JimpleParser;
 import java.util.*;
 import javax.annotation.Nonnull;
@@ -142,7 +143,7 @@ public class SignaturePositionResolver {
 
     @Override
     public void enterImportItem(JimpleParser.ImportItemContext ctx) {
-      util.addImport(ctx, fileUri);
+      util.addImport(ctx);
       super.enterImportItem(ctx);
     }
 
