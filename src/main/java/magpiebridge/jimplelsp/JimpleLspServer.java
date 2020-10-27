@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.ServerConfiguration;
 import org.antlr.v4.runtime.CharStream;
@@ -29,12 +30,15 @@ import org.eclipse.lsp4j.*;
 // FIXME: sth with sourcefilemanager
 public class JimpleLspServer extends MagpieServer {
 
-  @Nonnull final AnalysisInputLocation dummyInputLocation = new EagerInputLocation();
-  private boolean validCache = false;
+  @Nonnull
+  private boolean isCacheInvalid = true;
 
-  @Nonnull private View view;
-  @Nonnull private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
-  @Nonnull private Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
+  @Nonnull
+  private View view;
+  @Nonnull
+  private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
+  @Nonnull
+  private Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
 
   public JimpleLspServer(ServerConfiguration config) {
     super(config);
@@ -45,15 +49,15 @@ public class JimpleLspServer extends MagpieServer {
   @Nonnull
   public <T> CompletableFuture<T> pool(Callable<T> lambda) {
     return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return lambda.call();
-          } catch (Throwable e) {
-            e.printStackTrace();
-            return null;
-          }
-        },
-        THREAD_POOL);
+            () -> {
+              try {
+                return lambda.call();
+              } catch (Throwable e) {
+                e.printStackTrace();
+                return null;
+              }
+            },
+            THREAD_POOL);
   }
 
   @Nonnull
@@ -63,8 +67,9 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
   public View getView() {
-    if (!validCache) {
-      recreateView();
+    if (isCacheInvalid) {
+      view = recreateView();
+      isCacheInvalid = false;
     }
     return view;
   }
@@ -78,28 +83,30 @@ public class JimpleLspServer extends MagpieServer {
   }
 
   @Nullable
-  public SootClassSource quarantineInput(@Nonnull String uri) throws ResolveException, IOException {
-    return quarantineInput(uri, CharStreams.fromPath(Util.uriToPath(uri)));
+  public void quarantineInputOrUpdate(@Nonnull String uri) throws ResolveException, IOException {
+    quarantineInputOrUpdate(uri, CharStreams.fromPath(Util.uriToPath(uri)));
   }
 
   @Nullable
-  public SootClassSource quarantineInput(@Nonnull String uri, String content) throws ResolveException {
-    return quarantineInput(uri, CharStreams.fromString(content));
+  public void quarantineInputOrUpdate(@Nonnull String uri, String content) throws ResolveException {
+    quarantineInputOrUpdate(uri, CharStreams.fromString(content));
   }
 
-    @Nullable
-  private SootClassSource quarantineInput(@Nonnull String uri, @Nonnull CharStream charStream ) throws ResolveException {
+  @Nullable
+  private void quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource scs =
-          jimpleConverter.run(charStream, dummyInputLocation, Paths.get(uri));
+      SootClassSource scs = jimpleConverter.run(charStream, new EagerInputLocation(), Paths.get(uri));
       // input is clean
-      return scs;
+      final SootClassSource overriden = this.textDocumentClassMapping.put(uri, scs);
+      if (overriden != null) {
+        // possible optimization: compare if classes are still equal -> set dirty bit only when necessary
+      }
+      isCacheInvalid = true;
     } catch (ResolveException e) {
       // feed error into diagnostics
       // FIXME uncomment addDiagnostic(uri, new Diagnostic(positionToRange(e.getRange()),
       // e.getMessage(), DiagnosticSeverity.Error, "JimpleParser"));
-      return null;
     }
   }
 
@@ -119,8 +126,8 @@ public class JimpleLspServer extends MagpieServer {
       // TODO: capabilities.setImplementationProvider(true);
       // TODO: capabilities.setReferencesProvider(true);
 
-      capabilities.setDocumentFormattingProvider( true );
-      capabilities.setFoldingRangeProvider( true );
+      capabilities.setDocumentFormattingProvider(true);
+      capabilities.setFoldingRangeProvider(true);
 
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
@@ -173,10 +180,9 @@ public class JimpleLspServer extends MagpieServer {
     */
 
     for (Path jimpleFile : jimpleFiles) {
-      final SootClassSource sootClassSource;
       try {
-        sootClassSource = quarantineInput(jimpleFile.toString());
-        textDocumentClassMapping.put(jimpleFile.toString(), sootClassSource);
+        final String uri = Util.pathToUri(jimpleFile);
+        quarantineInputOrUpdate(uri);
       } catch (IOException exception) {
         exception.printStackTrace();
       }
@@ -187,7 +193,7 @@ public class JimpleLspServer extends MagpieServer {
   @Nullable
   public ClassType docIdentifierToClassType(@Nonnull String textDocument) {
     final SootClassSource sootClassSource = textDocumentClassMapping.get(textDocument);
-    if(sootClassSource == null){
+    if (sootClassSource == null) {
       return null;
     }
     return sootClassSource.getClassType();

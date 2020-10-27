@@ -14,13 +14,13 @@ import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.util.printer.Printer;
+import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleLexer;
 import de.upb.swt.soot.jimple.JimpleParser;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
@@ -108,7 +108,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
     // update classes
     final String text = params.getText();
-    getServer().quarantineInput(params.getTextDocument().getUri(), text);
+    getServer().quarantineInputOrUpdate(params.getTextDocument().getUri(), text);
   }
 
   @Override
@@ -495,12 +495,21 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (params == null) {
       return null;
     }
+    final TextDocumentIdentifier textDocument = params.getTextDocument();
+    if (textDocument == null) {
+      return null;
+    }
+    final String uri = textDocument.getUri();
+    if (uri == null) {
+      return null;
+    }
 
     return getServer()
         .pool(
             () -> {
               // warning: removes comments!
-              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(Util.uriToClasstype(params.getTextDocument().getUri()));
+              final View view = getServer().getView();
+              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = view.getClass(Util.uriToClasstype(uri));
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
 
@@ -509,8 +518,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 de.upb.swt.soot.core.util.printer.Printer printer = new Printer();
                 printer.printTo(sc, writer);
                 writer.close();
-
-                return Collections.singletonList(new TextEdit(new Range(new Position(0,0), new Position(sc.getPosition().getLastLine(),sc.getPosition().getLastCol())), out.toString() ));
+                final String newText = out.toString();
+                return Collections.singletonList(new TextEdit(new Range(new Position(0,0), new Position(sc.getPosition().getLastLine(),sc.getPosition().getLastCol())), newText));
               }
               return null;
             });

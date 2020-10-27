@@ -34,7 +34,7 @@ public class SignaturePositionResolver {
   public SignaturePositionResolver(Path fileUri, String contents) {
     this.fileUri = fileUri;
     util = new JimpleConverterUtil(fileUri);
-    JimpleParser parser = util.createJimpleParser(CharStreams.fromString(contents), fileUri);
+    JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromString(contents), fileUri);
 
     final SignatureOccurenceAggregator signatureOccurenceAggregator =
         new SignatureOccurenceAggregator();
@@ -55,7 +55,7 @@ public class SignaturePositionResolver {
     public void enterFile(JimpleParser.FileContext ctx) {
       if (ctx.classname == null) {
         throw new ResolveException(
-            "Identifier for this unit is not found.", fileUri, util.buildPositionFromCtx(ctx));
+            "Identifier for this unit is not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
       String classname = StringTools.getUnEscapedStringOf(ctx.classname.getText());
       clazz = util.getClassType(classname);
@@ -87,12 +87,12 @@ public class SignaturePositionResolver {
       Type type = util.getType(ctx.type().getText());
       if (type == null) {
         throw new ResolveException(
-            "Returntype not found.", fileUri, util.buildPositionFromCtx(ctx));
+            "Returntype not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
       String methodname = ctx.method_name().getText();
       if (methodname == null) {
         throw new ResolveException(
-            "Methodname not found.", fileUri, util.buildPositionFromCtx(ctx));
+            "Methodname not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
 
       List<Type> params = util.getTypeList(ctx.type_list());
@@ -175,7 +175,7 @@ public class SignaturePositionResolver {
       return null;
     }
 
-    // FIXME: implement or dependency
+    // TODO: improve ds: implement or use dependency for sth like segment/intervaltree
   }
 
   private static final class PositionComparator implements Comparator<Position> {
