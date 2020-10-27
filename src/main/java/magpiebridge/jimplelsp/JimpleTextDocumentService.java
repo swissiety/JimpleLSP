@@ -82,13 +82,25 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
     super.didOpen(params);
-    if (params == null || params.getTextDocument() == null || params.getTextDocument().getUri() == null || params.getTextDocument().getText() == null) {
+    if (params == null || params.getTextDocument() == null) {
       return;
     }
-    // calculate and cache interesting i.e.signature positions of the opened file
-    docSignaturePositionResolver.put(
-        params.getTextDocument().getUri(),
-        new SignaturePositionResolver( Util.uriToPath(params.getTextDocument().getUri()), params.getTextDocument().getText()));
+    final String uri = params.getTextDocument().getUri();
+    if (uri == null) {
+      return;
+    }
+    final String text = params.getTextDocument().getText();
+    if (text == null) {
+      return;
+    }
+
+    final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
+    if(valid) {
+      // calculate and cache interesting i.e.signature positions of the opened file
+      docSignaturePositionResolver.put(
+              uri,
+              new SignaturePositionResolver(Util.uriToPath(uri), text));
+    }
   }
 
   @Override

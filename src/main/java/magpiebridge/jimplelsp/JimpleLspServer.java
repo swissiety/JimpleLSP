@@ -82,18 +82,15 @@ public class JimpleLspServer extends MagpieServer {
     return project.createOnDemandView();
   }
 
-  @Nullable
-  public void quarantineInputOrUpdate(@Nonnull String uri) throws ResolveException, IOException {
-    quarantineInputOrUpdate(uri, CharStreams.fromPath(Util.uriToPath(uri)));
+  public boolean quarantineInputOrUpdate(@Nonnull String uri) throws ResolveException, IOException {
+    return quarantineInputOrUpdate(uri, CharStreams.fromPath(Util.uriToPath(uri)));
   }
 
-  @Nullable
-  public void quarantineInputOrUpdate(@Nonnull String uri, String content) throws ResolveException {
-    quarantineInputOrUpdate(uri, CharStreams.fromString(content));
+  public boolean quarantineInputOrUpdate(@Nonnull String uri, String content) throws ResolveException {
+    return quarantineInputOrUpdate(uri, CharStreams.fromString(content));
   }
 
-  @Nullable
-  private void quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream) throws ResolveException {
+  private boolean quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
       SootClassSource scs = jimpleConverter.run(charStream, new EagerInputLocation(), Paths.get(uri));
@@ -103,10 +100,12 @@ public class JimpleLspServer extends MagpieServer {
         // possible optimization: compare if classes are still equal -> set dirty bit only when necessary
       }
       isCacheInvalid = true;
+      return true;
     } catch (ResolveException e) {
       // feed error into diagnostics
       // FIXME uncomment addDiagnostic(uri, new Diagnostic(positionToRange(e.getRange()),
       // e.getMessage(), DiagnosticSeverity.Error, "JimpleParser"));
+      return false;
     }
   }
 
