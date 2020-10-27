@@ -2,6 +2,8 @@ package magpiebridge.jimplelsp.provider;
 
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
+
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +26,7 @@ public class JimpleLabelLinkProvider extends JimpleBaseListener {
   @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
 
   @Nonnull
-  public List<DocumentLink> getLinks(String fileUri) {
+  public List<DocumentLink> getLinks(Path fileUri) {
     // traverse label usages and assign the respective target (which is in the same file and
     // method).
     List<DocumentLink> links = new ArrayList<>();

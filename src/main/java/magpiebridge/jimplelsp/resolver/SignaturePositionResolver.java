@@ -10,6 +10,8 @@ import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleLexer;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import de.upb.swt.soot.jimple.JimpleParser;
+
+import java.nio.file.Path;
 import java.util.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,30 +28,13 @@ import org.eclipse.lsp4j.Position;
  */
 public class SignaturePositionResolver {
   private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
-  private final String fileUri;
+  private final Path fileUri;
+  private final JimpleConverterUtil util;
 
-  public SignaturePositionResolver(String fileUri, String contents) {
+  public SignaturePositionResolver(Path fileUri, String contents) {
     this.fileUri = fileUri;
-
-    JimpleLexer lexer = new JimpleLexer(CharStreams.fromString(contents));
-    TokenStream tokens = new CommonTokenStream(lexer);
-    JimpleParser parser = new JimpleParser(tokens);
-    parser.removeErrorListeners();
-    parser.addErrorListener(
-        new BaseErrorListener() {
-          public void syntaxError(
-              Recognizer<?, ?> recognizer,
-              Object offendingSymbol,
-              int line,
-              int charPositionInLine,
-              String msg,
-              RecognitionException e) {
-            throw new ResolveException(
-                "Jimple Syntaxerror: " + msg,
-                fileUri,
-                new de.upb.swt.soot.core.model.Position(line, charPositionInLine, -1, -1));
-          }
-        });
+    util = new JimpleConverterUtil(fileUri);
+    JimpleParser parser = util.createJimpleParser(CharStreams.fromString(contents), fileUri);
 
     final SignatureOccurenceAggregator signatureOccurenceAggregator =
         new SignatureOccurenceAggregator();
@@ -58,12 +43,11 @@ public class SignaturePositionResolver {
 
   @Nullable
   public Signature resolve(org.eclipse.lsp4j.Position position) {
+
     return occurences.resolve(position);
   }
 
   private final class SignatureOccurenceAggregator extends JimpleBaseListener {
-
-    JimpleConverterUtil util = new JimpleConverterUtil(fileUri);
     SmartDatastructure positionContainer = new SmartDatastructure();
     ClassType clazz;
 
@@ -167,7 +151,10 @@ public class SignaturePositionResolver {
 
     void add(Token start, Token end, Signature sig, @Nullable String identifier) {
       final Position startPos = new Position(start.getLine(), start.getCharPositionInLine());
-      final int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
+      int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
+      if(idx < 0){
+        idx = 0;
+      }
       startPositions.add(idx, startPos);
       endPositions.add(idx, new Position(end.getLine(), end.getCharPositionInLine()));
       signaturesAndIdentifiers.add(idx, Pair.of(sig, identifier));

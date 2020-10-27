@@ -113,11 +113,14 @@ public class JimpleLspServer extends MagpieServer {
     try {
       final ServerCapabilities capabilities = initialize.get().getCapabilities();
       capabilities.setWorkspaceSymbolProvider(true);
-      // TODO: capabilities.setDocumentSymbolProvider(true);
+      capabilities.setDocumentSymbolProvider(true);
       // TODO: capabilities.setDefinitionProvider(true);
       // TODO: capabilities.setTypeDefinitionProvider(true);
       // TODO: capabilities.setImplementationProvider(true);
       // TODO: capabilities.setReferencesProvider(true);
+
+      capabilities.setDocumentFormattingProvider( true );
+      capabilities.setFoldingRangeProvider( true );
 
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();

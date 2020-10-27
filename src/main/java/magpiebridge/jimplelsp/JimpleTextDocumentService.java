@@ -19,10 +19,13 @@ import de.upb.swt.soot.jimple.JimpleParser;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
+
+import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.jimplelsp.provider.JimpleLabelLinkProvider;
@@ -53,8 +56,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Nonnull
-  JimpleParser createParserForUri(String fileUri) throws IOException {
-    JimpleLexer lexer = new JimpleLexer(CharStreams.fromPath(Paths.get(fileUri)));
+  JimpleParser createParserForUri(Path fileUri) throws IOException {
+    JimpleLexer lexer = new JimpleLexer(CharStreams.fromPath(fileUri));
     TokenStream tokens = new CommonTokenStream(lexer);
     JimpleParser parser = new JimpleParser(tokens);
     parser.removeErrorListeners();
@@ -85,8 +88,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     // calculate and cache interesting i.e.signature positions of the opened file
     docSignaturePositionResolver.put(
         params.getTextDocument().getUri(),
-        new SignaturePositionResolver(
-            params.getTextDocument().getUri(), params.getTextDocument().getText()));
+        new SignaturePositionResolver( Util.uriToPath(params.getTextDocument().getUri()), params.getTextDocument().getText()));
   }
 
   @Override
@@ -212,7 +214,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               // LocalDeclarationResolver
 
               try {
-                JimpleParser parser = createParserForUri(fileUri);
+                final Path path = Util.uriToPath(fileUri);
+                JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
                 //        parser.file().enterRule(signatureOccurenceAggregator);
 
               } catch (IOException exception) {
@@ -426,8 +429,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         .pool(
             () -> {
               try {
-                final String fileUri = params.getTextDocument().getUri();
-                JimpleParser parser = createParserForUri(fileUri);
+                final Path fileUri = Util.uriToPath(params.getTextDocument().getUri());
+                JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(fileUri), fileUri);
 
                 final JimpleLabelLinkProvider listener = new JimpleLabelLinkProvider();
                 parser.file().enterRule(listener);
