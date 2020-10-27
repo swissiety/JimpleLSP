@@ -147,6 +147,7 @@ public class SignaturePositionResolver {
       super.enterImportItem(ctx);
     }
 
+    @Nullable
     Signature resolve(org.eclipse.lsp4j.Position position) {
       final Pair<Signature, String> resolve = positionContainer.resolve(position);
       if (resolve == null) {

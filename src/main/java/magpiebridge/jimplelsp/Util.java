@@ -37,7 +37,7 @@ public class Util {
   }
 
   @Nonnull
-  public static ClassType uritoClasstype(@Nonnull String strUri) {
+  public static ClassType uriToClasstype(@Nonnull String strUri) {
     final String baseName = FilenameUtils.getBaseName(strUri);
     return JavaIdentifierFactory.getInstance().getClassType(baseName);
   }

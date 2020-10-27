@@ -497,7 +497,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         .pool(
             () -> {
               // warning: removes comments!
-              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(Util.uritoClasstype(params.getTextDocument().getUri()));
+              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(Util.uriToClasstype(params.getTextDocument().getUri()));
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
 
@@ -525,7 +525,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                   getServer()
                       .getView()
-                      .getClass(Util.uritoClasstype(params.getTextDocument().getUri()));
+                      .getClass(Util.uriToClasstype(params.getTextDocument().getUri()));
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
                 List<FoldingRange> frList = new ArrayList<>();
