@@ -7,6 +7,7 @@ import de.upb.swt.soot.core.inputlocation.AnalysisInputLocation;
 import de.upb.swt.soot.core.inputlocation.EagerInputLocation;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
+import de.upb.swt.soot.java.core.JavaIdentifierFactory;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
 
@@ -27,7 +28,10 @@ import magpiebridge.core.MagpieServer;
 import magpiebridge.core.ServerConfiguration;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.lsp4j.*;
+
+import static magpiebridge.jimplelsp.Util.positionToRange;
 
 // FIXME: sth with sourcefilemanager
 public class JimpleLspServer extends MagpieServer {
@@ -108,9 +112,9 @@ public class JimpleLspServer extends MagpieServer {
       isCacheInvalid = true;
       return true;
     } catch (ResolveException e) {
-      // feed error into diagnostics
-      // FIXME uncomment addDiagnostic(uri, new Diagnostic(positionToRange(e.getRange()),
-      // e.getMessage(), DiagnosticSeverity.Error, "JimpleParser"));
+      // feed error into diagnostics2
+      final Diagnostic d = new Diagnostic(positionToRange(e.getRange()), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser");
+      client.publishDiagnostics(new PublishDiagnosticsParams( uri, Collections.singletonList(d) ));
       return false;
     }
   }
@@ -126,11 +130,10 @@ public class JimpleLspServer extends MagpieServer {
       final ServerCapabilities capabilities = initialize.get().getCapabilities();
       capabilities.setWorkspaceSymbolProvider(true);
       capabilities.setDocumentSymbolProvider(true);
-      // TODO: capabilities.setDefinitionProvider(true);
+      capabilities.setDefinitionProvider(true);
       // TODO: capabilities.setTypeDefinitionProvider(true);
       // TODO: capabilities.setImplementationProvider(true);
-      // TODO: capabilities.setReferencesProvider(true);
-
+      capabilities.setReferencesProvider(true);
       capabilities.setDocumentFormattingProvider(true);
       capabilities.setFoldingRangeProvider(true);
 
@@ -268,5 +271,14 @@ public class JimpleLspServer extends MagpieServer {
     return res;
   }
 
+
+  @Nullable
+  public ClassType uriToClasstype(@Nonnull String strUri) {
+    final SootClassSource scs = textDocumentClassMapping.get(strUri);
+    if(scs == null){
+      return null;
+    }
+    return scs.getClassType();
+  }
 
 }

@@ -37,12 +37,6 @@ public class Util {
   }
 
   @Nonnull
-  public static ClassType uriToClasstype(@Nonnull String strUri) {
-    final String baseName = FilenameUtils.getBaseName(strUri);
-    return JavaIdentifierFactory.getInstance().getClassType(baseName);
-  }
-
-  @Nonnull
   public static Range ctxToRange(@Nonnull ParserRuleContext ctx) {
     return new Range(
             new org.eclipse.lsp4j.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()),

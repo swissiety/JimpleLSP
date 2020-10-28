@@ -533,8 +533,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         .pool(
             () -> {
               // warning: removes comments!
+              final ClassType classType = getServer().uriToClasstype(uri);
+              if( classType == null){
+                return null;
+              }
               final View view = getServer().getView();
-              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = view.getClass(Util.uriToClasstype(uri));
+              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = view.getClass(classType);
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
 
@@ -559,10 +563,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
+              final ClassType classType = getServer().uriToClasstype(params.getTextDocument().getUri());
+              if( classType == null){
+                return null;
+              }
               final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                   getServer()
                       .getView()
-                      .getClass(Util.uriToClasstype(params.getTextDocument().getUri()));
+                      .getClass(classType);
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
                 List<FoldingRange> frList = new ArrayList<>();
@@ -593,22 +601,28 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
-              final TextDocumentClientCapabilities textDocument =
+              final TextDocumentClientCapabilities textDocumentCap =
                   getServer().getClientCapabilities().getTextDocument();
-              if (textDocument == null) {
+              if (textDocumentCap == null) {
                 return null;
               }
-              final DocumentSymbolCapabilities documentSymbol = textDocument.getDocumentSymbol();
+              final DocumentSymbolCapabilities documentSymbol = textDocumentCap.getDocumentSymbol();
               if (documentSymbol == null) {
                 return null;
               }
-
               final SymbolKindCapabilities symbolKind = documentSymbol.getSymbolKind();
               if (symbolKind == null) {
                 return null;
               }
-
-              final ClassType classType = getServer().docIdentifierToClassType(params.getTextDocument().getUri());
+              final TextDocumentIdentifier textDoc = params.getTextDocument();
+              if (textDoc == null) {
+                return null;
+              }
+              final String uri = textDoc.getUri();
+              if( uri == null){
+                return null;
+              }
+              final ClassType classType = getServer().uriToClasstype(uri);
               if( classType == null){
                 return null;
               }
