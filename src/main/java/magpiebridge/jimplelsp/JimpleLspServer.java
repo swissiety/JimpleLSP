@@ -5,6 +5,7 @@ import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.frontend.SootClassSource;
 import de.upb.swt.soot.core.inputlocation.AnalysisInputLocation;
 import de.upb.swt.soot.core.inputlocation.EagerInputLocation;
+import de.upb.swt.soot.core.jimple.basic.NoPositionInformation;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.java.core.JavaIdentifierFactory;
@@ -112,15 +113,26 @@ public class JimpleLspServer extends MagpieServer {
       isCacheInvalid = true;
       return true;
     } catch (ResolveException e) {
-      // feed error into diagnostics2
+      // feed error into diagnostics
       final Diagnostic d = new Diagnostic(positionToRange(e.getRange()), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser");
+      client.publishDiagnostics(new PublishDiagnosticsParams( uri, Collections.singletonList(d) ));
+      return false;
+    } catch (Exception e) {
+      // feed error into diagnostics
+      final Diagnostic d = new Diagnostic( new Range(new Position(0,0), new Position(1,0)), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser");
       client.publishDiagnostics(new PublishDiagnosticsParams( uri, Collections.singletonList(d) ));
       return false;
     }
   }
 
-  List<WorkspaceFolder> workspaceFolders = Collections.emptyList();
+  @Override
+  public void exit() {
+    // FIXME: don't die in development
+    logger.cleanUp();
+    MagpieServer.ExceptionLogger.cleanUp();
+  }
 
+  List<WorkspaceFolder> workspaceFolders = Collections.emptyList();
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
     workspaceFolders = params.getWorkspaceFolders();
