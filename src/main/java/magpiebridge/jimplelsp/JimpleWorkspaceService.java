@@ -28,7 +28,7 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
 
               final String query = params.getQuery().trim().toLowerCase();
 
-              if (query.length() > 1) {
+              if (query.length() >= 2) {
                 getServer()
                     .getView()
                     .getClasses()

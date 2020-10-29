@@ -29,7 +29,7 @@ public class JimpleSymbolProvider {
 
     if (clientSupportedSymbolKinds.contains(SymbolKind.Class)) {
       // retrieve classes
-      if (clazz.getName().toLowerCase().startsWith(query)) {
+      if (query == null || clazz.getName().toLowerCase().contains(query)) {
         Location location =
             new Location(Util.classToUri(clazz), Util.positionToRange(clazz.getPosition()));
         resultList.add(new SymbolInformation(clazz.getName(), SymbolKind.Class, location));
@@ -39,7 +39,7 @@ public class JimpleSymbolProvider {
     if (clientSupportedSymbolKinds.contains(SymbolKind.Method)) {
       // retrieve methods
       for (SootMethod method : clazz.getMethods()) {
-        if (method.getName().toLowerCase().startsWith(query)) {
+        if (query == null || method.getName().toLowerCase().contains(query)) {
           Location location =
               new Location(Util.classToUri(clazz), Util.positionToRange(method.getPosition()));
           resultList.add(new SymbolInformation(method.getName(), SymbolKind.Method, location));
@@ -50,7 +50,7 @@ public class JimpleSymbolProvider {
     if (clientSupportedSymbolKinds.contains(SymbolKind.Field)) {
       // retrieve fields
       for (SootField field : clazz.getFields()) {
-        if (field.getName().toLowerCase().startsWith(query)) {
+        if (query == null || field.getName().toLowerCase().contains(query)) {
           Location location =
               new Location(Util.classToUri(clazz), Util.positionToRange(field.getPosition()));
           resultList.add(new SymbolInformation(field.getName(), SymbolKind.Field, location));
