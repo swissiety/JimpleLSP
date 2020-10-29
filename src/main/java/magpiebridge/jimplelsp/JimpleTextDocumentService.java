@@ -636,7 +636,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
               SootClass clazz = (SootClass) aClass.get();
               List<SymbolInformation> list = new ArrayList<>();
-              JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(list, "", clazz, symbolKind);
+              int limit = Integer.MAX_VALUE;
+              JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(list, "", clazz, symbolKind, limit);
               List<Either<SymbolInformation, DocumentSymbol>> resultList =
                   new ArrayList<>(list.size());
               list.forEach(s -> resultList.add(Either.forLeft(s)));

@@ -89,7 +89,7 @@ public class JimpleLspServer extends MagpieServer {
     Map<ClassType, AbstractClassSource> map = new HashMap<>();
     textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
     final JimpleProject project = new JimpleProject(new EagerInputLocation( map));
-    return project.createOnDemandView();
+    return project.createFullView();
   }
 
   public boolean quarantineInputOrUpdate(@Nonnull String uri) throws ResolveException, IOException {
@@ -103,9 +103,9 @@ public class JimpleLspServer extends MagpieServer {
   private boolean quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream) throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource scs = jimpleConverter.run(charStream, new EagerInputLocation(), Paths.get(uri));
+      SootClassSource scs = jimpleConverter.run(charStream, new EagerInputLocation(), Util.uriToPath(uri));
       // input is clean
-      final SootClassSource overriden = this.textDocumentClassMapping.put(uri, scs);
+      final SootClassSource overriden = textDocumentClassMapping.put(uri, scs);
       if (overriden != null) {
         // possible optimization: compare if classes are still equal -> set dirty bit only when necessary
       }

@@ -19,11 +19,13 @@ import org.eclipse.lsp4j.SymbolKindCapabilities;
 public class JimpleSymbolProvider {
 
   public static void retrieveAndFilterSymbolsFromClass(
-      @Nonnull List<SymbolInformation> resultList,
-      String query,
-      @Nonnull SootClass clazz,
-      @Nonnull SymbolKindCapabilities symbolKind) {
+          @Nonnull List<SymbolInformation> resultList,
+          String query,
+          @Nonnull SootClass clazz,
+          @Nonnull SymbolKindCapabilities symbolKind, int limit) {
     final List<SymbolKind> clientSupportedSymbolKinds = symbolKind.getValueSet();
+
+    // TODO: implement limit
 
     if (clientSupportedSymbolKinds.contains(SymbolKind.Class)) {
       // retrieve classes

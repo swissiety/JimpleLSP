@@ -56,6 +56,10 @@ class ApkAndAndroidjar {
 
   public static boolean downloadAndroidjar(int apkVersion, String targetPath) {
 
+    // TODO: java -Xmx2g -jar sootclasses-trunk-jar-with-dependencies.jar soot.Main -w -allow-phantom-refs -android-jars /home/smarkus/workspace/android-platforms/ -src-prec apk -f jimple -process-dir "/home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/com.uberspot.a2048_25.apk"
+    // FIXME: old soot wants a specific folder structure: parameter + / android-{version} / android.jar
+
+
     final Path path = Paths.get(targetPath);
     try {
       Files.createDirectories(path.getParent());

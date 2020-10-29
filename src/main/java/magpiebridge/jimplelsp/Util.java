@@ -28,7 +28,7 @@ public class Util {
 
   @Nonnull
   public static String pathToUri(@Nonnull Path sourcePath) {
-    return sourcePath.toAbsolutePath().toUri().toString();
+    return sourcePath.toUri().toString();
   }
 
   @Nonnull

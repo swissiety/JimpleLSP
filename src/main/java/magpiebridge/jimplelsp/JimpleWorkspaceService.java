@@ -23,7 +23,7 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
     return getServer()
         .pool(
             () -> {
-              int limit = 100;
+              int limit = 32;
               List<SymbolInformation> list = new ArrayList<>(limit);
 
               final String query = params.getQuery().trim().toLowerCase();
@@ -49,7 +49,7 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
                           }
 
                           JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(
-                              list, query, (SootClass) clazz, symbolKind);
+                              list, query, (SootClass) clazz, symbolKind, limit);
                         });
               }
               return list;
