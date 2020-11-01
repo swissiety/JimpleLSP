@@ -1,5 +1,6 @@
 package magpiebridge.jimplelsp;
 
+import de.upb.swt.soot.callgraph.typehierarchy.ViewTypeHierarchy;
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.basic.Value;
@@ -170,7 +171,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     getServer().getView().getClass((ClassType) sig);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  return Util.positionToLocation(
+                  return Util.positionToLocationList(
                       Util.pathToUri(sc.getClassSource().getSourcePath()), sc.getPosition());
                 }
 
@@ -181,7 +182,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   SootClass sc = (SootClass) aClass.get();
                   final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
                   if (method.isPresent()) {
-                    return Util.positionToLocation(
+                    return Util.positionToLocationList(
                         Util.pathToUri(sc.getClassSource().getSourcePath()),
                         method.get().getPosition());
                   }
@@ -195,7 +196,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   final Optional<SootField> field =
                       sc.getField(((FieldSignature) sig).getSubSignature());
                   if (field.isPresent()) {
-                    return Util.positionToLocation(
+                    return Util.positionToLocationList(
                         Util.pathToUri(sc.getClassSource().getSourcePath()),
                         field.get().getPosition());
                   }
@@ -262,8 +263,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         .pool(
             () -> {
               List<Location> list = new ArrayList<>();
+
+              final String uri = position.getTextDocument().getUri();
               final SignaturePositionResolver resolver =
-                  docSignaturePositionResolver.get(position.getTextDocument().getUri());
+                  docSignaturePositionResolver.get(uri);
               if (resolver == null) {
                 return null;
               }
@@ -272,45 +275,25 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return null;
               }
 
-              final Collection<SootClass> classes =
-                  (Collection<SootClass>) getServer().getView().getClasses();
-              if (sig instanceof ClassType) {
-                // TODO
-                for (SootClass sc : classes) {
-                  for (SootMethod method : sc.getMethods()) {
-                    final Body body = method.getBody();
-                    for (Stmt stmt : body.getStmtGraph().nodes()) {
-                      for (Value usesAndDef : stmt.getUsesAndDefs()) {
-                        if (usesAndDef instanceof JFieldRef
-                            && ((JFieldRef) usesAndDef).getFieldSignature().equals(sig)) {
-                          list.add(
-                              new Location(
-                                  Util.classToUri(sc),
-                                  Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
-                        }
-                      }
-                    }
-                  }
-                }
-              } else if (sig instanceof MethodSignature) {
+              final View view = getServer().getView();
+              final ViewTypeHierarchy typeHierarchy = new ViewTypeHierarchy(view);
 
-                // TODO:
-                for (SootClass sc : classes) {
-                  for (SootMethod method : sc.getMethods()) {
-                    final Body body = method.getBody();
-                    for (Stmt stmt : body.getStmtGraph().nodes()) {
-                      for (Value usesAndDef : stmt.getUsesAndDefs()) {
-                        if (usesAndDef instanceof JFieldRef
-                            && ((JFieldRef) usesAndDef).getFieldSignature().equals(sig)) {
-                          list.add(
-                              new Location(
-                                  Util.classToUri(sc),
-                                  Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
-                        }
-                      }
-                    }
+              if (sig instanceof ClassType) {
+                // TODO traverse typehierarchy
+
+                final Set<ClassType> classTypes = typeHierarchy.subtypesOf((ClassType) sig);
+
+                classTypes.forEach(csig -> {
+                  Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
+                  if(scOpt.isPresent()){
+                    // FIXME list.add(Util.positionToLocation(uri, scOpt.get().getPosition()));
                   }
-                }
+                });
+
+                return Either.forLeft(list);
+              } else if (sig instanceof MethodSignature) {
+                // TODO traverse typehierarchy and find overridden methods
+                // list.add(new Location(Util.classToUri(sc), Util.positionToRange(sc.getPosition())));
               }
 
               return null;

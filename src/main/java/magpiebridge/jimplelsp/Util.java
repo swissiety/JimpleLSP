@@ -38,20 +38,28 @@ public class Util {
 
   @Nonnull
   public static Range ctxToRange(@Nonnull ParserRuleContext ctx) {
+    // line numbers starting zero-based in LSP vs one-based in antlr
     return new Range(
-            new org.eclipse.lsp4j.Position(ctx.start.getLine(), ctx.start.getCharPositionInLine()),
-            new org.eclipse.lsp4j.Position(ctx.stop.getLine(), ctx.stop.getCharPositionInLine()));
+            new org.eclipse.lsp4j.Position(ctx.start.getLine()-1, ctx.start.getCharPositionInLine()),
+            new org.eclipse.lsp4j.Position(ctx.stop.getLine()-1, ctx.stop.getCharPositionInLine()));
   }
 
   @Nonnull
   public static Range positionToRange(@Nonnull Position position) {
+    // line numbers starting zero-based in LSP vs one-based in antlr
     return new Range(
-        new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
-        new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
+        new org.eclipse.lsp4j.Position(position.getFirstLine()-1, position.getFirstCol()),
+        new org.eclipse.lsp4j.Position(position.getLastLine()-1, position.getLastCol()));
   }
 
-  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocation(
-      @Nonnull String uri, @Nonnull Position position) {
+  public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocationList(
+          @Nonnull String uri, @Nonnull Position position) {
     return Either.forLeft(Collections.singletonList(new Location(uri, positionToRange(position))));
   }
+
+  public static List<Location> positionToLocation(
+          @Nonnull String uri, @Nonnull Position position) {
+    return Collections.singletonList(new Location(uri, positionToRange(position)));
+  }
+
 }
