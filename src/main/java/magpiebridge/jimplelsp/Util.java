@@ -57,9 +57,9 @@ public class Util {
     return Either.forLeft(Collections.singletonList(new Location(uri, positionToRange(position))));
   }
 
-  public static List<Location> positionToLocation(
+  public static Location positionToLocation(
           @Nonnull String uri, @Nonnull Position position) {
-    return Collections.singletonList(new Location(uri, positionToRange(position)));
+    return new Location(uri, positionToRange(position));
   }
 
 }

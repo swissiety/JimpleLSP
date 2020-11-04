@@ -29,7 +29,7 @@ import javax.annotation.Nonnull;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.jimplelsp.provider.JimpleLabelLinkProvider;
+import magpiebridge.jimplelsp.provider.JimpleLabelReferenceProvider;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.antlr.v4.runtime.*;
@@ -258,7 +258,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (position == null) {
       return null;
     }
-    // TODO implement: resolve position to MethodSignature/Type and retrieve respective subclasses
+    // resolve position to ClassSignature/MethodSignature and retrieve respective subclasses/overriding methods there
     return getServer()
         .pool(
             () -> {
@@ -279,21 +279,24 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               final ViewTypeHierarchy typeHierarchy = new ViewTypeHierarchy(view);
 
               if (sig instanceof ClassType) {
-                // TODO traverse typehierarchy
-
                 final Set<ClassType> classTypes = typeHierarchy.subtypesOf((ClassType) sig);
 
                 classTypes.forEach(csig -> {
                   Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
-                  if(scOpt.isPresent()){
-                    // FIXME list.add(Util.positionToLocation(uri, scOpt.get().getPosition()));
-                  }
+                  scOpt.ifPresent(sootClass -> list.add(Util.positionToLocation(uri, sootClass.getPosition())));
                 });
 
                 return Either.forLeft(list);
               } else if (sig instanceof MethodSignature) {
-                // TODO traverse typehierarchy and find overridden methods
-                // list.add(new Location(Util.classToUri(sc), Util.positionToRange(sc.getPosition())));
+                final Set<ClassType> classTypes = typeHierarchy.subtypesOf(((MethodSignature) sig).getDeclClassType());
+                classTypes.forEach(csig -> {
+                  Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
+                  if(scOpt.isPresent()){
+                    final SootClass sc = scOpt.get();
+                    final Optional<SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig).getSubSignature());
+                    methodOpt.ifPresent(method -> list.add(Util.positionToLocation(Util.classToUri(sc), method.getPosition())));
+                  }
+                });
               }
 
               return null;
@@ -440,7 +443,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 final Path fileUri = Util.uriToPath(params.getTextDocument().getUri());
                 JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(fileUri), fileUri);
 
-                final JimpleLabelLinkProvider listener = new JimpleLabelLinkProvider();
+                final JimpleLabelReferenceProvider listener = new JimpleLabelReferenceProvider();
                 parser.file().enterRule(listener);
 
                 return listener.getLinks(fileUri);
