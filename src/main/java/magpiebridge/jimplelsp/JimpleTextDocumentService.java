@@ -22,15 +22,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
 
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.jimplelsp.provider.JimpleLabelReferenceProvider;
+import magpiebridge.file.SourceFileManager;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
+import magpiebridge.jimplelsp.resolver.LocalResolver;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.antlr.v4.runtime.*;
 import org.eclipse.lsp4j.*;
@@ -130,7 +131,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     super.didChange(params);
-    // later: getServer().quarantineInput(params.getTextDocument().getUri(), );
+
+    final String uri = params.getTextDocument().getUri();
+    String language = inferLanguage(uri);
+    SourceFileManager fileManager = server.getSourceFileManager(language);
+    getServer().quarantineInputOrUpdate(params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(uri).getText() );
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
@@ -150,12 +155,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       return null;
     }
 
-    //  go to declaration of Local/Field- if position resolves to a Type -> go to typeDefinition
+    //  go to declaration of Field/Method/Class/Local - if position resolves to a Type -> go to typeDefinition
     return getServer()
         .pool(
             () -> {
+              final String uri = position.getTextDocument().getUri();
               final SignaturePositionResolver resolver = docSignaturePositionResolver
-                      .get(position.getTextDocument().getUri());
+                      .get(uri);
               if (resolver == null) {
                 return null;
               }
@@ -163,9 +169,26 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   resolver
                       .resolve(position.getPosition());
               if (sig == null) {
-                // here is nothing to resolve
-                return null;
+                // try whether its a Local (which has no Signature!)
+
+
+                final ClassType classType = getServer().uriToClasstype(uri);
+                if (classType!=null) {
+                  return null;
+                }
+
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                        getServer().getView().getClass(classType);
+                if (!aClass.isPresent()) {
+                  return null;
+                }
+                SootClass sc = (SootClass) aClass.get();
+
+                // maybe: cache instance for this file like for sigs
+                final LocalResolver localResolver = new LocalResolver(Paths.get(uri));
+                return localResolver.resolveDefinition(sc, position);
               }
+
               if (sig instanceof ClassType) {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                     getServer().getView().getClass((ClassType) sig);
@@ -209,51 +232,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      typeDefinition(TextDocumentPositionParams position) {
-    if (position == null) {
-      return null;
-    }
-    // TODO: resolve position to: Variable/FieldSignature/MethodSignature/TypeSignature - get its
-    // type -> return its definition position
-    return getServer()
-        .pool(
-            () -> {
-              return null;
-            });
-  }
-
-  @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      declaration(TextDocumentPositionParams params) {
-    if (params == null) {
-      return null;
-    }
-    // TODO: find local declaration
-    return getServer()
-        .pool(
-            () -> {
-              String fileUri = params.getTextDocument().getUri();
-
-              // TODO: getClass - getMethods; find Method surrounding
-              params.getPosition();
-              // TODO: parse usages of local in this method -> return declarations ; class:
-              // LocalDeclarationResolver
-
-              try {
-                final Path path = Util.uriToPath(fileUri);
-                JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
-                //        parser.file().enterRule(signatureOccurenceAggregator);
-
-              } catch (IOException exception) {
-                exception.printStackTrace();
-              }
-
-              return null;
-            });
-  }
-
-  @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       implementation(TextDocumentPositionParams position) {
     if (position == null) {
       return null;
@@ -265,12 +243,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               List<Location> list = new ArrayList<>();
 
               final String uri = position.getTextDocument().getUri();
-              final SignaturePositionResolver resolver =
+              final SignaturePositionResolver sigResolver =
                   docSignaturePositionResolver.get(uri);
-              if (resolver == null) {
+              if (sigResolver == null) {
                 return null;
               }
-              final Signature sig = resolver.resolve(position.getPosition());
+              final Signature sig = sigResolver.resolve(position.getPosition());
               if (sig == null) {
                 return null;
               }

@@ -48,8 +48,10 @@ public class Util {
   public static Range positionToRange(@Nonnull Position position) {
     // line numbers starting zero-based in LSP vs one-based in antlr
     return new Range(
-        new org.eclipse.lsp4j.Position(position.getFirstLine()-1, position.getFirstCol()),
-        new org.eclipse.lsp4j.Position(position.getLastLine()-1, position.getLastCol()));
+            new org.eclipse.lsp4j.Position(position.getFirstLine()-1, position.getFirstCol()),
+            new org.eclipse.lsp4j.Position(position.getFirstLine(), 0));
+            // extract interesting part /beginning which usually is the signature of the current Range
+            // new org.eclipse.lsp4j.Position(position.getLastLine()-1, position.getLastCol()));
   }
 
   public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocationList(

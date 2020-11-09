@@ -25,7 +25,8 @@ class SmartDatastructure {
 
   void add(ParserRuleContext token, Signature sig, @Nullable String identifier) {
     // insert sorted to be accessed via binary search
-    final Position startPos = new Position(token.start.getLine(), token.start.getCharPositionInLine());
+    // lsp is zero indexed; antlrs line not
+    final Position startPos = new Position(token.start.getLine()-1, token.start.getCharPositionInLine());
     int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
     if(idx < 0){
       // calculate insertion index
@@ -38,7 +39,8 @@ class SmartDatastructure {
 
     // calc end position (line number+char offset in line) as antlr is not capable to do it intuitively
     String tokenstr = token.getText();
-    int lineCount = 0;
+    // lsp indexes everything zero based - antlr does it only chars in line; linenos are indexed one-based => subtract one ;)
+    int lineCount = -1;
     int fromIdx = 0;
     int lastLineBreakIdx = 0;
     while ((fromIdx = tokenstr.indexOf("\n", fromIdx)) != -1 ){
