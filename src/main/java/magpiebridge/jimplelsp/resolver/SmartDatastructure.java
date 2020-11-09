@@ -1,6 +1,7 @@
 package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;
@@ -22,9 +23,9 @@ class SmartDatastructure {
 
   Comparator<Position> comparator = new PositionComparator();
 
-  void add(Token start, Token end, Signature sig, @Nullable String identifier) {
+  void add(ParserRuleContext token, Signature sig, @Nullable String identifier) {
     // insert sorted to be accessed via binary search
-    final Position startPos = new Position(start.getLine(), start.getCharPositionInLine());
+    final Position startPos = new Position(token.start.getLine(), token.start.getCharPositionInLine());
     int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
     if(idx < 0){
       // calculate insertion index
@@ -34,7 +35,24 @@ class SmartDatastructure {
     }
 
     startPositions.add(idx, startPos);
-    endPositions.add(idx, new Position(end.getLine(), end.getCharPositionInLine()));
+
+    // calc end position (line number+char offset in line) as antlr is not capable to do it intuitively
+    String tokenstr = token.getText();
+    int lineCount = 0;
+    int fromIdx = 0;
+    int lastLineBreakIdx = 0;
+    while ((fromIdx = tokenstr.indexOf("\n", fromIdx)) != -1 ){
+      lastLineBreakIdx = fromIdx;
+      lineCount++;
+      fromIdx++;
+    }
+
+    int endCharLength = tokenstr.length()-lastLineBreakIdx;
+
+    int line = token.stop.getLine();
+    int charPositionInLine = token.stop.getCharPositionInLine();
+    endPositions.add(idx, new Position(line+lineCount, charPositionInLine+endCharLength));
+
     signaturesAndIdentifiers.add(idx, Pair.of(sig, identifier));
   }
 
