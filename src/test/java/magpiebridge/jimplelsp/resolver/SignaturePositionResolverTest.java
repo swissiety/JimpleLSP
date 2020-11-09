@@ -7,6 +7,7 @@ import org.eclipse.lsp4j.Position;
 import org.junit.Before;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class SignaturePositionResolverTest extends TestCase {
@@ -16,8 +17,8 @@ public class SignaturePositionResolverTest extends TestCase {
   @Override
   protected void setUp(){
     try {
-      // FIXME path
-      resolver = new SignaturePositionResolver(Paths.get("nonexisting.txt"), CharStreams.fromFileName("TODO"));
+      final Path path = Paths.get("src/test/resources/signatureOccurences.jimple").toAbsolutePath();
+      resolver = new SignaturePositionResolver(path);
     } catch (IOException exception) {
       exception.printStackTrace();
       fail("filenotfound");

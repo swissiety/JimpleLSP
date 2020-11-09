@@ -1,0 +1,30 @@
+// this Jimple file is not valid in respect to other classes i.e. dont parse a sootclass from it!
+
+public class de.upb.Car extends de.upb.Vehicle implements de.upb.SelfDriving
+{
+
+    public void <init>()
+    {
+        de.upb.Car r0;
+
+        r0 := @this: de.upb.Car;
+
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+
+        return;
+    }
+
+    public void driving() throws java.lang.Exception
+    {
+        java.lang.Exception $r0;
+        de.upb.Car r1;
+
+        r1 := @this: de.upb.Car;
+
+        $r0 = new java.lang.Exception;
+
+        specialinvoke $r0.<java.lang.Exception: void <init>(java.lang.String)>("Banana");
+
+        throw $r0;
+    }
+}

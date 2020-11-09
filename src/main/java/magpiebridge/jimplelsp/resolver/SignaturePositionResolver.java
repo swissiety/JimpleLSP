@@ -11,6 +11,7 @@ import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import de.upb.swt.soot.jimple.JimpleParser;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import javax.annotation.Nonnull;
@@ -31,7 +32,15 @@ public class SignaturePositionResolver {
   private final Path fileUri;
   private final JimpleConverterUtil util;
 
-  public SignaturePositionResolver(Path fileUri, CharStream charStream) {
+  public SignaturePositionResolver(Path fileUri) throws IOException {
+    this (fileUri, CharStreams.fromPath(fileUri));
+  }
+
+  public SignaturePositionResolver(Path fileUri, String content) {
+    this(fileUri, CharStreams.fromString(content));
+  }
+
+  private SignaturePositionResolver(Path fileUri, CharStream charStream) {
     this.fileUri = fileUri;
     util = new JimpleConverterUtil(fileUri);
     JimpleParser parser = JimpleConverterUtil.createJimpleParser(charStream, fileUri);

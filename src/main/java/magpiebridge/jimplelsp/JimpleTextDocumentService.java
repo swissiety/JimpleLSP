@@ -139,7 +139,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       // calculate and cache interesting i.e.signature positions of the opened file
       docSignaturePositionResolver.put(
               uri,
-              new SignaturePositionResolver(Util.uriToPath(uri), CharStreams.fromString(text)));
+              new SignaturePositionResolver(Util.uriToPath(uri), text));
     }
   }
 
