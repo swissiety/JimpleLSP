@@ -57,6 +57,13 @@ public class SignaturePositionResolver {
     SmartDatastructure positionContainer = new SmartDatastructure();
     ClassType clazz;
 
+    private void addType(JimpleParser.TypeContext typeCtx) {
+      final Type returnType = util.getType(typeCtx.getText());
+      if(returnType instanceof ClassType){
+        positionContainer.add(typeCtx.identifier().start, typeCtx.identifier().stop, (Signature) returnType,null );
+      }
+    }
+
     @Override
     public void enterFile(JimpleParser.FileContext ctx  ) {
       if (ctx.classname == null) {
@@ -84,6 +91,13 @@ public class SignaturePositionResolver {
       }
 
       super.enterFile(ctx);
+    }
+
+    @Override
+    public void enterDeclaration(JimpleParser.DeclarationContext ctx) {
+      JimpleParser.TypeContext typeCtx = ctx.type();
+      addType(typeCtx);
+      super.enterDeclaration(ctx);
     }
 
     @Override
@@ -126,10 +140,7 @@ public class SignaturePositionResolver {
 
       // returntype
       final JimpleParser.TypeContext returntypeCtx = ctx.method_subsignature().type();
-      final Type returnType = util.getType(returntypeCtx.getText());
-      if(returnType instanceof ClassType){
-        positionContainer.add(returntypeCtx.identifier().start, returntypeCtx.identifier().stop, (Signature) returnType,null );
-      }
+      addType(returntypeCtx);
 
       // parameter types
       final JimpleParser.Type_listContext type_listContext = ctx.method_subsignature().type_list();
