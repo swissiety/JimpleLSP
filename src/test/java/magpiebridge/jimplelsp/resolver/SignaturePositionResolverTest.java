@@ -2,9 +2,7 @@ package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
 import junit.framework.TestCase;
-import org.antlr.v4.runtime.CharStreams;
 import org.eclipse.lsp4j.Position;
-import org.junit.Before;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -32,24 +30,22 @@ public class SignaturePositionResolverTest extends TestCase {
     assertEquals("de.upb.Car", sig.toString());
   }
 
-  public void testResolveMethodSigFromMethodDefinition()  {
+  public void testResolveMethodSigFromMethodDefinitionExcatStart()  {
     // beginning position
-    {
-      final Signature sig = resolver.resolve(new Position(17, 17));
-      assertNotNull(sig);
-      assertEquals("driving", sig.toString());
-    }
+    final Signature sig = resolver.resolve(new Position(17, 17));
+    assertNotNull(sig);
+    assertEquals("<de.upb.Car: void driving()>", sig.toString());
+  }
 
+  public void testResolveMethodSigFromMethodDefinition()  {
     // middle position
-    {
-      final Signature sig = resolver.resolve(new Position(17, 18));
-      assertNotNull(sig);
-      assertEquals("driving", sig.toString());
-    }
+    final Signature sig = resolver.resolve(new Position(17, 18));
+    assertNotNull(sig);
+    assertEquals("<de.upb.Car: void driving()>", sig.toString());
   }
 
   public void testResolveClassSigUsageFromMethodSigException() {
-    final Signature sig = resolver.resolve(new Position(0, 0));
+    final Signature sig = resolver.resolve(new Position(17, 46));
     assertNotNull(sig);
     assertEquals("java.lang.Exception", sig.toString());
   }
@@ -76,6 +72,6 @@ public class SignaturePositionResolverTest extends TestCase {
   public void testResolveMethodSigUsageFromInsideBody(){
     final Signature sig = resolver.resolve(new Position(26, 28));
     assertNotNull(sig);
-    assertEquals("java.lang.Exception: void <init>(java.lang.String)", sig.toString());
+    assertEquals("<java.lang.Exception: void <init>(java.lang.String)>", sig.toString());
   }
 }

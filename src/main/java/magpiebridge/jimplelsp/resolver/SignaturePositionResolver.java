@@ -70,7 +70,7 @@ public class SignaturePositionResolver {
       if (ctx.extends_clause() != null) {
         ClassType superclass = util.getClassType(ctx.extends_clause().classname.getText());
         positionContainer.add(
-            ctx.extends_clause().start, ctx.extends_clause().stop, superclass, null);
+            ctx.extends_clause().classname.start, ctx.extends_clause().classname.stop, superclass, null);
       }
 
       if (ctx.implements_clause() != null) {

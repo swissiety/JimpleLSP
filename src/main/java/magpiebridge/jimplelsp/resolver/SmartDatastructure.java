@@ -40,11 +40,14 @@ class SmartDatastructure {
 
   @Nullable
   Pair<Signature, String> resolve(Position position) {
-    int index = Collections.binarySearch(startPositions, position, new PositionComparator());
+    int index = Collections.binarySearch(startPositions, position, PositionComparator.getInstance());
 
-    if (index < 0 || index >= startPositions.size()) {
-      // not found
-      return null;
+    if (index < 0) {
+      // not exactly found: check if next smaller neighbour is surrounding it
+      index = (-index)-1-1;
+    } else if (index >= startPositions.size()) {
+      // not exactly found: (greater than last element) check if next smaller neighbour is surrounding it
+      index = index-1;
     }
 
     if (comparator.compare(startPositions.get(index), position) <= 0
