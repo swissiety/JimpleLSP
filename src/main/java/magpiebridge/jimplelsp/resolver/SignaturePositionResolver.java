@@ -121,13 +121,15 @@ public class SignaturePositionResolver {
 
     @Override
     public void enterMethod_signature(JimpleParser.Method_signatureContext ctx) {
-      positionContainer.add(ctx.start, ctx.stop, util.getMethodSignature(ctx, null), null);
+      positionContainer.add(ctx.class_name.start, ctx.class_name.stop, util.getClassType(ctx.class_name.getText()), null);
+      positionContainer.add(ctx.method_subsignature().start, ctx.method_subsignature().stop, util.getMethodSignature(ctx, null), null);
       super.enterMethod_signature(ctx);
     }
 
     @Override
     public void enterField_signature(JimpleParser.Field_signatureContext ctx) {
-      positionContainer.add(ctx.start, ctx.stop, util.getFieldSignature(ctx), null);
+      positionContainer.add(ctx.classname.start, ctx.classname.stop, util.getClassType(ctx.classname.getText()), null);
+      positionContainer.add(ctx.fieldname.start, ctx.fieldname.stop, util.getFieldSignature(ctx), null);
       super.enterField_signature(ctx);
     }
 
