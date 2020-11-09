@@ -70,8 +70,14 @@ public class SignaturePositionResolverTest extends TestCase {
 
   // methodsig iside body
   public void testResolveMethodSigUsageFromInsideBody(){
-    final Signature sig = resolver.resolve(new Position(26, 28));
+    final Signature sig = resolver.resolve(new Position(26, 57));
     assertNotNull(sig);
     assertEquals("<java.lang.Exception: void <init>(java.lang.String)>", sig.toString());
+  }
+
+  public void testResolveClassSigUsageFromInsideBodyMethodParameterType(){
+    final Signature sig = resolver.resolve(new Position(26, 62));
+    assertNotNull(sig);
+    assertEquals("java.lang.String", sig.toString());
   }
 }

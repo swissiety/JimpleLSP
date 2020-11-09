@@ -122,7 +122,23 @@ public class SignaturePositionResolver {
     @Override
     public void enterMethod_signature(JimpleParser.Method_signatureContext ctx) {
       positionContainer.add(ctx.class_name.start, ctx.class_name.stop, util.getClassType(ctx.class_name.getText()), null);
-      positionContainer.add(ctx.method_subsignature().start, ctx.method_subsignature().stop, util.getMethodSignature(ctx, null), null);
+      positionContainer.add(ctx.method_subsignature().method_name().start, ctx.method_subsignature().method_name().stop, util.getMethodSignature(ctx, null), null);
+
+      // returntype
+      final JimpleParser.TypeContext returntypeCtx = ctx.method_subsignature().type();
+      final Type returnType = util.getType(returntypeCtx.getText());
+      if(returnType instanceof ClassType){
+        positionContainer.add(returntypeCtx.identifier().start, returntypeCtx.identifier().stop, (Signature) returnType,null );
+      }
+
+      // parameter types
+      for (JimpleParser.TypeContext typeCtx : ctx.method_subsignature().type_list().type()) {
+        final Type paramType = util.getType(typeCtx.identifier().getText());
+        if(paramType instanceof ClassType) {
+          positionContainer.add(typeCtx.identifier().start, typeCtx.identifier().stop, (Signature) paramType, null);
+        }
+      }
+
       super.enterMethod_signature(ctx);
     }
 
