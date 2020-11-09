@@ -181,6 +181,20 @@ public class SignaturePositionResolver {
     }
 
     @Override
+    public void enterValue(JimpleParser.ValueContext ctx) {
+      if (ctx.NEW()!=null) {
+        positionContainer.add(ctx.base_type, util.getClassType(ctx.base_type.getText()), null);
+      }else if (ctx.NEWARRAY()!=null) {
+        positionContainer.add(ctx.array_type, util.getClassType(ctx.array_type.getText()), null);
+      }else if (ctx.NEWMULTIARRAY()!=null) {
+        positionContainer.add(ctx.multiarray_type, util.getClassType(ctx.multiarray_type.getText()), null);
+      }else if (ctx.INSTANCEOF()!=null) {
+        positionContainer.add(ctx.nonvoid_type, util.getClassType(ctx.nonvoid_type.getText()), null);
+      }
+      super.enterValue(ctx);
+    }
+
+    @Override
     public void enterImportItem(JimpleParser.ImportItemContext ctx) {
       // add information for resolving classes correctly
       util.addImport(ctx);
