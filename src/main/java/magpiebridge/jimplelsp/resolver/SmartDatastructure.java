@@ -12,6 +12,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+
+
+// TODO: improve ds: implement or use dependency for sth like segment/intervaltree
 class SmartDatastructure {
 
   @Nonnull
@@ -48,6 +51,4 @@ class SmartDatastructure {
     }
     return null;
   }
-
-  // TODO: improve ds: implement or use dependency for sth like segment/intervaltree
 }

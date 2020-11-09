@@ -44,11 +44,8 @@ public class SignaturePositionResolver {
     util = new JimpleConverterUtil(fileUri);
     JimpleParser parser = JimpleConverterUtil.createJimpleParser(charStream, fileUri);
 
-    final SignatureOccurenceAggregator signatureOccurenceAggregator =
-            new SignatureOccurenceAggregator();
-
     ParseTreeWalker walker = new ParseTreeWalker();
-    walker.walk(signatureOccurenceAggregator, parser.file() );
+    walker.walk(occurences, parser.file() );
   }
 
   @Nullable
