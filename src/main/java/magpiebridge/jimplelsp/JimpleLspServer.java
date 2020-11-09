@@ -120,6 +120,7 @@ public class JimpleLspServer extends MagpieServer {
     } catch (Exception e) {
       // feed error into diagnostics
       final Diagnostic d = new Diagnostic( new Range(new Position(0,0), new Position(1,0)), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser");
+      // FIXME: merge with other diagnostics in magpie
       client.publishDiagnostics(new PublishDiagnosticsParams( uri, Collections.singletonList(d) ));
       return false;
     }
@@ -142,12 +143,15 @@ public class JimpleLspServer extends MagpieServer {
       final ServerCapabilities capabilities = initialize.get().getCapabilities();
       capabilities.setWorkspaceSymbolProvider(true);
       capabilities.setDocumentSymbolProvider(true);
+
+      capabilities.setImplementationProvider(true);
       capabilities.setDefinitionProvider(true);
+
       // TODO: capabilities.setTypeDefinitionProvider(true);
-      // TODO: capabilities.setImplementationProvider(true);
-      capabilities.setReferencesProvider(true);
-      capabilities.setDocumentFormattingProvider(true);
-      capabilities.setFoldingRangeProvider(true);
+      // TODO: capabilities.setReferencesProvider(true);
+
+      // check: capabilities.setDocumentFormattingProvider(true);
+      // check: capabilities.setFoldingRangeProvider(true);
 
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();

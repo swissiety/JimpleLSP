@@ -1,13 +1,13 @@
 package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.frontend.ResolveException;
+import de.upb.swt.soot.core.jimple.Jimple;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.StringTools;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
-import de.upb.swt.soot.jimple.JimpleLexer;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import de.upb.swt.soot.jimple.JimpleParser;
 
@@ -31,13 +31,13 @@ public class SignaturePositionResolver {
   private final Path fileUri;
   private final JimpleConverterUtil util;
 
-  public SignaturePositionResolver(Path fileUri, String contents) {
+  public SignaturePositionResolver(Path fileUri, CharStream charStream) {
     this.fileUri = fileUri;
     util = new JimpleConverterUtil(fileUri);
-    JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromString(contents), fileUri);
+    JimpleParser parser = JimpleConverterUtil.createJimpleParser(charStream, fileUri);
 
     final SignatureOccurenceAggregator signatureOccurenceAggregator =
-        new SignatureOccurenceAggregator();
+            new SignatureOccurenceAggregator();
     parser.file().enterRule(signatureOccurenceAggregator);
   }
 
@@ -52,12 +52,12 @@ public class SignaturePositionResolver {
     ClassType clazz;
 
     @Override
-    public void enterFile(JimpleParser.FileContext ctx) {
+    public void enterFile(JimpleParser.FileContext ctx  ) {
       if (ctx.classname == null) {
         throw new ResolveException(
             "Identifier for this unit is not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
-      String classname = StringTools.getUnEscapedStringOf(ctx.classname.getText());
+      String classname = Jimple.unescape(ctx.classname.getText());
       clazz = util.getClassType(classname);
       positionContainer.add(ctx.classname.start, ctx.classname.stop, clazz, null);
 
@@ -99,7 +99,7 @@ public class SignaturePositionResolver {
       MethodSignature methodSignature =
           util.getIdentifierFactory()
               .getMethodSignature(
-                  StringTools.getUnEscapedStringOf(methodname), clazz, type, params);
+                  Jimple.unescape(methodname), clazz, type, params);
       positionContainer.add(ctx.start, ctx.stop, methodSignature, null);
 
       if (ctx.throws_clause() != null) {
@@ -147,7 +147,7 @@ public class SignaturePositionResolver {
     @Nonnull List<Position> endPositions = new ArrayList<>();
     @Nonnull List<Pair<Signature, String>> signaturesAndIdentifiers = new ArrayList<>();
 
-    Comparator<Position> comp = new PositionComparator();
+    Comparator<Position> comparator = new PositionComparator();
 
     void add(Token start, Token end, Signature sig, @Nullable String identifier) {
       final Position startPos = new Position(start.getLine(), start.getCharPositionInLine());
@@ -166,10 +166,12 @@ public class SignaturePositionResolver {
 
       if (index < 0 || index >= startPositions.size()) {
         // not exactly found;
-        index = -index + 1;
+        // index = -index + 1;
+        return null;
       }
-      if (comp.compare(startPositions.get(index), position) <= 0
-          && comp.compare(position, endPositions.get(index)) <= 0) {
+      // FIXME: BUG
+      if (comparator.compare(startPositions.get(index), position) <= 0
+          && comparator.compare(position, endPositions.get(index)) <= 0) {
         return signaturesAndIdentifiers.get(index);
       }
       return null;

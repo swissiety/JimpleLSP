@@ -21,7 +21,7 @@ import org.eclipse.lsp4j.Range;
  *
  * @author Markus Schmidt
  */
-public class JimpleLabelLinkProvider extends JimpleBaseListener {
+public class JimpleLabelReferenceProvider extends JimpleBaseListener {
   @Nonnull private final Map<String, Range> labelTargets = new HashMap<>();
   @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
 

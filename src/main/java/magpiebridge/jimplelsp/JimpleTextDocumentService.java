@@ -139,7 +139,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       // calculate and cache interesting i.e.signature positions of the opened file
       docSignaturePositionResolver.put(
               uri,
-              new SignaturePositionResolver(Util.uriToPath(uri), text));
+              new SignaturePositionResolver(Util.uriToPath(uri), CharStreams.fromString(text)));
     }
   }
 
@@ -430,7 +430,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
-  @Override
+
+/* TODO: do label jumps via go to definition
+ @Override
   public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
     if (params == null) {
       return null;
@@ -454,6 +456,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               return null;
             });
   }
+ */
 
   /*
     @Override
