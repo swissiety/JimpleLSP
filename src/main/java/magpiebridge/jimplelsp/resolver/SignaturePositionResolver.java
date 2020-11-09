@@ -56,13 +56,6 @@ public class SignaturePositionResolver {
     SmartDatastructure positionContainer = new SmartDatastructure();
     ClassType clazz;
 
-    private void addType(JimpleParser.TypeContext typeCtx) {
-      final Type returnType = util.getType(typeCtx.getText());
-      if(returnType instanceof ClassType){
-        positionContainer.add(typeCtx.identifier(), (Signature) returnType,null );
-      }
-    }
-
     @Override
     public void enterFile(JimpleParser.FileContext ctx  ) {
       if (ctx.classname == null) {
@@ -78,30 +71,12 @@ public class SignaturePositionResolver {
         positionContainer.add(ctx.extends_clause().classname, superclass, null);
       }
 
-      if (ctx.implements_clause() != null) {
-        List<ClassType> interfaces = util.getClassTypeList(ctx.implements_clause().type_list());
-        for (int i = 0, interfacesSize = interfaces.size(); i < interfacesSize; i++) {
-          ClassType anInterface = interfaces.get(i);
-          final JimpleParser.TypeContext interfaceToken =
-              ctx.implements_clause().type_list().type(i);
-          positionContainer.add(interfaceToken, anInterface, null);
-        }
-      }
-
       super.enterFile(ctx);
-    }
-
-    @Override
-    public void enterDeclaration(JimpleParser.DeclarationContext ctx) {
-      JimpleParser.TypeContext typeCtx = ctx.type();
-      addType(typeCtx);
-      super.enterDeclaration(ctx);
     }
 
     @Override
     public void enterMethod(JimpleParser.MethodContext ctx) {
       // parsing the declaration
-
       Type type = util.getType(ctx.type().getText());
       if (type == null) {
         throw new ResolveException(
@@ -120,14 +95,6 @@ public class SignaturePositionResolver {
                   Jimple.unescape(methodname), clazz, type, params);
       positionContainer.add(ctx, methodSignature, null);
 
-      if (ctx.throws_clause() != null) {
-        List<ClassType> exceptions = util.getClassTypeList(ctx.throws_clause().type_list());
-        for (int i = 0, exceptionsSize = exceptions.size(); i < exceptionsSize; i++) {
-          final JimpleParser.TypeContext typeContext = ctx.throws_clause().type_list().type(i);
-          positionContainer.add(typeContext, exceptions.get(i), null);
-        }
-      }
-
       super.enterMethod(ctx);
     }
 
@@ -136,20 +103,6 @@ public class SignaturePositionResolver {
       positionContainer.add(ctx.class_name, util.getClassType(ctx.class_name.getText()), null);
       final JimpleParser.Method_nameContext method_nameCtx = ctx.method_subsignature().method_name();
       positionContainer.add(method_nameCtx, util.getMethodSignature(ctx, null), null);
-      // returntype
-      final JimpleParser.TypeContext returntypeCtx = ctx.method_subsignature().type();
-      addType(returntypeCtx);
-
-      // parameter types
-      final JimpleParser.Type_listContext type_listContext = ctx.method_subsignature().type_list();
-      if( type_listContext!= null) {
-        for (JimpleParser.TypeContext typeCtx : type_listContext.type()) {
-          final Type paramType = util.getType(typeCtx.identifier().getText());
-          if(paramType instanceof ClassType) {
-            positionContainer.add(typeCtx.identifier(), (Signature) paramType, null);
-          }
-        }
-      }
 
       super.enterMethod_signature(ctx);
     }
@@ -159,17 +112,6 @@ public class SignaturePositionResolver {
       positionContainer.add(ctx.classname, util.getClassType(ctx.classname.getText()), null);
       positionContainer.add(ctx.fieldname, util.getFieldSignature(ctx), null);
       super.enterField_signature(ctx);
-    }
-
-    @Override
-    public void enterIdentity_ref(JimpleParser.Identity_refContext ctx) {
-      if (ctx.type() != null) {
-        final Type type = util.getType(ctx.type().getText());
-        if(type instanceof ClassType) {
-          positionContainer.add(ctx.type(), (Signature) type, null);
-        }
-      }
-      super.enterIdentity_ref(ctx);
     }
 
     @Override
@@ -198,7 +140,18 @@ public class SignaturePositionResolver {
     public void enterImportItem(JimpleParser.ImportItemContext ctx) {
       // add information for resolving classes correctly
       util.addImport(ctx);
+
+      positionContainer.add(ctx.location, util.getClassType(ctx.location.getText()), null);
       super.enterImportItem(ctx);
+    }
+
+    @Override
+    public void enterType(JimpleParser.TypeContext ctx) {
+      final Type returnType = util.getType(ctx.getText());
+      if(returnType instanceof ClassType){
+        positionContainer.add(ctx.identifier(), (Signature) returnType,null );
+      }
+      super.enterType(ctx);
     }
 
     @Nullable
