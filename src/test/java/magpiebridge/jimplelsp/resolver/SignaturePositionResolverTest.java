@@ -27,51 +27,55 @@ public class SignaturePositionResolverTest extends TestCase {
 
   public void testResolveClassSigFromClassDefinition() {
     // TODO
-    final Signature sig = resolver.resolve(new Position(0, 0));
+    final Signature sig = resolver.resolve(new Position(3, 20));
     assertNotNull(sig);
-    assertEquals("", sig.toString());
+    assertEquals("de.upb.Car", sig.toString());
   }
 
   public void testResolveMethodSigFromMethodDefinition()  {
-    // TODO
-    final Signature sig = resolver.resolve(new Position(0, 0));
-    assertNotNull(sig);
-    assertEquals("", sig.toString());
+    // beginning position
+    {
+      final Signature sig = resolver.resolve(new Position(17, 17));
+      assertNotNull(sig);
+      assertEquals("driving", sig.toString());
+    }
+
+    // middle position
+    {
+      final Signature sig = resolver.resolve(new Position(17, 18));
+      assertNotNull(sig);
+      assertEquals("driving", sig.toString());
+    }
   }
 
-  public void testResolvClassSigUsageFromMethodSigException() {
-    // TODO
+  public void testResolveClassSigUsageFromMethodSigException() {
     final Signature sig = resolver.resolve(new Position(0, 0));
     assertNotNull(sig);
-    assertEquals("", sig.toString());
+    assertEquals("java.lang.Exception", sig.toString());
   }
 
-  public void testResolvClassSigUsageFromExtends() {
-    // TODO
-    final Signature sig = resolver.resolve(new Position(0, 0));
+  public void testResolveClassSigUsageFromExtends() {
+    final Signature sig = resolver.resolve(new Position(3, 42));
     assertNotNull(sig);
-    assertEquals("", sig.toString());
+    assertEquals("de.upb.Vehicle", sig.toString());
   }
 
-  public void testResolvClassSigUsageFromImplements(){
-    // TODO
-    final Signature sig = resolver.resolve(new Position(0, 0));
+  public void testResolveClassSigUsageFromImplements(){
+    final Signature sig = resolver.resolve(new Position(3, 69));
     assertNotNull(sig);
-    assertEquals("", sig.toString());
+    assertEquals("de.upb.SelfDriving", sig.toString());
   }
 
-  public void testResolvClassSigUsageFromBody(){
-    // TODO
-    final Signature sig = resolver.resolve(new Position(0, 0));
+  public void testResolveClassSigUsageFromBody(){
+    final Signature sig = resolver.resolve(new Position(24, 24));
     assertNotNull(sig);
-    assertEquals("", sig.toString());
+    assertEquals("java.lang.Exception", sig.toString());
   }
 
   // methodsig iside body
-  public void testResolvMethodSigUsageFromInsideBody(){
-    // TODO
-    final Signature sig = resolver.resolve(new Position(0, 0));
+  public void testResolveMethodSigUsageFromInsideBody(){
+    final Signature sig = resolver.resolve(new Position(26, 28));
     assertNotNull(sig);
-    assertEquals("", sig.toString());
+    assertEquals("java.lang.Exception: void <init>(java.lang.String)", sig.toString());
   }
 }
