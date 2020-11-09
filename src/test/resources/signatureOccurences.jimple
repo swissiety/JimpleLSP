@@ -1,5 +1,5 @@
 // this Jimple file is not valid in respect to other classes i.e. dont parse a sootclass from it!
-
+// DO NOT MODIFY POSITIONS!
 public class de.upb.Car extends de.upb.Vehicle implements de.upb.SelfDriving
 {
 
