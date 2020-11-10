@@ -45,12 +45,12 @@ public class LocalResolver {
   public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(SootClass sc, TextDocumentPositionParams pos ){
     final Optional<SootMethod> surroundingMethod = sc.getMethods().stream().filter(m -> isInRangeOf( pos.getPosition(), m.getPosition()) ).findAny();
     if (surroundingMethod.isPresent()) {
-      final List<Pair<Position, String>> locals = localsOfMethod.get(surroundingMethod.get());
+      final List<Pair<Position, String>> locals = localsOfMethod.get(surroundingMethod.get().getSubSignature());
       if(locals == null){
         return null;
       }
 
-      final Optional<Pair<Position, String>> localOpt = locals.stream().findFirst(pair -> isInRangeOf(pos.getPosition(), pair.getLeft()) );
+      final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft()) ).findFirst();
       if (localOpt.isPresent()) {
         return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),localOpt.get().getLeft())));
       }
