@@ -2,10 +2,11 @@ package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
 import junit.framework.TestCase;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class SignaturePositionResolverTest extends TestCase {
@@ -25,74 +26,74 @@ public class SignaturePositionResolverTest extends TestCase {
   }
 
   public void testResolveClassSigFromClassDefinition() {
-    final Signature sig = resolver.resolve(new Position(2, 20));
+    final Pair<Signature, Range> sig = resolver.resolve(new Position(2, 20));
     assertNotNull(sig);
-    assertEquals("de.upb.Car", sig.toString());
+    assertEquals("de.upb.Car", sig.getLeft().toString());
   }
 
   public void testResolveMethodSigFromMethodDefinitionExcatStart()  {
     // beginning position
-    final Signature sig = resolver.resolve(new Position(16, 17));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(16, 17));
     assertNotNull(sig);
-    assertEquals("<de.upb.Car: void driving()>", sig.toString());
+    assertEquals("<de.upb.Car: void driving()>", sig.getLeft().toString());
   }
 
   public void testResolveMethodSigFromMethodDefinition()  {
     // middle position
-    final Signature sig = resolver.resolve(new Position(16, 18));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(16, 18));
     assertNotNull(sig);
-    assertEquals("<de.upb.Car: void driving()>", sig.toString());
+    assertEquals("<de.upb.Car: void driving()>", sig.getLeft().toString());
   }
 
   public void testResolveClassSigUsageFromMethodSigException() {
-    final Signature sig = resolver.resolve(new Position(16, 46));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(16, 46));
     assertNotNull(sig);
-    assertEquals("java.lang.Exception", sig.toString());
+    assertEquals("java.lang.Exception", sig.getLeft().toString());
   }
 
   public void testResolveClassSigUsageFromExtends() {
-    final Signature sig = resolver.resolve(new Position(2, 42));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(2, 42));
     assertNotNull(sig);
-    assertEquals("de.upb.Vehicle", sig.toString());
+    assertEquals("de.upb.Vehicle", sig.getLeft().toString());
   }
 
   public void testResolveClassSigUsageFromImplements(){
-    final Signature sig = resolver.resolve(new Position(2, 69));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(2, 69));
     assertNotNull(sig);
-    assertEquals("de.upb.SelfDriving", sig.toString());
+    assertEquals("de.upb.SelfDriving", sig.getLeft().toString());
   }
 
   public void testResolveClassSigUsageFromBody(){
     {
-      final Signature sig = resolver.resolve(new Position(25, 28));
+      final Pair<Signature,Range> sig = resolver.resolve(new Position(25, 28));
       assertNotNull(sig);
-      assertEquals("java.lang.Exception", sig.toString());
+      assertEquals("java.lang.Exception", sig.getLeft().toString());
     }
 
     {
-    final Signature sig = resolver.resolve(new Position(23, 20));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(23, 20));
     assertNotNull(sig);
-    assertEquals("java.lang.Exception", sig.toString());
+    assertEquals("java.lang.Exception", sig.getLeft().toString());
     }
   }
 
   // methodsig iside body
   public void testResolveMethodSigUsageFromInsideBody(){
-    final Signature sig = resolver.resolve(new Position(25, 57));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(25, 57));
     assertNotNull(sig);
-    assertEquals("<java.lang.Exception: void <init>(java.lang.String)>", sig.toString());
+    assertEquals("<java.lang.Exception: void <init>(java.lang.String)>", sig.getLeft().toString());
   }
 
   public void testResolveClassSigUsageFromInsideBodyMethodParameterType(){
-    final Signature sig = resolver.resolve(new Position(25, 62));
+    final Pair<Signature,Range> sig = resolver.resolve(new Position(25, 62));
     assertNotNull(sig);
-    assertEquals("java.lang.String", sig.toString());
+    assertEquals("java.lang.String", sig.getLeft().toString());
   }
 
   public void testResolveFieldSigUsageFromInsideBody(){
-    final Signature sig = fieldResolver.resolve(new Position(17, 71));
+    final Pair<Signature, Range> sig = fieldResolver.resolve(new Position(17, 71));
     assertNotNull(sig);
-    assertEquals("<de.upb.soot.concrete.fieldReference.A: java.lang.String str>", sig.toString());
+    assertEquals("<de.upb.soot.concrete.fieldReference.A: java.lang.String str>", sig.getLeft().toString());
   }
 
 }

@@ -17,6 +17,8 @@ import javax.annotation.Nullable;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Range;
 
 /**
  * This Class holds information about (open) jimple files. Especially range information about
@@ -47,7 +49,7 @@ public class SignaturePositionResolver {
   }
 
   @Nullable
-  public Signature resolve(org.eclipse.lsp4j.Position position) {
+  public Pair<Signature,Range> resolve(org.eclipse.lsp4j.Position position) {
     return occurences.resolve(position);
   }
 
@@ -154,8 +156,8 @@ public class SignaturePositionResolver {
     }
 
     @Nullable
-    Signature resolve(org.eclipse.lsp4j.Position position) {
-      final Signature resolve = positionContainer.resolve(position);
+    public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {
+      final Pair<Signature, Range> resolve = positionContainer.resolve(position);
       if (resolve == null) {
         return null;
       }

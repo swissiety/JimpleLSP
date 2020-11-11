@@ -149,6 +149,7 @@ public class JimpleLspServer extends MagpieServer {
 
       capabilities.setImplementationProvider(true);
       capabilities.setDefinitionProvider(true);
+      capabilities.setHoverProvider(true);
 
       // TODO: capabilities.setTypeDefinitionProvider(true);
       // TODO: capabilities.setReferencesProvider(true);

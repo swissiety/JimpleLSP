@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
@@ -34,6 +33,7 @@ import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import magpiebridge.jimplelsp.resolver.LocalResolver;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.antlr.v4.runtime.*;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -165,10 +165,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               if (resolver == null) {
                 return null;
               }
-              final Signature sig =
+              final Pair<Signature, Range> sigInst =
                   resolver
                       .resolve(position.getPosition());
-              if (sig == null) {
+              if (sigInst == null) {
                 // try whether its a Local (which has no Signature!)
 
 
@@ -188,6 +188,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
                 return localResolver.resolveDefinition(sc, position);
               }
+              Signature sig = sigInst.getLeft();
 
               if (sig instanceof ClassType) {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
@@ -248,10 +249,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               if (sigResolver == null) {
                 return null;
               }
-              final Signature sig = sigResolver.resolve(position.getPosition());
-              if (sig == null) {
+              final Pair<Signature, Range> sigInstance = sigResolver.resolve(position.getPosition());
+              if (sigInstance == null) {
                 return null;
               }
+              Signature sig = sigInstance.getLeft();
 
               final View view = getServer().getView();
               final ViewTypeHierarchy typeHierarchy = new ViewTypeHierarchy(view);
@@ -296,10 +298,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               if (resolver == null) {
                 return null;
               }
-              final Signature sig = resolver.resolve(params.getPosition());
-              if (sig == null) {
+              final Pair<Signature, Range> sigInstance = resolver.resolve(params.getPosition());
+              if (sigInstance == null) {
                 return null;
               }
+              Signature sig = sigInstance.getLeft();
 
               boolean includeDef =
                   params.getContext() != null && params.getContext().isIncludeDeclaration();
@@ -408,8 +411,33 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
+  @Override
+  public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+    if (position==null) {
+      return null;
+    }
 
-/* TODO: do label jumps via go to definition
+    return getServer().pool(
+            () -> {
+              final String uri = position.getTextDocument().getUri();
+              final SignaturePositionResolver sigResolver =
+                      docSignaturePositionResolver.get(uri);
+              if (sigResolver == null) {
+                return null;
+              }
+              final Pair<Signature, Range> sigInstance = sigResolver.resolve(position.getPosition());
+              if (sigInstance == null) {
+                return null;
+              }
+              Signature sig = sigInstance.getLeft();
+
+              Hover hover = new Hover( new MarkupContent(MarkupKind.PLAINTEXT, "This is a valid Jimple Signature i.e. "+ sig), sigInstance.getRight());
+              return hover;
+            });
+  }
+
+
+  /* TODO: do label jumps via go to definition
  @Override
   public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
     if (params == null) {

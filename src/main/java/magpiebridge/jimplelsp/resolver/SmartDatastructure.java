@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -44,7 +45,7 @@ class SmartDatastructure {
   }
 
   @Nullable
-  Signature resolve(Position position) {
+  Pair<Signature, Range> resolve(Position position) {
     if(startPositions.isEmpty()){
       return null;
     }
@@ -61,9 +62,11 @@ class SmartDatastructure {
       return null;
     }
 
-    if (comparator.compare(startPositions.get(index), position) <= 0
-        && comparator.compare(position, endPositions.get(index)) <= 0) {
-      return signaturesAndIdentifiers.get(index);
+    final Position startPos = startPositions.get(index);
+    final Position endPos = endPositions.get(index);
+    if (comparator.compare(startPos, position) <= 0
+        && comparator.compare(position, endPos) <= 0) {
+      return Pair.of(signaturesAndIdentifiers.get(index), new Range(startPos,endPos) );
     }
     return null;
   }
