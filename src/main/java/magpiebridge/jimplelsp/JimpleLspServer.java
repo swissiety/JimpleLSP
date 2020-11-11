@@ -63,10 +63,13 @@ public class JimpleLspServer extends MagpieServer {
             () -> {
               try {
                 return lambda.call();
+              }catch( ResolveException e){
+                // TODO: send publishDiagnostics!
+                e.printStackTrace();
               } catch (Throwable e) {
                 e.printStackTrace();
-                return null;
               }
+              return null;
             },
             THREAD_POOL);
   }
