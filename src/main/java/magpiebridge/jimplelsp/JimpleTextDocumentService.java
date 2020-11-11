@@ -431,8 +431,40 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               Signature sig = sigInstance.getLeft();
 
-              Hover hover = new Hover( new MarkupContent(MarkupKind.PLAINTEXT, "This is a valid Jimple Signature i.e. "+ sig), sigInstance.getRight());
-              return hover;
+
+              String str = null;
+              if(sig instanceof ClassType){
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass((ClassType) sig);
+                if(aClass.isPresent()){
+                  SootClass sc = (SootClass) aClass.get();
+                  str = Modifier.toString(sc.getModifiers()) +" "+sc.toString();
+                }
+              }else if( sig instanceof MethodSignature){
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
+                if(aClass.isPresent()){
+                  SootClass sc = (SootClass) aClass.get();
+                  final Optional<SootMethod> aMethod = sc.getMethod(((MethodSignature) sig).getSubSignature());
+                  if (aMethod.isPresent()) {
+                    final SootMethod sootMethod = aMethod.get();
+                    str = Modifier.toString(sootMethod.getModifiers()) +" "+sootMethod.toString();
+                  }
+                }
+              }else if( sig instanceof FieldSignature){
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
+                if(aClass.isPresent()){
+                  SootClass sc = (SootClass) aClass.get();
+                  final Optional<SootField> aField = sc.getField(((FieldSignature) sig).getSubSignature());
+                  if (aField.isPresent()) {
+                    final SootField sootField = aField.get();
+                    str = Modifier.toString(sootField.getModifiers()) +" "+sootField.toString();
+                  }
+                }
+              }
+
+              if (str!=null) {
+                return new Hover( new MarkupContent(MarkupKind.PLAINTEXT, str), sigInstance.getRight());
+              }
+              return null;
             });
   }
 
