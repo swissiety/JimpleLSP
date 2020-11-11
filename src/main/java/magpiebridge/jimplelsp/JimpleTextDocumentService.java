@@ -173,7 +173,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
 
                 final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType!=null) {
+                if (classType==null) {
                   return null;
                 }
 
@@ -185,7 +185,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalResolver localResolver = new LocalResolver(Paths.get(uri));
+                final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
                 return localResolver.resolveDefinition(sc, position);
               }
 
