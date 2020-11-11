@@ -61,23 +61,23 @@ public class JimpleSemanticHighlightingProvider extends JimpleBaseListener {
     // returntype
     symbols.add(
         new DocumentSymbol(
-            ctx.type().getText(),
+            ctx.method_subsignature().type().getText(),
             SymbolKind.Object,
             convertRange(ctx.start, ctx.stop),
             convertRange(ctx.start, ctx.stop)));
     // method name
     symbols.add(
         new DocumentSymbol(
-            ctx.method_name().getText(),
+            ctx.method_subsignature().method_name().getText(),
             SymbolKind.Method,
             convertRange(ctx.start, ctx.stop),
             convertRange(ctx.start, ctx.stop)));
     // parameter types
-    if (!ctx.type_list().isEmpty()) {
-      for (JimpleParser.TypeContext typeCtx : ctx.type_list().type()) {
+    if (!ctx.method_subsignature().type_list().isEmpty()) {
+      for (JimpleParser.TypeContext typeCtx : ctx.method_subsignature().type_list().type()) {
         symbols.add(
             new DocumentSymbol(
-                ctx.type().getText(),
+                ctx.method_subsignature().type().getText(),
                 SymbolKind.Object,
                 convertRange(typeCtx.start, typeCtx.stop),
                 convertRange(typeCtx.start, typeCtx.stop)));
@@ -88,7 +88,7 @@ public class JimpleSemanticHighlightingProvider extends JimpleBaseListener {
       for (JimpleParser.TypeContext typeCtx : ctx.throws_clause().type_list().type()) {
         symbols.add(
             new DocumentSymbol(
-                ctx.type().getText(),
+                ctx.method_subsignature().type().getText(),
                 SymbolKind.Object,
                 convertRange(typeCtx.start, typeCtx.stop),
                 convertRange(typeCtx.start, typeCtx.stop)));
