@@ -18,6 +18,7 @@ import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -40,7 +41,7 @@ public class LocalResolver {
 
     final JimpleParser jimpleParser = JimpleConverterUtil.createJimpleParser(charStream, this.path);
     ParseTreeWalker walker = new ParseTreeWalker();
-    walker.walk(new LocalDeclarationFinder(this.path), jimpleParser.file());
+    walker.walk(new LocalDeclarationFinder(path), jimpleParser.file());
   }
 
   public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(SootClass sc, TextDocumentPositionParams pos ){
@@ -65,7 +66,7 @@ public class LocalResolver {
     return null;
   }
 
-  private boolean isInRangeOf(org.eclipse.lsp4j.Position p1, Position p2) {
+  private boolean isInRangeOf(@Nonnull org.eclipse.lsp4j.Position p1, @Nonnull Position p2) {
     // simplify
     if (p1.getLine() > p2.getFirstLine()) {
         if (p1.getLine() < p2.getLastLine()) {
@@ -91,7 +92,7 @@ public class LocalResolver {
     private MethodSubSignature currentMethodSig = null;
     private List<Pair<Position, String>> currentLocalPositionList = null;
 
-    private LocalDeclarationFinder(Path path) {
+    private LocalDeclarationFinder(@Nonnull Path path) {
       this.path = path;
       util = new JimpleConverterUtil(path);
     }
@@ -117,6 +118,14 @@ public class LocalResolver {
     }
 
     @Override
+    public void enterReference(JimpleParser.ReferenceContext ctx) {
+      if (ctx.identifier() != null) {
+        currentLocalPositionList.add( Pair.of(JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()), Jimple.unescape(ctx.identifier().getText())) );
+      }
+      super.enterReference(ctx);
+    }
+
+    @Override
     public void enterInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
       if( ctx.local_name != null) {
         currentLocalPositionList.add(Pair.of(JimpleConverterUtil.buildPositionFromCtx(ctx.local_name), Jimple.unescape(ctx.local_name.getText())));
@@ -131,5 +140,7 @@ public class LocalResolver {
       }
       super.enterImmediate(ctx);
     }
+
+
   }
 }

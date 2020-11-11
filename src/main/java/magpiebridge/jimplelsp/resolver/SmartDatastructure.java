@@ -20,11 +20,11 @@ class SmartDatastructure {
   @Nonnull
   List<Position> startPositions = new ArrayList<>();
   @Nonnull List<Position> endPositions = new ArrayList<>();
-  @Nonnull List<Pair<Signature, String>> signaturesAndIdentifiers = new ArrayList<>();
+  @Nonnull List<Signature> signaturesAndIdentifiers = new ArrayList<>();
 
   Comparator<Position> comparator = new PositionComparator();
 
-  void add(ParserRuleContext token, Signature sig, @Nullable String identifier) {
+  void add(ParserRuleContext token, Signature sig) {
     // insert sorted to be accessed via binary search
     // lsp is zero indexed; antlrs line not
     final Position startPos = new Position(token.start.getLine()-1, token.start.getCharPositionInLine());
@@ -40,11 +40,11 @@ class SmartDatastructure {
     final de.upb.swt.soot.core.model.Position position = JimpleConverterUtil.buildPositionFromCtx(token);
     endPositions.add(idx, new Position(position.getLastLine(), position.getLastCol()));
 
-    signaturesAndIdentifiers.add(idx, Pair.of(sig, identifier));
+    signaturesAndIdentifiers.add(idx, sig);
   }
 
   @Nullable
-  Pair<Signature, String> resolve(Position position) {
+  Signature resolve(Position position) {
     if(startPositions.isEmpty()){
       return null;
     }

@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 
+import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.lsp4j.Location;
@@ -39,9 +40,10 @@ public class Util {
   @Nonnull
   public static Range ctxToRange(@Nonnull ParserRuleContext ctx) {
     // line numbers starting zero-based in LSP vs one-based in antlr
+    final Position sootPosition = JimpleConverterUtil.buildPositionFromCtx(ctx);
     return new Range(
-            new org.eclipse.lsp4j.Position(ctx.start.getLine()-1, ctx.start.getCharPositionInLine()),
-            new org.eclipse.lsp4j.Position(ctx.stop.getLine()-1, ctx.stop.getCharPositionInLine()));
+            new org.eclipse.lsp4j.Position(sootPosition.getFirstLine(), sootPosition.getFirstCol()),
+            new org.eclipse.lsp4j.Position(sootPosition.getLastLine(), sootPosition.getLastCol()));
   }
 
   @Nonnull
@@ -49,9 +51,10 @@ public class Util {
     // line numbers starting zero-based in LSP vs one-based in antlr
     return new Range(
             new org.eclipse.lsp4j.Position(position.getFirstLine()-1, position.getFirstCol()),
+            // to next line
             new org.eclipse.lsp4j.Position(position.getFirstLine(), 0));
             // extract interesting part /beginning which usually is the signature of the current Range
-            // new org.eclipse.lsp4j.Position(position.getLastLine()-1, position.getLastCol()));
+            // new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
 
   public static Either<List<? extends Location>, List<? extends LocationLink>> positionToLocationList(

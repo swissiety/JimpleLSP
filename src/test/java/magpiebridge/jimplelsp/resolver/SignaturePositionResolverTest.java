@@ -10,13 +10,14 @@ import java.nio.file.Paths;
 
 public class SignaturePositionResolverTest extends TestCase {
 
-  SignaturePositionResolver resolver;
+  private SignaturePositionResolver resolver;
+  private SignaturePositionResolver fieldResolver;
 
   @Override
   protected void setUp(){
     try {
-      final Path path = Paths.get("src/test/resources/signatureOccurences.jimple").toAbsolutePath();
-      resolver = new SignaturePositionResolver(path);
+      resolver = new SignaturePositionResolver(Paths.get("src/test/resources/signatureOccurences.jimple").toAbsolutePath());
+      fieldResolver = new SignaturePositionResolver(Paths.get("src/test/resources/FieldSignatureOccurences.jimple"));
     } catch (IOException exception) {
       exception.printStackTrace();
       fail("filenotfound");
@@ -24,7 +25,6 @@ public class SignaturePositionResolverTest extends TestCase {
   }
 
   public void testResolveClassSigFromClassDefinition() {
-    // TODO
     final Signature sig = resolver.resolve(new Position(2, 20));
     assertNotNull(sig);
     assertEquals("de.upb.Car", sig.toString());
@@ -88,4 +88,11 @@ public class SignaturePositionResolverTest extends TestCase {
     assertNotNull(sig);
     assertEquals("java.lang.String", sig.toString());
   }
+
+  public void testResolveFieldSigUsageFromInsideBody(){
+    final Signature sig = fieldResolver.resolve(new Position(17, 71));
+    assertNotNull(sig);
+    assertEquals("<de.upb.soot.concrete.fieldReference.A: java.lang.String str>", sig.toString());
+  }
+
 }
