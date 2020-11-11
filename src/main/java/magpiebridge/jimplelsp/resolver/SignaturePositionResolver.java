@@ -77,18 +77,18 @@ public class SignaturePositionResolver {
     @Override
     public void enterMethod(JimpleParser.MethodContext ctx) {
       // parsing the declaration
-      Type type = util.getType(ctx.type().getText());
+      Type type = util.getType(ctx.method_subsignature().type().getText());
       if (type == null) {
         throw new ResolveException(
             "Returntype not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
-      String methodname = ctx.method_name().getText();
+      String methodname = ctx.method_subsignature().method_name().getText();
       if (methodname == null) {
         throw new ResolveException(
             "Methodname not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
 
-      List<Type> params = util.getTypeList(ctx.type_list());
+      List<Type> params = util.getTypeList(ctx.method_subsignature().type_list());
       MethodSignature methodSignature =
           util.getIdentifierFactory()
               .getMethodSignature(

@@ -33,7 +33,8 @@ public class LocalResolver {
     final CharStream charStream;
     try {
       charStream = CharStreams.fromPath(this.path);
-    } catch (IOException exception) {
+    } catch (IOException e) {
+      e.printStackTrace();
       return;
     }
 
@@ -50,19 +51,34 @@ public class LocalResolver {
         return null;
       }
 
-      final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft()) ).findFirst();
+      // determine name of local
+      final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft()) ).findAny();
       if (localOpt.isPresent()) {
-        return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),localOpt.get().getLeft())));
+        final String localname = localOpt.get().getRight();
+        // first occurence of that local (in the current method) is the definition (or declaration if existing).
+        final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
+        if (deflocalOpt.isPresent()) {
+          return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
+        }
       }
     }
     return null;
   }
 
   private boolean isInRangeOf(org.eclipse.lsp4j.Position p1, Position p2) {
-    if(p1.getLine() >= p2.getFirstLine() && p1.getLine() <= p2.getLastLine() ){
-     if( p1.getCharacter() >= p2.getFirstCol() && p1.getCharacter() <= p2.getLastCol()){
-       return true;
-     }
+    // simplify
+    if (p1.getLine() > p2.getFirstLine()) {
+        if (p1.getLine() < p2.getLastLine()) {
+          return true;
+        }else if(p1.getLine() == p2.getLastLine() && p1.getCharacter() <= p2.getLastCol() ){
+            return true;
+        }
+    }else if(p1.getLine() == p2.getFirstLine() && p1.getCharacter() >= p2.getFirstCol()){
+      if (p1.getLine() < p2.getLastLine()) {
+        return true;
+      }else if(p1.getLine() == p2.getLastLine() && p1.getCharacter() <= p2.getLastCol() ){
+        return true;
+      }
     }
     return false;
   }
@@ -82,36 +98,37 @@ public class LocalResolver {
 
     @Override
     public void enterMethod(JimpleParser.MethodContext ctx) {
-      localsOfMethod.put( currentMethodSig, currentLocalPositionList);
       currentMethodSig = util.getMethodSubSignature(ctx.method_subsignature(), ctx);
       currentLocalPositionList = new ArrayList<>();
       super.enterMethod(ctx);
     }
 
     @Override
-    public void enterDeclaration(JimpleParser.DeclarationContext ctx) {
-      final JimpleParser.Arg_listContext arg_listCtx = ctx.arg_list();
-      if (arg_listCtx == null) {
-        throw new ResolveException("Jimple Syntaxerror: Locals are missing.", path, JimpleConverterUtil.buildPositionFromCtx(ctx) );
-      }
-      if (ctx.type() == null) {
-        throw new ResolveException("Jimple Syntaxerror: Type missing.", path, JimpleConverterUtil.buildPositionFromCtx(ctx) );
-      }
-      for (JimpleParser.ImmediateContext immediateCtx : arg_listCtx.immediate()) {
-        currentLocalPositionList.add( Pair.of(JimpleConverterUtil.buildPositionFromCtx(immediateCtx.local), Jimple.unescape(immediateCtx.local.getText() )) );
-      }
+    public void exitMethod(JimpleParser.MethodContext ctx) {
+      localsOfMethod.put( currentMethodSig, currentLocalPositionList);
+    }
 
-      super.enterDeclaration(ctx);
+    @Override
+    public void enterAssignments(JimpleParser.AssignmentsContext ctx) {
+      if (ctx.local != null) {
+        currentLocalPositionList.add( Pair.of(JimpleConverterUtil.buildPositionFromCtx(ctx.local), Jimple.unescape(ctx.local.getText())) );
+      }
+      super.enterAssignments(ctx);
+    }
+
+    @Override
+    public void enterInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
+      if( ctx.local_name != null) {
+        currentLocalPositionList.add(Pair.of(JimpleConverterUtil.buildPositionFromCtx(ctx.local_name), Jimple.unescape(ctx.local_name.getText())));
+      }
+      super.enterInvoke_expr(ctx);
     }
 
     @Override
     public void enterImmediate(JimpleParser.ImmediateContext ctx) {
-      if (ctx.local == null) {
-          throw new ResolveException("Jimple Syntaxerror: immediate is not a local.", path, JimpleConverterUtil.buildPositionFromCtx(ctx) );
+      if (ctx.local != null) {
+        currentLocalPositionList.add( Pair.of(JimpleConverterUtil.buildPositionFromCtx(ctx.local), Jimple.unescape(ctx.local.getText())) );
       }
-
-      currentLocalPositionList.add( Pair.of(JimpleConverterUtil.buildPositionFromCtx(ctx.local), Jimple.unescape(ctx.local.getText())) );
-
       super.enterImmediate(ctx);
     }
   }

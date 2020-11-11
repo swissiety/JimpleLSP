@@ -1,6 +1,7 @@
 package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
+import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.apache.commons.lang3.tuple.Pair;
@@ -36,24 +37,8 @@ class SmartDatastructure {
     }
 
     startPositions.add(idx, startPos);
-
-    // calc end position (line number+char offset in line) as antlr is not capable to do it intuitively
-    String tokenstr = token.getText();
-    // lsp indexes everything zero based - antlr does it only chars in line; linenos are indexed one-based => subtract one ;)
-    int lineCount = -1;
-    int fromIdx = 0;
-    int lastLineBreakIdx = 0;
-    while ((fromIdx = tokenstr.indexOf("\n", fromIdx)) != -1 ){
-      lastLineBreakIdx = fromIdx;
-      lineCount++;
-      fromIdx++;
-    }
-
-    int endCharLength = tokenstr.length()-lastLineBreakIdx;
-
-    int line = token.stop.getLine();
-    int charPositionInLine = token.stop.getCharPositionInLine();
-    endPositions.add(idx, new Position(line+lineCount, charPositionInLine+endCharLength));
+    final de.upb.swt.soot.core.model.Position position = JimpleConverterUtil.buildPositionFromCtx(token);
+    endPositions.add(idx, new Position(position.getLastLine(), position.getLastCol()));
 
     signaturesAndIdentifiers.add(idx, Pair.of(sig, identifier));
   }
