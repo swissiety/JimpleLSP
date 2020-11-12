@@ -64,7 +64,8 @@ public class LocalResolver {
         .findAny();
   }
 
-  private Optional<Pair<Position, String>> getSelectedLocalInfo(@Nonnull List<Pair<Position, String>> locals, @Nonnull TextDocumentPositionParams pos) {
+  private Optional<Pair<Position, String>> getSelectedLocalInfo(
+      @Nonnull List<Pair<Position, String>> locals, @Nonnull TextDocumentPositionParams pos) {
     // determine name/range of selected local
     return locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
   }
@@ -81,7 +82,9 @@ public class LocalResolver {
       return null;
     }
     final String localname = localOpt.get().getRight();
-    return locals.stream().filter(l -> l.getRight().equals(localname) ).map(
+    return locals.stream()
+        .filter(l -> l.getRight().equals(localname))
+        .map(
             l ->
                 new DocumentHighlight(
                     Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text))

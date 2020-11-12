@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.file.SourceFileManager;
@@ -191,7 +190,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return localResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
-              if(sig != null){
+              if (sig != null) {
                 return Either.forLeft(Collections.singletonList(getDefinitionLocation(sig)));
               }
               return null;
@@ -206,7 +205,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
         return new Location(
-            Util.pathToUri(sc.getClassSource().getSourcePath()), Util.positionToRange(sc.getPosition()));
+            Util.pathToUri(sc.getClassSource().getSourcePath()),
+            Util.positionToRange(sc.getPosition()));
       }
 
     } else if (sig instanceof MethodSignature) {
@@ -216,8 +216,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         SootClass sc = (SootClass) aClass.get();
         final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
         if (method.isPresent()) {
-          return new Location(Util.pathToUri(sc.getClassSource().getSourcePath()),
-                  Util.positionToRange(method.get().getPosition()));
+          return new Location(
+              Util.pathToUri(sc.getClassSource().getSourcePath()),
+              Util.positionToRange(method.get().getPosition()));
         }
       }
 
@@ -226,10 +227,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
           getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
-        final Optional<SootField> field =
-            sc.getField(((FieldSignature) sig).getSubSignature());
+        final Optional<SootField> field = sc.getField(((FieldSignature) sig).getSubSignature());
         if (field.isPresent()) {
-          return new Location(Util.pathToUri(sc.getClassSource().getSourcePath()), Util.positionToRange(field.get().getPosition()));
+          return new Location(
+              Util.pathToUri(sc.getClassSource().getSourcePath()),
+              Util.positionToRange(field.get().getPosition()));
         }
       }
     }
@@ -272,7 +274,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
                       scOpt.ifPresent(
                           sootClass ->
-                              list.add(Util.positionToLocation(Util.pathToUri(sootClass.getClassSource().getSourcePath()), sootClass.getPosition())));
+                              list.add(
+                                  Util.positionToLocation(
+                                      Util.pathToUri(sootClass.getClassSource().getSourcePath()),
+                                      sootClass.getPosition())));
                     });
 
                 return Either.forLeft(list);
@@ -286,18 +291,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                         final SootClass sc = scOpt.get();
                         final Optional<SootMethod> methodOpt =
                             sc.getMethod(((MethodSignature) sig).getSubSignature());
-                        final String methodsClassUri = Util.pathToUri(sc.getClassSource().getSourcePath());
+                        final String methodsClassUri =
+                            Util.pathToUri(sc.getClassSource().getSourcePath());
                         methodOpt.ifPresent(
-                            method ->
-                            {
+                            method -> {
                               list.add(
-                                  Util.positionToLocation(
-                                          methodsClassUri, method.getPosition()));
+                                  Util.positionToLocation(methodsClassUri, method.getPosition()));
                             });
                       }
                     });
 
-                return Either.forLeft(list );
+                return Either.forLeft(list);
               }
 
               return null;
@@ -315,7 +319,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             () -> {
               List<Location> list = new ArrayList<>();
               final SignaturePositionResolver resolver =
-                      docSignaturePositionResolver.get(params.getTextDocument().getUri());
+                  docSignaturePositionResolver.get(params.getTextDocument().getUri());
               if (resolver == null) {
                 return null;
               }
@@ -326,11 +330,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               Signature sig = sigInstance.getLeft();
 
               boolean includeDef =
-                      params.getContext() != null && params.getContext().isIncludeDeclaration();
+                  params.getContext() != null && params.getContext().isIncludeDeclaration();
 
               if (includeDef) {
                 final Location definitionLocation = getDefinitionLocation(sig);
-                if(definitionLocation!= null) {
+                if (definitionLocation != null) {
                   list.add(definitionLocation);
                 }
               }
@@ -667,6 +671,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+    // possibilities: fold imports | fold multiline comments
     if (params == null) {
       return null;
     }
@@ -696,7 +701,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return frList;
               }
 
-              // possibilities: fold imports | fold multiline comments
               return null;
             });
   }
