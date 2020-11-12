@@ -562,37 +562,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
-  /*
-      @Override
-      public CompletableFuture<TypeHierarchyItem> resolveTypeHierarchy(ResolveTypeHierarchyItemParams params) {
-          if( params == null ){
-          return null;
-        }
-
-        // TODO:
-        return getServer().pool(() -> {
-          params.getDirection();
-          params.getItem();
-          params.getResolve();
-          return null;
-        });
-      }
-
-      @Override
-      public CompletableFuture<TypeHierarchyItem> typeHierarchy(TypeHierarchyParams params) {
-          if( params == null ){
-          return null;
-        }
-
-        // TODO:
-        return getServer().pool(() -> {
-          params.getDirection();
-          params.getResolve();
-          return null;
-        });
-      }
-  */
-
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
       TextDocumentPositionParams position) {
