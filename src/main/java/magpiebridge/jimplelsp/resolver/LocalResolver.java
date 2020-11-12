@@ -109,21 +109,19 @@ public class LocalResolver {
   }
 
   private boolean isInRangeOf(@Nonnull org.eclipse.lsp4j.Position p1, @Nonnull Position p2) {
-    // simplify
-    if (p1.getLine() > p2.getFirstLine()) {
-      if (p1.getLine() < p2.getLastLine()) {
-        return true;
-      } else if (p1.getLine() == p2.getLastLine() && p1.getCharacter() <= p2.getLastCol()) {
-        return true;
-      }
-    } else if (p1.getLine() == p2.getFirstLine() && p1.getCharacter() >= p2.getFirstCol()) {
-      if (p1.getLine() < p2.getLastLine()) {
-        return true;
-      } else if (p1.getLine() == p2.getLastLine() && p1.getCharacter() <= p2.getLastCol()) {
-        return true;
-      }
+    if (p1.getLine() < p2.getFirstLine()) {
+      return false;
+    } else if (p1.getLine() == p2.getFirstLine() && p1.getCharacter() < p2.getFirstCol()) {
+      return false;
     }
-    return false;
+
+    if (p1.getLine() > p2.getLastLine()) {
+      return false;
+    } else if (p1.getLine() == p2.getLastLine() && p1.getCharacter() > p2.getLastCol()) {
+      return false;
+    }
+
+    return true;
   }
 
   private final class LocalDeclarationFinder extends JimpleBaseListener {
