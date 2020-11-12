@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.file.SourceFileManager;
@@ -189,46 +191,49 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return localResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
-
-              if (sig instanceof ClassType) {
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass((ClassType) sig);
-                if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  return Util.positionToLocationList(
-                      Util.pathToUri(sc.getClassSource().getSourcePath()), sc.getPosition());
-                }
-
-              } else if (sig instanceof MethodSignature) {
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
-                if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
-                  if (method.isPresent()) {
-                    return Util.positionToLocationList(
-                        Util.pathToUri(sc.getClassSource().getSourcePath()),
-                        method.get().getPosition());
-                  }
-                }
-
-              } else if (sig instanceof FieldSignature) {
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
-                if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  final Optional<SootField> field =
-                      sc.getField(((FieldSignature) sig).getSubSignature());
-                  if (field.isPresent()) {
-                    return Util.positionToLocationList(
-                        Util.pathToUri(sc.getClassSource().getSourcePath()),
-                        field.get().getPosition());
-                  }
-                }
+              if(sig != null){
+                return Either.forLeft(Collections.singletonList(getDefinitionLocation(sig)));
               }
-
               return null;
             });
+  }
+
+  @Nullable
+  private Location getDefinitionLocation(Signature sig) {
+    if (sig instanceof ClassType) {
+      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+          getServer().getView().getClass((ClassType) sig);
+      if (aClass.isPresent()) {
+        SootClass sc = (SootClass) aClass.get();
+        return new Location(
+            Util.pathToUri(sc.getClassSource().getSourcePath()), Util.positionToRange(sc.getPosition()));
+      }
+
+    } else if (sig instanceof MethodSignature) {
+      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+          getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
+      if (aClass.isPresent()) {
+        SootClass sc = (SootClass) aClass.get();
+        final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
+        if (method.isPresent()) {
+          return new Location(Util.pathToUri(sc.getClassSource().getSourcePath()),
+                  Util.positionToRange(method.get().getPosition()));
+        }
+      }
+
+    } else if (sig instanceof FieldSignature) {
+      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+          getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
+      if (aClass.isPresent()) {
+        SootClass sc = (SootClass) aClass.get();
+        final Optional<SootField> field =
+            sc.getField(((FieldSignature) sig).getSubSignature());
+        if (field.isPresent()) {
+          return new Location(Util.pathToUri(sc.getClassSource().getSourcePath()), Util.positionToRange(field.get().getPosition()));
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -304,13 +309,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (params == null) {
       return null;
     }
-    // find usages of Methods|Classes
+    // find usages of FieldSignaturesy|MethodSignatures|Classtypes
     return getServer()
         .pool(
             () -> {
               List<Location> list = new ArrayList<>();
               final SignaturePositionResolver resolver =
-                  docSignaturePositionResolver.get(params.getTextDocument().getUri());
+                      docSignaturePositionResolver.get(params.getTextDocument().getUri());
               if (resolver == null) {
                 return null;
               }
@@ -321,42 +326,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               Signature sig = sigInstance.getLeft();
 
               boolean includeDef =
-                  params.getContext() != null && params.getContext().isIncludeDeclaration();
-              if (sig instanceof ClassType) {
-                Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass(((ClassType) sig));
-                if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  list.add(
-                      new Location(Util.classToUri(sc), Util.positionToRange(sc.getPosition())));
-                }
-              } else if (sig instanceof MethodSignature) {
-                Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
-                if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  final Optional<? extends Method> method = sc.getMethod(((MethodSignature) sig));
-                  method.ifPresent(
-                      value ->
-                          list.add(
-                              new Location(
-                                  Util.classToUri(sc),
-                                  Util.positionToRange(((SootMethod) value).getPosition()))));
-                }
-              } else if (includeDef) {
-                if (sig instanceof FieldSignature) {
-                  Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                      getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
-                  if (aClass.isPresent()) {
-                    SootClass sc = (SootClass) aClass.get();
-                    final Optional<? extends Field> field = sc.getField(((FieldSignature) sig));
-                    field.ifPresent(
-                        value ->
-                            list.add(
-                                new Location(
-                                    Util.classToUri(sc),
-                                    Util.positionToRange(((SootField) value).getPosition()))));
-                  }
+                      params.getContext() != null && params.getContext().isIncludeDeclaration();
+
+              if (includeDef) {
+                final Location definitionLocation = getDefinitionLocation(sig);
+                if(definitionLocation!= null) {
+                  list.add(definitionLocation);
                 }
               }
 
