@@ -2,14 +2,12 @@ package magpiebridge.jimplelsp.provider;
 
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
-
 import magpiebridge.jimplelsp.Util;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.DocumentLink;

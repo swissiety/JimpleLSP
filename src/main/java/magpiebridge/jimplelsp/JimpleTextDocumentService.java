@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
-
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.file.SourceFileManager;
@@ -122,7 +121,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
     super.didClose(params);
-    if (params == null || params.getTextDocument() == null || params.getTextDocument().getUri() == null) {
+    if (params == null
+        || params.getTextDocument() == null
+        || params.getTextDocument().getUri() == null) {
       return;
     }
     // clear position cache
@@ -136,16 +137,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     final String uri = params.getTextDocument().getUri();
     String language = inferLanguage(uri);
     SourceFileManager fileManager = server.getSourceFileManager(language);
-    getServer().quarantineInputOrUpdate(params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(uri).getText() );
+    getServer()
+        .quarantineInputOrUpdate(
+            params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(uri).getText());
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
     final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
-    if(valid) {
+    if (valid) {
       // calculate and cache interesting i.e.signature positions of the opened file
       docSignaturePositionResolver.put(
-              uri,
-              new SignaturePositionResolver(Util.uriToPath(uri), text));
+          uri, new SignaturePositionResolver(Util.uriToPath(uri), text));
     }
   }
 
@@ -156,30 +158,27 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       return null;
     }
 
-    //  go to declaration of Field/Method/Class/Local - if position resolves to a Type -> go to typeDefinition
+    //  go to declaration of Field/Method/Class/Local - if position resolves to a Type -> go to
+    // typeDefinition
     return getServer()
         .pool(
             () -> {
               final String uri = position.getTextDocument().getUri();
-              final SignaturePositionResolver resolver = docSignaturePositionResolver
-                      .get(uri);
+              final SignaturePositionResolver resolver = docSignaturePositionResolver.get(uri);
               if (resolver == null) {
                 return null;
               }
-              final Pair<Signature, Range> sigInst =
-                  resolver
-                      .resolve(position.getPosition());
+              final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
                 // try whether its a Local (which has no Signature!)
 
-
                 final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType==null) {
+                if (classType == null) {
                   return null;
                 }
 
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                        getServer().getView().getClass(classType);
+                    getServer().getView().getClass(classType);
                 if (!aClass.isPresent()) {
                   return null;
                 }
@@ -238,19 +237,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (position == null) {
       return null;
     }
-    // resolve position to ClassSignature/MethodSignature and retrieve respective subclasses/overriding methods there
+    // resolve position to ClassSignature/MethodSignature and retrieve respective
+    // subclasses/overriding methods there
     return getServer()
         .pool(
             () -> {
               List<Location> list = new ArrayList<>();
 
               final String uri = position.getTextDocument().getUri();
-              final SignaturePositionResolver sigResolver =
-                  docSignaturePositionResolver.get(uri);
+              final SignaturePositionResolver sigResolver = docSignaturePositionResolver.get(uri);
               if (sigResolver == null) {
                 return null;
               }
-              final Pair<Signature, Range> sigInstance = sigResolver.resolve(position.getPosition());
+              final Pair<Signature, Range> sigInstance =
+                  sigResolver.resolve(position.getPosition());
               if (sigInstance == null) {
                 return null;
               }
@@ -262,22 +262,32 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               if (sig instanceof ClassType) {
                 final Set<ClassType> classTypes = typeHierarchy.subtypesOf((ClassType) sig);
 
-                classTypes.forEach(csig -> {
-                  Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
-                  scOpt.ifPresent(sootClass -> list.add(Util.positionToLocation(uri, sootClass.getPosition())));
-                });
+                classTypes.forEach(
+                    csig -> {
+                      Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
+                      scOpt.ifPresent(
+                          sootClass ->
+                              list.add(Util.positionToLocation(uri, sootClass.getPosition())));
+                    });
 
                 return Either.forLeft(list);
               } else if (sig instanceof MethodSignature) {
-                final Set<ClassType> classTypes = typeHierarchy.subtypesOf(((MethodSignature) sig).getDeclClassType());
-                classTypes.forEach(csig -> {
-                  Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
-                  if(scOpt.isPresent()){
-                    final SootClass sc = scOpt.get();
-                    final Optional<SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig).getSubSignature());
-                    methodOpt.ifPresent(method -> list.add(Util.positionToLocation(Util.classToUri(sc), method.getPosition())));
-                  }
-                });
+                final Set<ClassType> classTypes =
+                    typeHierarchy.subtypesOf(((MethodSignature) sig).getDeclClassType());
+                classTypes.forEach(
+                    csig -> {
+                      Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
+                      if (scOpt.isPresent()) {
+                        final SootClass sc = scOpt.get();
+                        final Optional<SootMethod> methodOpt =
+                            sc.getMethod(((MethodSignature) sig).getSubSignature());
+                        methodOpt.ifPresent(
+                            method ->
+                                list.add(
+                                    Util.positionToLocation(
+                                        Util.classToUri(sc), method.getPosition())));
+                      }
+                    });
               }
 
               return null;
@@ -358,7 +368,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                               new Location(
                                   Util.classToUri(sc),
                                   Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
-                          // list a stmt just once even if the classtype occures multiple times in a single stmt.
+                          // list a stmt just once even if the classtype occures multiple times in a
+                          // single stmt.
                           break;
                         }
                       }
@@ -391,18 +402,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       if (stmt instanceof JInvokeStmt) {
                         invokeExpr = stmt.getInvokeExpr();
                       } else if (stmt instanceof JAssignStmt
-                              && ((JAssignStmt) stmt).getRightOp() instanceof AbstractInvokeExpr) {
+                          && ((JAssignStmt) stmt).getRightOp() instanceof AbstractInvokeExpr) {
                         invokeExpr = (AbstractInvokeExpr) ((JAssignStmt) stmt).getRightOp();
-                      }else{
+                      } else {
                         continue;
                       }
 
                       if (invokeExpr.getMethodSignature().equals(sig)) {
                         list.add(
-                                new Location(
-                                        Util.classToUri(sc),
-                                        Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
-
+                            new Location(
+                                Util.classToUri(sc),
+                                Util.positionToRange(stmt.getPositionInfo().getStmtPosition())));
                       }
                     }
                   }
@@ -413,31 +423,31 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
-    if (position==null) {
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+      typeDefinition(TextDocumentPositionParams position) {
+    if (position == null) {
       return null;
     }
 
     // method-> returntype; field -> type; local -> type
-    return getServer().pool(
+    return getServer()
+        .pool(
             () -> {
               final String uri = position.getTextDocument().getUri();
               final SignaturePositionResolver resolver = docSignaturePositionResolver.get(uri);
               if (resolver == null) {
                 return null;
               }
-              final Pair<Signature, Range> sigInst =
-                      resolver
-                              .resolve(position.getPosition());
+              final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
                 // try whether its a Local (which has no Signature!)
                 final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType==null) {
+                if (classType == null) {
                   return null;
                 }
 
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                        getServer().getView().getClass(classType);
+                    getServer().getView().getClass(classType);
                 if (!aClass.isPresent()) {
                   return null;
                 }
@@ -450,10 +460,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (!(type instanceof ClassType)) {
                   return null;
                 }
-                final Optional<SootClass> typeClass = (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
-                if(typeClass.isPresent()){
+                final Optional<SootClass> typeClass =
+                    (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
+                if (typeClass.isPresent()) {
                   final SootClass sootClass = typeClass.get();
-                  return Util.positionToLocationList(Util.pathToUri(sootClass.getClassSource().getSourcePath()) , sootClass.getPosition());
+                  return Util.positionToLocationList(
+                      Util.pathToUri(sootClass.getClassSource().getSourcePath()),
+                      sootClass.getPosition());
                 }
                 return null;
               }
@@ -463,36 +476,36 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return null;
               } else if (sig instanceof MethodSignature) {
                 final Type type = ((MethodSignature) sig).getType();
-                if(! (type instanceof ClassType)){
+                if (!(type instanceof ClassType)) {
                   return null;
                 }
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                        getServer().getView().getClass((ClassType) type);
+                    getServer().getView().getClass((ClassType) type);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
                   final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
                   if (method.isPresent()) {
                     return Util.positionToLocationList(
-                            Util.pathToUri(sc.getClassSource().getSourcePath()),
-                            method.get().getPosition());
+                        Util.pathToUri(sc.getClassSource().getSourcePath()),
+                        method.get().getPosition());
                   }
                 }
 
               } else if (sig instanceof FieldSignature) {
                 final Type type = ((FieldSignature) sig).getType();
-                if(! (type instanceof ClassType)){
+                if (!(type instanceof ClassType)) {
                   return null;
                 }
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                        getServer().getView().getClass((ClassType) type);
+                    getServer().getView().getClass((ClassType) type);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
                   final Optional<SootField> field =
-                          sc.getField(((FieldSignature) sig).getSubSignature());
+                      sc.getField(((FieldSignature) sig).getSubSignature());
                   if (field.isPresent()) {
                     return Util.positionToLocationList(
-                            Util.pathToUri(sc.getClassSource().getSourcePath()),
-                            field.get().getPosition());
+                        Util.pathToUri(sc.getClassSource().getSourcePath()),
+                        field.get().getPosition());
                   }
                 }
               }
@@ -503,119 +516,125 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
-    if (position==null) {
+    if (position == null) {
       return null;
     }
 
-    return getServer().pool(
+    return getServer()
+        .pool(
             () -> {
               final String uri = position.getTextDocument().getUri();
-              final SignaturePositionResolver sigResolver =
-                      docSignaturePositionResolver.get(uri);
+              final SignaturePositionResolver sigResolver = docSignaturePositionResolver.get(uri);
               if (sigResolver == null) {
                 return null;
               }
-              final Pair<Signature, Range> sigInstance = sigResolver.resolve(position.getPosition());
+              final Pair<Signature, Range> sigInstance =
+                  sigResolver.resolve(position.getPosition());
               if (sigInstance == null) {
                 return null;
               }
               Signature sig = sigInstance.getLeft();
 
-
               String str = null;
-              if(sig instanceof ClassType){
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass((ClassType) sig);
-                if(aClass.isPresent()){
+              if (sig instanceof ClassType) {
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                    getServer().getView().getClass((ClassType) sig);
+                if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  str = Modifier.toString(sc.getModifiers()) +" "+sc.toString();
+                  str = Modifier.toString(sc.getModifiers()) + " " + sc.toString();
                 }
-              }else if( sig instanceof MethodSignature){
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
-                if(aClass.isPresent()){
+              } else if (sig instanceof MethodSignature) {
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                    getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
+                if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  final Optional<SootMethod> aMethod = sc.getMethod(((MethodSignature) sig).getSubSignature());
+                  final Optional<SootMethod> aMethod =
+                      sc.getMethod(((MethodSignature) sig).getSubSignature());
                   if (aMethod.isPresent()) {
                     final SootMethod sootMethod = aMethod.get();
-                    str = Modifier.toString(sootMethod.getModifiers()) +" "+sootMethod.toString();
+                    str =
+                        Modifier.toString(sootMethod.getModifiers()) + " " + sootMethod.toString();
                   }
                 }
-              }else if( sig instanceof FieldSignature){
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
-                if(aClass.isPresent()){
+              } else if (sig instanceof FieldSignature) {
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                    getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
+                if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  final Optional<SootField> aField = sc.getField(((FieldSignature) sig).getSubSignature());
+                  final Optional<SootField> aField =
+                      sc.getField(((FieldSignature) sig).getSubSignature());
                   if (aField.isPresent()) {
                     final SootField sootField = aField.get();
-                    str = Modifier.toString(sootField.getModifiers()) +" "+sootField.toString();
+                    str = Modifier.toString(sootField.getModifiers()) + " " + sootField.toString();
                   }
                 }
               }
 
-              if (str!=null) {
-                return new Hover( new MarkupContent(MarkupKind.PLAINTEXT, str), sigInstance.getRight());
+              if (str != null) {
+                return new Hover(
+                    new MarkupContent(MarkupKind.PLAINTEXT, str), sigInstance.getRight());
               }
               return null;
             });
   }
-
 
   /* TODO: do label jumps via go to definition
- @Override
-  public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
-    if (params == null) {
-      return null;
-    }
-    // make labels clickable to get to the label
-    return getServer()
-        .pool(
-            () -> {
-              try {
-                final Path fileUri = Util.uriToPath(params.getTextDocument().getUri());
-                JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(fileUri), fileUri);
+  @Override
+   public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
+     if (params == null) {
+       return null;
+     }
+     // make labels clickable to get to the label
+     return getServer()
+         .pool(
+             () -> {
+               try {
+                 final Path fileUri = Util.uriToPath(params.getTextDocument().getUri());
+                 JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(fileUri), fileUri);
 
-                final JimpleLabelReferenceProvider listener = new JimpleLabelReferenceProvider();
-                parser.file().enterRule(listener);
+                 final JimpleLabelReferenceProvider listener = new JimpleLabelReferenceProvider();
+                 parser.file().enterRule(listener);
 
-                return listener.getLinks(fileUri);
-              } catch (IOException exception) {
-                exception.printStackTrace();
-              }
+                 return listener.getLinks(fileUri);
+               } catch (IOException exception) {
+                 exception.printStackTrace();
+               }
 
-              return null;
-            });
-  }
- */
+               return null;
+             });
+   }
+  */
 
   /*
-    @Override
-    public CompletableFuture<TypeHierarchyItem> resolveTypeHierarchy(ResolveTypeHierarchyItemParams params) {
-        if( params == null ){
-        return null;
+      @Override
+      public CompletableFuture<TypeHierarchyItem> resolveTypeHierarchy(ResolveTypeHierarchyItemParams params) {
+          if( params == null ){
+          return null;
+        }
+
+        // TODO:
+        return getServer().pool(() -> {
+          params.getDirection();
+          params.getItem();
+          params.getResolve();
+          return null;
+        });
       }
 
-      // TODO:
-      return getServer().pool(() -> {
-        params.getDirection();
-        params.getItem();
-        params.getResolve();
-        return null;
-      });
-    }
+      @Override
+      public CompletableFuture<TypeHierarchyItem> typeHierarchy(TypeHierarchyParams params) {
+          if( params == null ){
+          return null;
+        }
 
-    @Override
-    public CompletableFuture<TypeHierarchyItem> typeHierarchy(TypeHierarchyParams params) {
-        if( params == null ){
-        return null;
+        // TODO:
+        return getServer().pool(() -> {
+          params.getDirection();
+          params.getResolve();
+          return null;
+        });
       }
-
-      // TODO:
-      return getServer().pool(() -> {
-        params.getDirection();
-        params.getResolve();
-        return null;
-      });
-    }
-*/
+  */
   /*
     @Override
     public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
@@ -651,11 +670,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             () -> {
               // warning: removes comments!
               final ClassType classType = getServer().uriToClasstype(uri);
-              if( classType == null){
+              if (classType == null) {
                 return null;
               }
               final View view = getServer().getView();
-              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass = view.getClass(classType);
+              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                  view.getClass(classType);
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
 
@@ -665,7 +685,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 printer.printTo(sc, writer);
                 writer.close();
                 final String newText = out.toString();
-                return Collections.singletonList(new TextEdit(new Range(new Position(0,0), new Position(sc.getPosition().getLastLine(),sc.getPosition().getLastCol())), newText));
+                return Collections.singletonList(
+                    new TextEdit(
+                        new Range(
+                            new Position(0, 0),
+                            new Position(
+                                sc.getPosition().getLastLine(), sc.getPosition().getLastCol())),
+                        newText));
               }
               return null;
             });
@@ -680,14 +706,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
-              final ClassType classType = getServer().uriToClasstype(params.getTextDocument().getUri());
-              if( classType == null){
+              final ClassType classType =
+                  getServer().uriToClasstype(params.getTextDocument().getUri());
+              if (classType == null) {
                 return null;
               }
               final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                  getServer()
-                      .getView()
-                      .getClass(classType);
+                  getServer().getView().getClass(classType);
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
                 List<FoldingRange> frList = new ArrayList<>();
@@ -736,17 +761,15 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 return null;
               }
               final String uri = textDoc.getUri();
-              if( uri == null){
+              if (uri == null) {
                 return null;
               }
               final ClassType classType = getServer().uriToClasstype(uri);
-              if( classType == null){
+              if (classType == null) {
                 return null;
               }
               final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                  getServer()
-                      .getView()
-                      .getClass(classType);
+                  getServer().getView().getClass(classType);
               if (!aClass.isPresent()) {
                 return null;
               }
@@ -754,7 +777,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               SootClass clazz = (SootClass) aClass.get();
               List<SymbolInformation> list = new ArrayList<>();
               int limit = Integer.MAX_VALUE;
-              JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(list, null, clazz, symbolKind, limit);
+              JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(
+                  list, null, clazz, symbolKind, limit);
               List<Either<SymbolInformation, DocumentSymbol>> resultList =
                   new ArrayList<>(list.size());
               list.forEach(s -> resultList.add(Either.forLeft(s)));
@@ -769,5 +793,4 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     }
     return super.inferLanguage(uri);
   }
-
 }

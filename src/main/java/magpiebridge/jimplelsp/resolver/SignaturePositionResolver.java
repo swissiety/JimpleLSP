@@ -7,14 +7,12 @@ import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import de.upb.swt.soot.jimple.JimpleParser;
-
+import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import javax.annotation.Nullable;
-
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,7 +30,7 @@ public class SignaturePositionResolver {
   private final JimpleConverterUtil util;
 
   public SignaturePositionResolver(Path fileUri) throws IOException {
-    this (fileUri, CharStreams.fromPath(fileUri));
+    this(fileUri, CharStreams.fromPath(fileUri));
   }
 
   public SignaturePositionResolver(Path fileUri, String content) {
@@ -45,11 +43,11 @@ public class SignaturePositionResolver {
     JimpleParser parser = JimpleConverterUtil.createJimpleParser(charStream, fileUri);
 
     ParseTreeWalker walker = new ParseTreeWalker();
-    walker.walk(occurences, parser.file() );
+    walker.walk(occurences, parser.file());
   }
 
   @Nullable
-  public Pair<Signature,Range> resolve(org.eclipse.lsp4j.Position position) {
+  public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {
     return occurences.resolve(position);
   }
 
@@ -58,10 +56,12 @@ public class SignaturePositionResolver {
     ClassType clazz;
 
     @Override
-    public void enterFile(JimpleParser.FileContext ctx  ) {
+    public void enterFile(JimpleParser.FileContext ctx) {
       if (ctx.classname == null) {
         throw new ResolveException(
-            "Identifier for this unit is not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
+            "Identifier for this unit is not found.",
+            fileUri,
+            JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
       String classname = Jimple.unescape(ctx.classname.getText());
       clazz = util.getClassType(classname);
@@ -92,8 +92,7 @@ public class SignaturePositionResolver {
       List<Type> params = util.getTypeList(ctx.method_subsignature().type_list());
       MethodSignature methodSignature =
           util.getIdentifierFactory()
-              .getMethodSignature(
-                  Jimple.unescape(methodname), clazz, type, params);
+              .getMethodSignature(Jimple.unescape(methodname), clazz, type, params);
       positionContainer.add(ctx, methodSignature);
 
       super.enterMethod(ctx);
@@ -102,7 +101,8 @@ public class SignaturePositionResolver {
     @Override
     public void enterMethod_signature(JimpleParser.Method_signatureContext ctx) {
       positionContainer.add(ctx.class_name, util.getClassType(ctx.class_name.getText()));
-      final JimpleParser.Method_nameContext method_nameCtx = ctx.method_subsignature().method_name();
+      final JimpleParser.Method_nameContext method_nameCtx =
+          ctx.method_subsignature().method_name();
       positionContainer.add(method_nameCtx, util.getMethodSignature(ctx, null));
 
       super.enterMethod_signature(ctx);
@@ -117,7 +117,7 @@ public class SignaturePositionResolver {
 
     @Override
     public void enterConstant(JimpleParser.ConstantContext ctx) {
-      if( ctx.CLASS() != null){
+      if (ctx.CLASS() != null) {
         positionContainer.add(ctx.identifier(), util.getClassType(ctx.identifier().getText()));
       }
       super.enterConstant(ctx);
@@ -125,13 +125,14 @@ public class SignaturePositionResolver {
 
     @Override
     public void enterValue(JimpleParser.ValueContext ctx) {
-      if (ctx.NEW()!=null) {
+      if (ctx.NEW() != null) {
         positionContainer.add(ctx.base_type, util.getClassType(ctx.base_type.getText()));
-      }else if (ctx.NEWARRAY()!=null) {
+      } else if (ctx.NEWARRAY() != null) {
         positionContainer.add(ctx.array_type, util.getClassType(ctx.array_type.getText()));
-      }else if (ctx.NEWMULTIARRAY()!=null) {
-        positionContainer.add(ctx.multiarray_type, util.getClassType(ctx.multiarray_type.getText()));
-      }else if (ctx.INSTANCEOF()!=null) {
+      } else if (ctx.NEWMULTIARRAY() != null) {
+        positionContainer.add(
+            ctx.multiarray_type, util.getClassType(ctx.multiarray_type.getText()));
+      } else if (ctx.INSTANCEOF() != null) {
         positionContainer.add(ctx.nonvoid_type, util.getClassType(ctx.nonvoid_type.getText()));
       }
       super.enterValue(ctx);
@@ -149,7 +150,7 @@ public class SignaturePositionResolver {
     @Override
     public void enterType(JimpleParser.TypeContext ctx) {
       final Type returnType = util.getType(ctx.getText());
-      if(returnType instanceof ClassType){
+      if (returnType instanceof ClassType) {
         positionContainer.add(ctx.identifier(), (Signature) returnType);
       }
       super.enterType(ctx);
@@ -164,5 +165,4 @@ public class SignaturePositionResolver {
       return resolve;
     }
   }
-
 }

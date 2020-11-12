@@ -1,54 +1,43 @@
 package magpiebridge.jimplelsp;
 
+import static magpiebridge.jimplelsp.Util.positionToRange;
+
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.frontend.SootClassSource;
 import de.upb.swt.soot.core.inputlocation.AnalysisInputLocation;
 import de.upb.swt.soot.core.inputlocation.EagerInputLocation;
-import de.upb.swt.soot.core.jimple.basic.NoPositionInformation;
 import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
-import de.upb.swt.soot.java.core.JavaIdentifierFactory;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.ServerConfiguration;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
-import org.apache.commons.io.FilenameUtils;
 import org.eclipse.lsp4j.*;
-
-import static magpiebridge.jimplelsp.Util.positionToRange;
 
 // FIXME: sth with sourcefilemanager
 public class JimpleLspServer extends MagpieServer {
 
-  @Nonnull
-  private boolean isCacheInvalid = true;
+  @Nonnull private boolean isCacheInvalid = true;
 
-  @Nonnull
-  private View view;
-  @Nonnull
-  private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
-  @Nonnull
-  private Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
+  @Nonnull private View view;
+  @Nonnull private List<AnalysisInputLocation> analysisInputLocations = new ArrayList<>();
+  @Nonnull private Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
 
   public JimpleLspServer() {
-    super( new ServerConfiguration());
+    super(new ServerConfiguration());
   }
 
   public JimpleLspServer(ServerConfiguration config) {
@@ -60,18 +49,18 @@ public class JimpleLspServer extends MagpieServer {
   @Nonnull
   public <T> CompletableFuture<T> pool(Callable<T> lambda) {
     return CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return lambda.call();
-              }catch( ResolveException e){
-                // TODO: send publishDiagnostics!
-                e.printStackTrace();
-              } catch (Throwable e) {
-                e.printStackTrace();
-              }
-              return null;
-            },
-            THREAD_POOL);
+        () -> {
+          try {
+            return lambda.call();
+          } catch (ResolveException e) {
+            // TODO: send publishDiagnostics!
+            e.printStackTrace();
+          } catch (Throwable e) {
+            e.printStackTrace();
+          }
+          return null;
+        },
+        THREAD_POOL);
   }
 
   @Nonnull
@@ -92,7 +81,7 @@ public class JimpleLspServer extends MagpieServer {
   private View recreateView() {
     Map<ClassType, AbstractClassSource> map = new HashMap<>();
     textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
-    final JimpleProject project = new JimpleProject(new EagerInputLocation( map));
+    final JimpleProject project = new JimpleProject(new EagerInputLocation(map));
     return project.createFullView();
   }
 
@@ -100,31 +89,45 @@ public class JimpleLspServer extends MagpieServer {
     return quarantineInputOrUpdate(uri, CharStreams.fromPath(Util.uriToPath(uri)));
   }
 
-  public boolean quarantineInputOrUpdate(@Nonnull String uri, String content) throws ResolveException {
+  public boolean quarantineInputOrUpdate(@Nonnull String uri, String content)
+      throws ResolveException {
     return quarantineInputOrUpdate(uri, CharStreams.fromString(content));
   }
 
-  private boolean quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream) throws ResolveException {
+  private boolean quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream)
+      throws ResolveException {
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource scs = jimpleConverter.run(charStream, new EagerInputLocation(), Util.uriToPath(uri));
+      SootClassSource scs =
+          jimpleConverter.run(charStream, new EagerInputLocation(), Util.uriToPath(uri));
       // input is clean
       final SootClassSource overriden = textDocumentClassMapping.put(uri, scs);
       if (overriden != null) {
-        // possible optimization: compare if classes are still equal -> set dirty bit only when necessary
+        // possible optimization: compare if classes are still equal -> set dirty bit only when
+        // necessary
       }
       isCacheInvalid = true;
       return true;
     } catch (ResolveException e) {
       // feed error into diagnostics
-      final Diagnostic d = new Diagnostic(positionToRange(e.getRange()), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser");
-      client.publishDiagnostics(new PublishDiagnosticsParams( uri, Collections.singletonList(d) ));
+      final Diagnostic d =
+          new Diagnostic(
+              positionToRange(e.getRange()),
+              e.getMessage(),
+              DiagnosticSeverity.Error,
+              "JimpleParser");
+      client.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.singletonList(d)));
       return false;
     } catch (Exception e) {
       // feed error into diagnostics
-      final Diagnostic d = new Diagnostic( new Range(new Position(0,0), new Position(1,0)), e.getMessage(), DiagnosticSeverity.Error, "JimpleParser");
+      final Diagnostic d =
+          new Diagnostic(
+              new Range(new Position(0, 0), new Position(1, 0)),
+              e.getMessage(),
+              DiagnosticSeverity.Error,
+              "JimpleParser");
       // FIXME: merge with other diagnostics in magpie
-      client.publishDiagnostics(new PublishDiagnosticsParams( uri, Collections.singletonList(d) ));
+      client.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.singletonList(d)));
       return false;
     }
   }
@@ -137,6 +140,7 @@ public class JimpleLspServer extends MagpieServer {
   }
 
   List<WorkspaceFolder> workspaceFolders = Collections.emptyList();
+
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
     workspaceFolders = params.getWorkspaceFolders();
@@ -172,13 +176,15 @@ public class JimpleLspServer extends MagpieServer {
     List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
     rootPath.ifPresent(rootpaths::add);
 
-    workspaceFolders.forEach(f -> {
-      final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
-      if (!rootpaths.stream().anyMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
-        // add workspace folder if its not a subdirectory of an already existing path
-        rootpaths.add(path);
-      }
-    });
+    workspaceFolders.forEach(
+        f -> {
+          final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
+          if (!rootpaths.stream()
+              .anyMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
+            // add workspace folder if its not a subdirectory of an already existing path
+            rootpaths.add(path);
+          }
+        });
     List<Path> apkFiles = new ArrayList<>();
     List<Path> jimpleFiles = new ArrayList<>();
 
@@ -214,7 +220,6 @@ public class JimpleLspServer extends MagpieServer {
         exception.printStackTrace();
       }
     }
-
   }
 
   @Nullable
@@ -225,7 +230,6 @@ public class JimpleLspServer extends MagpieServer {
     }
     return sootClassSource.getClassType();
   }
-
 
   // TODO: remove
   private List<Diagnostic> validate(DidOpenTextDocumentParams model) {
@@ -240,28 +244,30 @@ public class JimpleLspServer extends MagpieServer {
     int charOffset = 4;
     int length = 10;
     diagnostic.setRange(
-            new Range(new Position(line, charOffset), new Position(line, charOffset + length)));
+        new Range(new Position(line, charOffset), new Position(line, charOffset + length)));
 
     final ArrayList<DiagnosticRelatedInformation> relatedInformation = new ArrayList<>();
     relatedInformation.add(
-            new DiagnosticRelatedInformation(
-                    new Location(model.getTextDocument().getUri(), new Range(new Position(1, 5), new Position(2, 0))),
-                    "here is sth strange"));
+        new DiagnosticRelatedInformation(
+            new Location(
+                model.getTextDocument().getUri(),
+                new Range(new Position(1, 5), new Position(2, 0))),
+            "here is sth strange"));
 
     boolean uriOne = model.getTextDocument().getUri().endsWith("helloworld.jimple");
     String uriA =
-            "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/"
-                    + (uriOne ? "another" : "helloworld")
-                    + ".jimple";
+        "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/"
+            + (uriOne ? "another" : "helloworld")
+            + ".jimple";
     String uriB =
-            "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/"
-                    + (!uriOne ? "another" : "helloworld")
-                    + ".jimple";
+        "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/"
+            + (!uriOne ? "another" : "helloworld")
+            + ".jimple";
 
     relatedInformation.add(
-            new DiagnosticRelatedInformation(
-                    new Location(uriA, new Range(new Position(2, 0), new Position(3, 0))),
-                    "more strangeness"));
+        new DiagnosticRelatedInformation(
+            new Location(uriA, new Range(new Position(2, 0), new Position(3, 0))),
+            "more strangeness"));
     diagnostic.setRelatedInformation(relatedInformation);
 
     res.add(diagnostic);
@@ -275,29 +281,27 @@ public class JimpleLspServer extends MagpieServer {
 
     List<DiagnosticRelatedInformation> related = new ArrayList<>();
     related.add(
-            new DiagnosticRelatedInformation(
-                    new Location(uriA, new Range(new Position(4, 4), new Position(4, 10))), "problem A"));
+        new DiagnosticRelatedInformation(
+            new Location(uriA, new Range(new Position(4, 4), new Position(4, 10))), "problem A"));
     related.add(
-            new DiagnosticRelatedInformation(
-                    new Location(uriB, new Range(new Position(6, 6), new Position(6, 12))),
-                    "another problem: B"));
+        new DiagnosticRelatedInformation(
+            new Location(uriB, new Range(new Position(6, 6), new Position(6, 12))),
+            "another problem: B"));
     related.add(
-            new DiagnosticRelatedInformation(
-                    new Location(uriA, new Range(new Position(8, 8), new Position(8, 14))), "problem C"));
+        new DiagnosticRelatedInformation(
+            new Location(uriA, new Range(new Position(8, 8), new Position(8, 14))), "problem C"));
     diagnostic2.setRelatedInformation(related);
 
     res.add(diagnostic2);
     return res;
   }
 
-
   @Nullable
   public ClassType uriToClasstype(@Nonnull String strUri) {
     final SootClassSource scs = textDocumentClassMapping.get(strUri);
-    if(scs == null){
+    if (scs == null) {
       return null;
     }
     return scs.getClassType();
   }
-
 }
