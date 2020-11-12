@@ -10,7 +10,6 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -28,7 +27,6 @@ import java.util.*;
 public class LocalResolver {
   final Path path;
 
-  //private final List<Position> localPosList = new ArrayList<>();
   private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod = new HashMap<>();
   private Map<MethodSubSignature,Map<String, Type>> localToType = new HashMap<>();
 
