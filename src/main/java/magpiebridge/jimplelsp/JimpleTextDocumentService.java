@@ -267,7 +267,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       Optional<SootClass> scOpt = (Optional<SootClass>) view.getClass(csig);
                       scOpt.ifPresent(
                           sootClass ->
-                              list.add(Util.positionToLocation(uri, sootClass.getPosition())));
+                              list.add(Util.positionToLocation(Util.pathToUri(sootClass.getClassSource().getSourcePath()), sootClass.getPosition())));
                     });
 
                 return Either.forLeft(list);
@@ -281,13 +281,18 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                         final SootClass sc = scOpt.get();
                         final Optional<SootMethod> methodOpt =
                             sc.getMethod(((MethodSignature) sig).getSubSignature());
+                        final String methodsClassUri = Util.pathToUri(sc.getClassSource().getSourcePath());
                         methodOpt.ifPresent(
                             method ->
-                                list.add(
-                                    Util.positionToLocation(
-                                        Util.classToUri(sc), method.getPosition())));
+                            {
+                              list.add(
+                                  Util.positionToLocation(
+                                          methodsClassUri, method.getPosition()));
+                            });
                       }
                     });
+
+                return Either.forLeft(list );
               }
 
               return null;
@@ -610,30 +615,33 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   */
 
   @Override
-  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
-    if( position == null ){
+  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
+      TextDocumentPositionParams position) {
+    if (position == null) {
       return null;
     }
 
     // local references
-    return getServer().pool(() -> {
-      final String uri = position.getTextDocument().getUri();
-      final LocalResolver resolver = new LocalResolver(Util.uriToPath(uri));
+    return getServer()
+        .pool(
+            () -> {
+              final String uri = position.getTextDocument().getUri();
+              final LocalResolver resolver = new LocalResolver(Util.uriToPath(uri));
 
-      final ClassType classType = getServer().uriToClasstype(uri);
-      if (classType == null) {
-        return null;
-      }
-      final View view = getServer().getView();
-      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-              view.getClass(classType);
-      if (aClass.isPresent()) {
-        SootClass sc = (SootClass) aClass.get();
-        return resolver.resolveReferences(sc, position);
-      }
+              final ClassType classType = getServer().uriToClasstype(uri);
+              if (classType == null) {
+                return null;
+              }
+              final View view = getServer().getView();
+              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                  view.getClass(classType);
+              if (aClass.isPresent()) {
+                SootClass sc = (SootClass) aClass.get();
+                return resolver.resolveReferences(sc, position);
+              }
 
-      return null;
-    });
+              return null;
+            });
   }
 
   @Override

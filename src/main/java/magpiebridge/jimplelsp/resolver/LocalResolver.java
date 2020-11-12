@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -26,8 +25,11 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class LocalResolver {
   @Nonnull final Path path;
-  @Nonnull private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod =
+
+  @Nonnull
+  private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod =
       new HashMap<>();
+
   @Nonnull private final Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
 
   public LocalResolver(Path path) {
@@ -55,34 +57,43 @@ public class LocalResolver {
   }
 
   @Nonnull
-  private Optional<SootMethod> getSootMethodFromPosition(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+  private Optional<SootMethod> getSootMethodFromPosition(
+      @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     return sc.getMethods().stream()
-            .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
-            .findAny();
+        .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
+        .findAny();
   }
 
   @Nullable
-  public List<? extends DocumentHighlight> resolveReferences(SootClass sc, TextDocumentPositionParams pos) {
+  public List<? extends DocumentHighlight> resolveReferences(
+      SootClass sc, TextDocumentPositionParams pos) {
     List<Pair<Position, String>> locals = getLocals(sc, pos);
-    if(locals == null){
+    if (locals == null) {
       return null;
     }
-    return locals.stream().map( l -> new DocumentHighlight( Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text)).collect(Collectors.toList());
+    return locals.stream()
+        .map(
+            l ->
+                new DocumentHighlight(
+                    Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text))
+        .collect(Collectors.toList());
   }
 
   @Nullable
-  public Type resolveTypeDefinition(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+  public Type resolveTypeDefinition(
+      @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     if (!surroundingMethod.isPresent()) {
       return null;
     }
     final SootMethod sm = surroundingMethod.get();
     List<Pair<Position, String>> locals = localsOfMethod.get(sm.getSubSignature());
-    if(locals == null){
+    if (locals == null) {
       return null;
     }
     // determine name/range of local
-    final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
+    final Optional<Pair<Position, String>> localOpt =
+        locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
     if (!localOpt.isPresent()) {
       return null;
     }
@@ -97,13 +108,14 @@ public class LocalResolver {
 
   @Nullable
   public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(
-          @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+      @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     List<Pair<Position, String>> locals = getLocals(sc, pos);
-    if(locals == null){
+    if (locals == null) {
       return null;
     }
     // determine name/range of local
-    final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p1 -> isInRangeOf(pos.getPosition(), p1.getLeft())).findAny();
+    final Optional<Pair<Position, String>> localOpt =
+        locals.stream().filter(p1 -> isInRangeOf(pos.getPosition(), p1.getLeft())).findAny();
     if (!localOpt.isPresent()) {
       return null;
     }
@@ -136,7 +148,6 @@ public class LocalResolver {
 
     return true;
   }
-
 
   private final class LocalDeclarationFinder extends JimpleBaseListener {
     private final Path path;
