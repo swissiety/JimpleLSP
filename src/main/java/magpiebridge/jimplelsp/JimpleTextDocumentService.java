@@ -14,6 +14,7 @@ import de.upb.swt.soot.core.signatures.FieldSignature;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
+import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleLexer;
@@ -408,6 +409,85 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 }
               }
               return list;
+            });
+  }
+
+  @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> typeDefinition(TextDocumentPositionParams position) {
+    if (position==null) {
+      return null;
+    }
+
+    // method-> returntype; field -> type; local -> type
+    return getServer().pool(
+            () -> {
+              final String uri = position.getTextDocument().getUri();
+              final SignaturePositionResolver resolver = docSignaturePositionResolver.get(uri);
+              if (resolver == null) {
+                return null;
+              }
+              final Pair<Signature, Range> sigInst =
+                      resolver
+                              .resolve(position.getPosition());
+              if (sigInst == null) {
+                // try whether its a Local (which has no Signature!)
+                final ClassType classType = getServer().uriToClasstype(uri);
+                if (classType==null) {
+                  return null;
+                }
+
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                        getServer().getView().getClass(classType);
+                if (!aClass.isPresent()) {
+                  return null;
+                }
+                SootClass sc = (SootClass) aClass.get();
+
+                // maybe: cache instance for this file like for sigs
+                final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
+                return localResolver.resolveTypeDefinition(sc, position);
+              }
+              Signature sig = sigInst.getLeft();
+
+              if (sig instanceof ClassType) {
+                return null;
+              } else if (sig instanceof MethodSignature) {
+                final Type type = ((MethodSignature) sig).getType();
+                if(! (type instanceof ClassType)){
+                  return null;
+                }
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                        getServer().getView().getClass((ClassType) type);
+                if (aClass.isPresent()) {
+                  SootClass sc = (SootClass) aClass.get();
+                  final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
+                  if (method.isPresent()) {
+                    return Util.positionToLocationList(
+                            Util.pathToUri(sc.getClassSource().getSourcePath()),
+                            method.get().getPosition());
+                  }
+                }
+
+              } else if (sig instanceof FieldSignature) {
+                final Type type = ((FieldSignature) sig).getType();
+                if(! (type instanceof ClassType)){
+                  return null;
+                }
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                        getServer().getView().getClass((ClassType) type);
+                if (aClass.isPresent()) {
+                  SootClass sc = (SootClass) aClass.get();
+                  final Optional<SootField> field =
+                          sc.getField(((FieldSignature) sig).getSubSignature());
+                  if (field.isPresent()) {
+                    return Util.positionToLocationList(
+                            Util.pathToUri(sc.getClassSource().getSourcePath()),
+                            field.get().getPosition());
+                  }
+                }
+              }
+
+              return null;
             });
   }
 

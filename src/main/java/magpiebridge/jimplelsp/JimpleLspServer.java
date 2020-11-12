@@ -149,13 +149,12 @@ public class JimpleLspServer extends MagpieServer {
 
       capabilities.setImplementationProvider(true);
       capabilities.setDefinitionProvider(true);
+      capabilities.setReferencesProvider(true);
       capabilities.setHoverProvider(true);
 
-      // TODO: capabilities.setTypeDefinitionProvider(true);
-      // TODO: capabilities.setReferencesProvider(true);
-
+      // capabilities.setTypeDefinitionProvider(true);
       // check: capabilities.setDocumentFormattingProvider(true);
-      // check: capabilities.setFoldingRangeProvider(true);
+      capabilities.setFoldingRangeProvider(true);
 
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();

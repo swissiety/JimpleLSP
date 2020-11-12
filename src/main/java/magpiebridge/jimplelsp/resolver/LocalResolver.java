@@ -1,6 +1,5 @@
 package magpiebridge.jimplelsp.resolver;
 
-import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.Jimple;
 import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.model.SootClass;
@@ -44,27 +43,50 @@ public class LocalResolver {
     walker.walk(new LocalDeclarationFinder(path), jimpleParser.file());
   }
 
-  public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(SootClass sc, TextDocumentPositionParams pos ){
-    final Optional<SootMethod> surroundingMethod = sc.getMethods().stream().filter(m -> isInRangeOf( pos.getPosition(), m.getPosition()) ).findAny();
-    if (surroundingMethod.isPresent()) {
-      final List<Pair<Position, String>> locals = localsOfMethod.get(surroundingMethod.get().getSubSignature());
-      if(locals == null){
-        return null;
-      }
+  public Either<List<? extends Location>, List<? extends LocationLink>> resolveTypeDefinition(SootClass sc, TextDocumentPositionParams pos ) {
+    List<Pair<Position, String>> locals = determineLocalsFromMethod(sc, pos);
+    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
+    final String localname = localOpt.get().getRight();
+    // first occurence of that local (in the current method) is the definition (or declaration if existing).
 
-      // determine name of local
-      final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft()) ).findAny();
-      if (localOpt.isPresent()) {
-        final String localname = localOpt.get().getRight();
-        // first occurence of that local (in the current method) is the definition (or declaration if existing).
-        final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
-        if (deflocalOpt.isPresent()) {
-          return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
-        }
-      }
+    // FIXME: get type of the local
+    /*
+    final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
+    if (deflocalOpt.isPresent()) {
+      return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
+    }*/
+    return null;
+  }
+
+  public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(SootClass sc, TextDocumentPositionParams pos ){
+    List<Pair<Position, String>> locals = determineLocalsFromMethod(sc, pos);
+    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
+    final String localname = localOpt.get().getRight();
+    // first occurence of that local (in the current method) is the definition (or declaration if existing).
+    final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
+    if (deflocalOpt.isPresent()) {
+      return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
     }
     return null;
   }
+
+  private List<Pair<Position, String>> determineLocalsFromMethod(SootClass sc, TextDocumentPositionParams pos){
+    final Optional<SootMethod> surroundingMethod = sc.getMethods().stream().filter(m -> isInRangeOf( pos.getPosition(), m.getPosition()) ).findAny();
+    if (!surroundingMethod.isPresent()) {
+      return null;
+    }
+    return localsOfMethod.get(surroundingMethod.get().getSubSignature());
+
+  }
+
+  private Optional<Pair<Position, String>> determineLocal(List<Pair<Position, String>> locals , TextDocumentPositionParams pos){
+    if(locals == null){
+      return Optional.empty();
+    }
+    // determine name/range of local
+    return locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft()) ).findAny();
+}
+
 
   private boolean isInRangeOf(@Nonnull org.eclipse.lsp4j.Position p1, @Nonnull Position p2) {
     // simplify
