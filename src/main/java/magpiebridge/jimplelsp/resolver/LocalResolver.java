@@ -26,11 +26,10 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class LocalResolver {
-  final Path path;
-
-  private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod =
+  @Nonnull final Path path;
+  @Nonnull private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod =
       new HashMap<>();
-  private final Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
+  @Nonnull private final Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
 
   public LocalResolver(Path path) {
     this.path = path;
