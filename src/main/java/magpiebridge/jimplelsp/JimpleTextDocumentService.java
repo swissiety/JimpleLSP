@@ -2,7 +2,6 @@ package magpiebridge.jimplelsp;
 
 import de.upb.swt.soot.callgraph.typehierarchy.ViewTypeHierarchy;
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
-import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.basic.Value;
 import de.upb.swt.soot.core.jimple.common.expr.AbstractInvokeExpr;
 import de.upb.swt.soot.core.jimple.common.ref.JFieldRef;
@@ -17,12 +16,8 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
-import de.upb.swt.soot.jimple.JimpleLexer;
-import de.upb.swt.soot.jimple.JimpleParser;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nonnull;
@@ -56,30 +51,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Nonnull
   JimpleLspServer getServer() {
     return (JimpleLspServer) server;
-  }
-
-  @Nonnull
-  JimpleParser createParserForUri(Path fileUri) throws IOException {
-    JimpleLexer lexer = new JimpleLexer(CharStreams.fromPath(fileUri));
-    TokenStream tokens = new CommonTokenStream(lexer);
-    JimpleParser parser = new JimpleParser(tokens);
-    parser.removeErrorListeners();
-    parser.addErrorListener(
-        new BaseErrorListener() {
-          public void syntaxError(
-              Recognizer<?, ?> recognizer,
-              Object offendingSymbol,
-              int line,
-              int charPositionInLine,
-              String msg,
-              RecognitionException e) {
-            throw new ResolveException(
-                "Jimple Syntaxerror: " + msg,
-                fileUri,
-                new de.upb.swt.soot.core.model.Position(line, charPositionInLine, -1, -1));
-          }
-        });
-    return parser;
   }
 
   @Override
