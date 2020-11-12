@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -28,7 +30,7 @@ public class LocalResolver {
 
   private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod =
       new HashMap<>();
-  private Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
+  private final Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
 
   public LocalResolver(Path path) {
     this.path = path;
@@ -45,7 +47,8 @@ public class LocalResolver {
     walker.walk(new LocalDeclarationFinder(path), jimpleParser.file());
   }
 
-  public Type resolveTypeDefinition(SootClass sc, TextDocumentPositionParams pos) {
+  @Nullable
+  public Type resolveTypeDefinition(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     final Optional<SootMethod> surroundingMethod =
         sc.getMethods().stream()
             .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
@@ -55,18 +58,26 @@ public class LocalResolver {
     }
     final SootMethod sm = surroundingMethod.get();
     List<Pair<Position, String>> locals = localsOfMethod.get(sm.getSubSignature());
-    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
+    if(locals == null){
+      return null;
+    }
+    // determine name/range of local
+    final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
+    if (!localOpt.isPresent()) {
+      return null;
+    }
     final String localname = localOpt.get().getRight();
 
-    final Map<String, Type> stringTypeMap = localToType.get(sm.getSignature());
+    final Map<String, Type> stringTypeMap = localToType.get(sm.getSubSignature());
     if (stringTypeMap != null) {
       return stringTypeMap.get(localname);
     }
     return null;
   }
 
+  @Nullable
   public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(
-      SootClass sc, TextDocumentPositionParams pos) {
+          @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     final Optional<SootMethod> surroundingMethod =
         sc.getMethods().stream()
             .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
@@ -76,7 +87,14 @@ public class LocalResolver {
     }
     List<Pair<Position, String>> locals =
         localsOfMethod.get(surroundingMethod.get().getSubSignature());
-    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
+    if(locals == null){
+      return null;
+    }
+    // determine name/range of local
+    final Optional<Pair<Position, String>> localOpt = locals.stream().filter(p1 -> isInRangeOf(pos.getPosition(), p1.getLeft())).findAny();
+    if (!localOpt.isPresent()) {
+      return null;
+    }
     final String localname = localOpt.get().getRight();
     // first occurence of that local (in the current method) is the definition (or declaration if
     // existing).
@@ -89,15 +107,6 @@ public class LocalResolver {
                   pos.getTextDocument().getUri(), deflocalOpt.get().getLeft())));
     }
     return null;
-  }
-
-  private Optional<Pair<Position, String>> determineLocal(
-      List<Pair<Position, String>> locals, TextDocumentPositionParams pos) {
-    if (locals == null) {
-      return Optional.empty();
-    }
-    // determine name/range of local
-    return locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
   }
 
   private boolean isInRangeOf(@Nonnull org.eclipse.lsp4j.Position p1, @Nonnull Position p2) {
@@ -135,7 +144,6 @@ public class LocalResolver {
     public void enterMethod(JimpleParser.MethodContext ctx) {
       currentMethodSig = util.getMethodSubSignature(ctx.method_subsignature(), ctx);
       currentLocalPositionList = new ArrayList<>();
-
       currentLocalToType = new HashMap<>();
       super.enterMethod(ctx);
     }
