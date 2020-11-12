@@ -13,6 +13,7 @@ import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -20,9 +21,7 @@ import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.LocationLink;
-import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class LocalResolver {
@@ -47,11 +46,33 @@ public class LocalResolver {
   }
 
   @Nullable
-  public Type resolveTypeDefinition(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
-    final Optional<SootMethod> surroundingMethod =
-        sc.getMethods().stream()
+  private List<Pair<Position, String>> getLocals(SootClass sc, TextDocumentPositionParams pos) {
+    final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
+    if (!surroundingMethod.isPresent()) {
+      return null;
+    }
+    return localsOfMethod.get(surroundingMethod.get().getSubSignature());
+  }
+
+  @Nonnull
+  private Optional<SootMethod> getSootMethodFromPosition(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+    return sc.getMethods().stream()
             .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
             .findAny();
+  }
+
+  @Nullable
+  public List<? extends DocumentHighlight> resolveReferences(SootClass sc, TextDocumentPositionParams pos) {
+    List<Pair<Position, String>> locals = getLocals(sc, pos);
+    if(locals == null){
+      return null;
+    }
+    return locals.stream().map( l -> new DocumentHighlight( Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text)).collect(Collectors.toList());
+  }
+
+  @Nullable
+  public Type resolveTypeDefinition(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+    final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     if (!surroundingMethod.isPresent()) {
       return null;
     }
@@ -77,15 +98,7 @@ public class LocalResolver {
   @Nullable
   public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(
           @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
-    final Optional<SootMethod> surroundingMethod =
-        sc.getMethods().stream()
-            .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
-            .findAny();
-    if (!surroundingMethod.isPresent()) {
-      return null;
-    }
-    List<Pair<Position, String>> locals =
-        localsOfMethod.get(surroundingMethod.get().getSubSignature());
+    List<Pair<Position, String>> locals = getLocals(sc, pos);
     if(locals == null){
       return null;
     }
@@ -123,6 +136,7 @@ public class LocalResolver {
 
     return true;
   }
+
 
   private final class LocalDeclarationFinder extends JimpleBaseListener {
     private final Path path;

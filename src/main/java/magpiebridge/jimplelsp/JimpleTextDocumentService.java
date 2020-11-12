@@ -578,33 +578,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
-  /* TODO: do label jumps via go to definition
-  @Override
-   public CompletableFuture<List<DocumentLink>> documentLink(DocumentLinkParams params) {
-     if (params == null) {
-       return null;
-     }
-     // make labels clickable to get to the label
-     return getServer()
-         .pool(
-             () -> {
-               try {
-                 final Path fileUri = Util.uriToPath(params.getTextDocument().getUri());
-                 JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(fileUri), fileUri);
-
-                 final JimpleLabelReferenceProvider listener = new JimpleLabelReferenceProvider();
-                 parser.file().enterRule(listener);
-
-                 return listener.getLinks(fileUri);
-               } catch (IOException exception) {
-                 exception.printStackTrace();
-               }
-
-               return null;
-             });
-   }
-  */
-
   /*
       @Override
       public CompletableFuture<TypeHierarchyItem> resolveTypeHierarchy(ResolveTypeHierarchyItemParams params) {
@@ -635,21 +608,33 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         });
       }
   */
-  /*
-    @Override
-    public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
-        if( params == null ){
+
+  @Override
+  public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(TextDocumentPositionParams position) {
+    if( position == null ){
+      return null;
+    }
+
+    // local references
+    return getServer().pool(() -> {
+      final String uri = position.getTextDocument().getUri();
+      final LocalResolver resolver = new LocalResolver(Util.uriToPath(uri));
+
+      final ClassType classType = getServer().uriToClasstype(uri);
+      if (classType == null) {
         return null;
       }
+      final View view = getServer().getView();
+      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+              view.getClass(classType);
+      if (aClass.isPresent()) {
+        SootClass sc = (SootClass) aClass.get();
+        return resolver.resolveReferences(sc, position);
+      }
 
-      // TODO: implement it for local usage | signatures | ?
-      return getServer().pool(() -> {
-        position.getTextDocument().getUri();
-
-        return null;
-      });
-    }
-  */
+      return null;
+    });
+  }
 
   @Override
   public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
