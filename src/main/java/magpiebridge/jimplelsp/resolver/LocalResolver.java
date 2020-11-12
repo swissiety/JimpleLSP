@@ -64,6 +64,11 @@ public class LocalResolver {
         .findAny();
   }
 
+  private Optional<Pair<Position, String>> getSelectedLocalInfo(@Nonnull List<Pair<Position, String>> locals, @Nonnull TextDocumentPositionParams pos) {
+    // determine name/range of selected local
+    return locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
+  }
+
   @Nullable
   public List<? extends DocumentHighlight> resolveReferences(
       SootClass sc, TextDocumentPositionParams pos) {
@@ -81,11 +86,6 @@ public class LocalResolver {
                 new DocumentHighlight(
                     Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text))
         .collect(Collectors.toList());
-  }
-
-  private Optional<Pair<Position, String>> getSelectedLocalInfo(List<Pair<Position, String>> locals, TextDocumentPositionParams pos2) {
-    // determine name/range of selected local
-    return locals.stream().filter(p -> isInRangeOf(pos2.getPosition(), p.getLeft())).findAny();
   }
 
   @Nullable
