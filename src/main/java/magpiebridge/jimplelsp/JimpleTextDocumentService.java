@@ -445,7 +445,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
                 // maybe: cache instance for this file like for sigs
                 final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
-                return localResolver.resolveTypeDefinition(sc, position);
+                final Type type = localResolver.resolveTypeDefinition(sc, position);
+
+                if (!(type instanceof ClassType)) {
+                  return null;
+                }
+                final Optional<SootClass> typeClass = (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
+                if(typeClass.isPresent()){
+                  final SootClass sootClass = typeClass.get();
+                  return Util.positionToLocationList(Util.pathToUri(sootClass.getClassSource().getSourcePath()) , sootClass.getPosition());
+                }
+                return null;
               }
               Signature sig = sigInst.getLeft();
 

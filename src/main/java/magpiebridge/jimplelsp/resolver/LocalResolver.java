@@ -1,13 +1,16 @@
 package magpiebridge.jimplelsp.resolver;
 
+import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.Jimple;
 import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.model.SootMethod;
 import de.upb.swt.soot.core.signatures.MethodSubSignature;
+import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
@@ -27,6 +30,7 @@ public class LocalResolver {
 
   //private final List<Position> localPosList = new ArrayList<>();
   private final Map<MethodSubSignature, List<Pair<Position, String>>> localsOfMethod = new HashMap<>();
+  private Map<MethodSubSignature,Map<String, Type>> localToType = new HashMap<>();
 
   public LocalResolver(Path path) {
     this.path = path;
@@ -43,40 +47,37 @@ public class LocalResolver {
     walker.walk(new LocalDeclarationFinder(path), jimpleParser.file());
   }
 
-  public Either<List<? extends Location>, List<? extends LocationLink>> resolveTypeDefinition(SootClass sc, TextDocumentPositionParams pos ) {
-    List<Pair<Position, String>> locals = determineLocalsFromMethod(sc, pos);
-    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
-    final String localname = localOpt.get().getRight();
-    // first occurence of that local (in the current method) is the definition (or declaration if existing).
-
-    // FIXME: get type of the local
-    /*
-    final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
-    if (deflocalOpt.isPresent()) {
-      return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
-    }*/
-    return null;
-  }
-
-  public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(SootClass sc, TextDocumentPositionParams pos ){
-    List<Pair<Position, String>> locals = determineLocalsFromMethod(sc, pos);
-    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
-    final String localname = localOpt.get().getRight();
-    // first occurence of that local (in the current method) is the definition (or declaration if existing).
-    final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
-    if (deflocalOpt.isPresent()) {
-      return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
-    }
-    return null;
-  }
-
-  private List<Pair<Position, String>> determineLocalsFromMethod(SootClass sc, TextDocumentPositionParams pos){
+  public Type resolveTypeDefinition(SootClass sc, TextDocumentPositionParams pos ) {
     final Optional<SootMethod> surroundingMethod = sc.getMethods().stream().filter(m -> isInRangeOf( pos.getPosition(), m.getPosition()) ).findAny();
     if (!surroundingMethod.isPresent()) {
       return null;
     }
-    return localsOfMethod.get(surroundingMethod.get().getSubSignature());
+    final SootMethod sm = surroundingMethod.get();
+    List<Pair<Position, String>> locals = localsOfMethod.get(sm.getSubSignature());
+    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
+    final String localname = localOpt.get().getRight();
 
+    final Map<String, Type> stringTypeMap = localToType.get(sm.getSignature());
+    if (stringTypeMap != null) {
+      return stringTypeMap.get(localname);
+    }
+    return null;
+  }
+
+  public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(SootClass sc, TextDocumentPositionParams pos ){
+    final Optional<SootMethod> surroundingMethod = sc.getMethods().stream().filter(m -> isInRangeOf( pos.getPosition(), m.getPosition()) ).findAny();
+    if (!surroundingMethod.isPresent()) {
+      return null;
+    }
+    List<Pair<Position, String>> locals = localsOfMethod.get(surroundingMethod.get().getSubSignature());
+    final Optional<Pair<Position, String>> localOpt = determineLocal(locals, pos);
+    final String localname = localOpt.get().getRight();
+    // first occurence of that local (in the current method) is the definition (or declaration if existing).
+    final Optional<Pair<Position, String>> deflocalOpt = locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
+    if (deflocalOpt.isPresent()) {
+      return Either.forLeft(Collections.singletonList(Util.positionToLocation(pos.getTextDocument().getUri(),deflocalOpt.get().getLeft())));
+    }
+    return null;
   }
 
   private Optional<Pair<Position, String>> determineLocal(List<Pair<Position, String>> locals , TextDocumentPositionParams pos){
@@ -113,22 +114,46 @@ public class LocalResolver {
 
     private MethodSubSignature currentMethodSig = null;
     private List<Pair<Position, String>> currentLocalPositionList = null;
+    private Map<String, Type> currentLocalToType = null;
 
     private LocalDeclarationFinder(@Nonnull Path path) {
       this.path = path;
       util = new JimpleConverterUtil(path);
     }
 
+
     @Override
     public void enterMethod(JimpleParser.MethodContext ctx) {
       currentMethodSig = util.getMethodSubSignature(ctx.method_subsignature(), ctx);
       currentLocalPositionList = new ArrayList<>();
+
+      currentLocalToType = new HashMap<>();
       super.enterMethod(ctx);
     }
 
     @Override
     public void exitMethod(JimpleParser.MethodContext ctx) {
       localsOfMethod.put( currentMethodSig, currentLocalPositionList);
+      localToType.put(currentMethodSig,currentLocalToType);
+    }
+
+    @Override
+    public void enterDeclaration(JimpleParser.DeclarationContext ctx) {
+      final JimpleParser.Arg_listContext arg_listCtx = ctx.arg_list();
+      if (arg_listCtx == null) {
+        throw new ResolveException("Jimple Syntaxerror: Locals are missing.", path, JimpleConverterUtil.buildPositionFromCtx(ctx));
+      }
+      if (ctx.type() == null) {
+        throw new ResolveException("Jimple Syntaxerror: Type missing.", path, JimpleConverterUtil.buildPositionFromCtx(ctx));
+      }
+
+      final Type type = util.getType(ctx.type().getText());
+      for (JimpleParser.ImmediateContext immediateCtx : arg_listCtx.immediate()) {
+        // remember type
+        currentLocalToType.put(Jimple.unescape(immediateCtx.local.getText() ), type );
+      }
+
+      super.enterDeclaration(ctx);
     }
 
     @Override
@@ -163,6 +188,10 @@ public class LocalResolver {
       super.enterImmediate(ctx);
     }
 
-
+    @Override
+    public void enterImportItem(JimpleParser.ImportItemContext ctx) {
+      util.addImport(ctx);
+      super.enterImportItem(ctx);
+    }
   }
 }
