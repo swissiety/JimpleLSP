@@ -71,12 +71,21 @@ public class LocalResolver {
     if (locals == null) {
       return null;
     }
-    return locals.stream()
-        .map(
+    final Optional<Pair<Position, String>> localOpt = getSelectedLocalInfo(locals, pos);
+    if (!localOpt.isPresent()) {
+      return null;
+    }
+    final String localname = localOpt.get().getRight();
+    return locals.stream().filter(l -> l.getRight().equals(localname) ).map(
             l ->
                 new DocumentHighlight(
                     Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text))
         .collect(Collectors.toList());
+  }
+
+  private Optional<Pair<Position, String>> getSelectedLocalInfo(List<Pair<Position, String>> locals, TextDocumentPositionParams pos2) {
+    // determine name/range of selected local
+    return locals.stream().filter(p -> isInRangeOf(pos2.getPosition(), p.getLeft())).findAny();
   }
 
   @Nullable
@@ -91,9 +100,8 @@ public class LocalResolver {
     if (locals == null) {
       return null;
     }
-    // determine name/range of local
-    final Optional<Pair<Position, String>> localOpt =
-        locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
+
+    final Optional<Pair<Position, String>> localOpt = getSelectedLocalInfo(locals, pos);
     if (!localOpt.isPresent()) {
       return null;
     }
@@ -113,9 +121,7 @@ public class LocalResolver {
     if (locals == null) {
       return null;
     }
-    // determine name/range of local
-    final Optional<Pair<Position, String>> localOpt =
-        locals.stream().filter(p1 -> isInRangeOf(pos.getPosition(), p1.getLeft())).findAny();
+    final Optional<Pair<Position, String>> localOpt = getSelectedLocalInfo(locals, pos);
     if (!localOpt.isPresent()) {
       return null;
     }
