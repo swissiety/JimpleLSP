@@ -47,7 +47,7 @@ public class Util {
     return new Range(
         new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
         // to next line
-        new org.eclipse.lsp4j.Position(position.getFirstLine(), 0));
+        new org.eclipse.lsp4j.Position(position.getFirstLine()+1, 0));
     // extract interesting part /beginning which usually is the signature of the current Range
     // new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
