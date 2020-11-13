@@ -22,11 +22,9 @@ class SmartDatastructure {
 
   Comparator<Position> comparator = new PositionComparator();
 
-  void add(ParserRuleContext token, Signature sig) {
+  void add( de.upb.swt.soot.core.model.Position position, Signature sig) {
     // insert sorted to be accessed via binary search
-    // lsp is zero indexed; antlrs line not
-    final Position startPos =
-        new Position(token.start.getLine() - 1, token.start.getCharPositionInLine());
+    final Position startPos = new Position(position.getFirstLine(), position.getFirstCol());
     int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
     if (idx < 0) {
       // calculate insertion index
@@ -36,8 +34,6 @@ class SmartDatastructure {
     }
 
     startPositions.add(idx, startPos);
-    final de.upb.swt.soot.core.model.Position position =
-        JimpleConverterUtil.buildPositionFromCtx(token);
     endPositions.add(idx, new Position(position.getLastLine(), position.getLastCol()));
 
     signaturesAndIdentifiers.add(idx, sig);

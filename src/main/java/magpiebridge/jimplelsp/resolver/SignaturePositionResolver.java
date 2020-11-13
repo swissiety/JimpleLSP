@@ -2,6 +2,7 @@ package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.Jimple;
+import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
@@ -65,11 +66,15 @@ public class SignaturePositionResolver {
       }
       String classname = Jimple.unescape(ctx.classname.getText());
       clazz = util.getClassType(classname);
-      positionContainer.add(ctx.classname, clazz);
+
+      final Position startpos = JimpleConverterUtil.buildPositionFromCtx(ctx.file_type());
+      final Position endpos = JimpleConverterUtil.buildPositionFromCtx(ctx.classname);
+
+      positionContainer.add( new Position(startpos.getFirstLine(),startpos.getFirstCol(),endpos.getLastLine(),endpos.getLastCol()), clazz);
 
       if (ctx.extends_clause() != null) {
         ClassType superclass = util.getClassType(ctx.extends_clause().classname.getText());
-        positionContainer.add(ctx.extends_clause().classname, superclass);
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.extends_clause().classname), superclass);
       }
 
       super.enterFile(ctx);
@@ -93,32 +98,32 @@ public class SignaturePositionResolver {
       MethodSignature methodSignature =
           util.getIdentifierFactory()
               .getMethodSignature(Jimple.unescape(methodname), clazz, type, params);
-      positionContainer.add(ctx, methodSignature);
+      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx), methodSignature);
 
       super.enterMethod(ctx);
     }
 
     @Override
     public void enterMethod_signature(JimpleParser.Method_signatureContext ctx) {
-      positionContainer.add(ctx.class_name, util.getClassType(ctx.class_name.getText()));
+      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.class_name), util.getClassType(ctx.class_name.getText()));
       final JimpleParser.Method_nameContext method_nameCtx =
           ctx.method_subsignature().method_name();
-      positionContainer.add(method_nameCtx, util.getMethodSignature(ctx, null));
+      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(method_nameCtx), util.getMethodSignature(ctx, null));
 
       super.enterMethod_signature(ctx);
     }
 
     @Override
     public void enterField_signature(JimpleParser.Field_signatureContext ctx) {
-      positionContainer.add(ctx.classname, util.getClassType(ctx.classname.getText()));
-      positionContainer.add(ctx.fieldname, util.getFieldSignature(ctx));
+      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.classname), util.getClassType(ctx.classname.getText()));
+      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.fieldname), util.getFieldSignature(ctx));
       super.enterField_signature(ctx);
     }
 
     @Override
     public void enterConstant(JimpleParser.ConstantContext ctx) {
       if (ctx.CLASS() != null) {
-        positionContainer.add(ctx.identifier(), util.getClassType(ctx.identifier().getText()));
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()), util.getClassType(ctx.identifier().getText()));
       }
       super.enterConstant(ctx);
     }
@@ -126,14 +131,14 @@ public class SignaturePositionResolver {
     @Override
     public void enterValue(JimpleParser.ValueContext ctx) {
       if (ctx.NEW() != null) {
-        positionContainer.add(ctx.base_type, util.getClassType(ctx.base_type.getText()));
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.base_type), util.getClassType(ctx.base_type.getText()));
       } else if (ctx.NEWARRAY() != null) {
-        positionContainer.add(ctx.array_type, util.getClassType(ctx.array_type.getText()));
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.array_type), util.getClassType(ctx.array_type.getText()));
       } else if (ctx.NEWMULTIARRAY() != null) {
         positionContainer.add(
-            ctx.multiarray_type, util.getClassType(ctx.multiarray_type.getText()));
+                JimpleConverterUtil.buildPositionFromCtx(ctx.multiarray_type), util.getClassType(ctx.multiarray_type.getText()));
       } else if (ctx.INSTANCEOF() != null) {
-        positionContainer.add(ctx.nonvoid_type, util.getClassType(ctx.nonvoid_type.getText()));
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.nonvoid_type), util.getClassType(ctx.nonvoid_type.getText()));
       }
       super.enterValue(ctx);
     }
@@ -143,7 +148,7 @@ public class SignaturePositionResolver {
       // add information for resolving classes correctly
       util.addImport(ctx);
 
-      positionContainer.add(ctx.location, util.getClassType(ctx.location.getText()));
+      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.location), util.getClassType(ctx.location.getText()));
       super.enterImportItem(ctx);
     }
 
@@ -151,18 +156,14 @@ public class SignaturePositionResolver {
     public void enterType(JimpleParser.TypeContext ctx) {
       final Type returnType = util.getType(ctx.getText());
       if (returnType instanceof ClassType) {
-        positionContainer.add(ctx.identifier(), (Signature) returnType);
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()), (Signature) returnType);
       }
       super.enterType(ctx);
     }
 
     @Nullable
     public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {
-      final Pair<Signature, Range> resolve = positionContainer.resolve(position);
-      if (resolve == null) {
-        return null;
-      }
-      return resolve;
+      return positionContainer.resolve(position);
     }
   }
 }
