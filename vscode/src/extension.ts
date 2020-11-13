@@ -14,7 +14,7 @@ async function configureAndStartClient(context: ExtensionContext) {
 	const timeout = settings.get("timeout");
 	const dockerImage: string = settings.get("dockerImage");
 	let script = 'java';
-	let relativePath = "JimpleLSP-0.0.1.jar";
+	let relativePath = "jimplelsp-0.0.1.jar";
 	let args = ['-jar', context.asAbsolutePath(relativePath)];
 	if (auto)
 		args.push("--auto", timeout.toString())
@@ -47,10 +47,10 @@ async function configureAndStartClient(context: ExtensionContext) {
 		(lspTransport === "stdio") ? serverOptionsStdio : (lspTransport === "socket") ? serverOptionsSocket : null
 
 	let clientOptions: LanguageClientOptions = {
-		documentSelector: [{ scheme: 'file', language: 'java' }],
+		documentSelector: [{ scheme: 'file', language: 'jimple' }],
 		synchronize: {
-			configurationSection: 'java',
-			fileEvents: [workspace.createFileSystemWatcher('**/*.java')]
+			configurationSection: 'jimple',
+			fileEvents: [workspace.createFileSystemWatcher('**/*.jimple')]
 		}
 	};
 
