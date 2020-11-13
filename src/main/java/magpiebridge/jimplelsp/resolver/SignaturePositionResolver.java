@@ -3,6 +3,7 @@ package magpiebridge.jimplelsp.resolver;
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.Jimple;
 import de.upb.swt.soot.core.model.Position;
+import de.upb.swt.soot.core.signatures.FieldSignature;
 import de.upb.swt.soot.core.signatures.MethodSignature;
 import de.upb.swt.soot.core.signatures.Signature;
 import de.upb.swt.soot.core.types.ClassType;
@@ -102,10 +103,7 @@ public class SignaturePositionResolver {
       String classname = Jimple.unescape(ctx.classname.getText());
       clazz = util.getClassType(classname);
 
-      final Position startpos = JimpleConverterUtil.buildPositionFromCtx(ctx.file_type());
-      final Position endpos = JimpleConverterUtil.buildPositionFromCtx(ctx.classname);
-
-      positionContainer.add( new Position(startpos.getFirstLine(),startpos.getFirstCol(),endpos.getLastLine(),endpos.getLastCol()), clazz);
+      positionContainer.add( JimpleConverterUtil.buildPositionFromCtx(ctx.classname), clazz);
 
       if (ctx.extends_clause() != null) {
         ClassType superclass = util.getClassType(ctx.extends_clause().classname.getText());
@@ -134,11 +132,19 @@ public class SignaturePositionResolver {
           util.getIdentifierFactory()
               .getMethodSignature(Jimple.unescape(methodname), clazz, type, params);
 
-      final Position startPos = JimpleConverterUtil.buildPositionFromCtx(ctx.method_subsignature().method_name());
-      final Position endPos = JimpleConverterUtil.buildPositionFromCtx(ctx);
-      positionContainer.add( new Position(startPos.getFirstLine(), startPos.getFirstCol(), endPos.getLastLine(), endPos.getLastCol()), methodSignature);
+      positionContainer.add( JimpleConverterUtil.buildPositionFromCtx(ctx.method_subsignature().method_name()) , methodSignature);
 
       super.enterMethod(ctx);
+    }
+
+    @Override
+    public void enterField(JimpleParser.FieldContext ctx) {
+      String fieldname = ctx.identifier().getText();
+      FieldSignature fieldSignature =
+              util.getIdentifierFactory()
+                      .getFieldSignature(Jimple.unescape(fieldname), clazz, util.getType(ctx.type().getText()) );
+      positionContainer.add( JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()), fieldSignature);
+      super.enterField(ctx);
     }
 
     @Override

@@ -162,22 +162,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
-                return Either.forLeft(Collections.singletonList(getDefinitionLocation(sig)));
+                return Either.forLeft(Collections.singletonList(getDefinitionLocation(resolver, sig)));
               }
               return null;
             });
   }
 
   @Nullable
-  private Location getDefinitionLocation(Signature sig) {
+  private Location getDefinitionLocation(SignaturePositionResolver resolver, Signature sig) {
     if (sig instanceof ClassType) {
       final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
           getServer().getView().getClass((ClassType) sig);
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
-        return new Location(
-            Util.pathToUri(sc.getClassSource().getSourcePath()),
-            Util.positionToRange(sc.getPosition()));
+        return resolver.findFirstMatchingSignature( sc.getType(), sc.getPosition() );
       }
 
     } else if (sig instanceof MethodSignature) {
@@ -185,11 +183,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
           getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
-        final Optional<SootMethod> method = sc.getMethod(((MethodSignature) sig));
-        if (method.isPresent()) {
-          return new Location(
-              Util.pathToUri(sc.getClassSource().getSourcePath()),
-              Util.positionToRange(method.get().getPosition()));
+        final Optional<SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig));
+        if (methodOpt.isPresent()) {
+          final SootMethod method = methodOpt.get();
+          return resolver.findFirstMatchingSignature( method.getSignature(), method.getPosition() );
         }
       }
 
@@ -200,9 +197,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         SootClass sc = (SootClass) aClass.get();
         final Optional<SootField> field = sc.getField(((FieldSignature) sig).getSubSignature());
         if (field.isPresent()) {
-          return new Location(
-              Util.pathToUri(sc.getClassSource().getSourcePath()),
-              Util.positionToRange(field.get().getPosition()));
+          final SootField sf = field.get();
+          return resolver.findFirstMatchingSignature( sf.getSignature(), sf.getPosition() );
         }
       }
     }
@@ -302,20 +298,21 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
               boolean includeDef =
                   params.getContext() != null && params.getContext().isIncludeDeclaration();
-
-              if (includeDef) {
-                final Location definitionLocation = getDefinitionLocation(sig);
-                if (definitionLocation != null) {
-                  list.add(definitionLocation);
-                }
-              }
+              final Location definitionLocation = includeDef ? null : getDefinitionLocation(resolver,sig);
 
               final Collection<SootClass> classes =
                   (Collection<SootClass>) getServer().getView().getClasses();
               for (SootClass sc : classes) {
                 final Path scPath = sc.getClassSource().getSourcePath();
                 final SignaturePositionResolver sigresolver = getSignaturePositionResolver(scPath);
-                list.addAll(sigresolver.resolve(sig));
+
+                final List<Location> resolvedList = sigresolver.resolve(sig);
+
+                // remove definition if requested
+                if (!includeDef) {
+                  resolvedList.removeIf( loc -> loc.equals(definitionLocation) );
+                }
+                list.addAll(resolvedList);
               }
 
               return list;
