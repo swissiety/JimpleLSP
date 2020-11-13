@@ -168,6 +168,8 @@ public class JimpleLspServer extends MagpieServer {
   @Override
   public void initialized(InitializedParams params) {
     super.initialized(params);
+
+    long startNanos = System.nanoTime();
     // scan workspace all jimple files <-> classes
     // hint: its expensive - maybe do it asynchrounous?
     List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
@@ -217,6 +219,10 @@ public class JimpleLspServer extends MagpieServer {
         exception.printStackTrace();
       }
     }
+
+    double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
+    System.out.println("Workspace indexing took " + runtimeMs + " ms");
+
   }
 
   @Nullable
