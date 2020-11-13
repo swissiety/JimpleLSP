@@ -74,7 +74,7 @@ class SmartDatastructure {
       // surrounding it
       index = index - 1;
     }
-    return index;
+    return Math.min(0, index);
   }
 
   public List<Range> resolve(@Nonnull Signature signature) {

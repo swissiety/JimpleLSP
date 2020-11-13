@@ -339,7 +339,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     final SignaturePositionResolver sigresolver = docSignaturePositionResolver.computeIfAbsent(uri, k -> {
       try {
         return new SignaturePositionResolver(path);
-      } catch (IOException exception) {
+      }catch (IllegalStateException ex){
+        System.out.println(path);
+        ex.printStackTrace();
+      }catch (IOException exception) {
         exception.printStackTrace();
       }
       return null;
@@ -478,7 +481,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       str += ", " + interfaceIt.next();
                     }
                   }
-
 
                 }
               } else if (sig instanceof MethodSignature) {
