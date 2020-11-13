@@ -170,13 +170,6 @@ public class SignaturePositionResolver {
     public void enterValue(JimpleParser.ValueContext ctx) {
       if (ctx.NEW() != null) {
         positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.base_type), util.getClassType(ctx.base_type.getText()));
-      } else if (ctx.NEWARRAY() != null) {
-        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.array_type), util.getClassType(ctx.array_type.getText()));
-      } else if (ctx.NEWMULTIARRAY() != null) {
-        positionContainer.add(
-                JimpleConverterUtil.buildPositionFromCtx(ctx.multiarray_type), util.getClassType(ctx.multiarray_type.getText()));
-      } else if (ctx.INSTANCEOF() != null) {
-        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.nonvoid_type), util.getClassType(ctx.nonvoid_type.getText()));
       }
       super.enterValue(ctx);
     }
