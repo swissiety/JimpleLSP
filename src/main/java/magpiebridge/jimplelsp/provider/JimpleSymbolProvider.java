@@ -6,6 +6,7 @@ import de.upb.swt.soot.core.model.SootMethod;
 import java.util.List;
 import javax.annotation.Nonnull;
 import magpiebridge.jimplelsp.Util;
+import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -22,6 +23,7 @@ public class JimpleSymbolProvider {
       @Nonnull List<SymbolInformation> resultList,
       String query,
       @Nonnull SootClass clazz,
+      SignaturePositionResolver resolver,
       @Nonnull SymbolKindCapabilities symbolKind,
       int limit) {
     final List<SymbolKind> clientSupportedSymbolKinds = symbolKind.getValueSet();
@@ -31,8 +33,7 @@ public class JimpleSymbolProvider {
     if (clientSupportedSymbolKinds.contains(SymbolKind.Class)) {
       // retrieve classes
       if (query == null || clazz.getName().toLowerCase().contains(query)) {
-        Location location =
-            new Location(Util.classToUri(clazz), Util.positionToRange(clazz.getPosition()));
+        Location location = resolver.findFirstMatchingSignature( clazz.getType(), clazz.getPosition() );
         resultList.add(new SymbolInformation(clazz.getName(), SymbolKind.Class, location));
       }
     }
@@ -41,8 +42,8 @@ public class JimpleSymbolProvider {
       // retrieve methods
       for (SootMethod method : clazz.getMethods()) {
         if (query == null || method.getName().toLowerCase().contains(query)) {
-          Location location =
-              new Location(Util.classToUri(clazz), Util.positionToRange(method.getPosition()));
+          // find first signature matching
+          Location location = resolver.findFirstMatchingSignature( method.getSignature(), method.getPosition() );
           resultList.add(new SymbolInformation(method.getName(), SymbolKind.Method, location));
         }
       }
@@ -52,8 +53,7 @@ public class JimpleSymbolProvider {
       // retrieve fields
       for (SootField field : clazz.getFields()) {
         if (query == null || field.getName().toLowerCase().contains(query)) {
-          Location location =
-              new Location(Util.classToUri(clazz), Util.positionToRange(field.getPosition()));
+          Location location = resolver.findFirstMatchingSignature( field.getSignature(), field.getPosition() );
           resultList.add(new SymbolInformation(field.getName(), SymbolKind.Field, location));
         }
       }

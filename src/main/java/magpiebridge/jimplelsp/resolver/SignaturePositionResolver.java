@@ -13,35 +13,40 @@ import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+
+import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 
 /**
- * This Class holds information about (open) jimple files. Especially range information about
- * occurences of Signature's or even Siganture+Identifier.
+ * This Class organizes information about (open) jimple files.
+ * Especially range information about occurences of Signature's in the given file.
+ *
  *
  * @author Markus Schmidt
  */
 public class SignaturePositionResolver {
   private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
-  private final Path fileUri;
+  private final Path path;
   private final JimpleConverterUtil util;
 
   public SignaturePositionResolver(Path fileUri) throws IOException {
     this(fileUri, CharStreams.fromPath(fileUri));
   }
 
-  public SignaturePositionResolver(Path fileUri, String content) {
-    this(fileUri, CharStreams.fromString(content));
+  public SignaturePositionResolver(Path path, String content) {
+    this(path, CharStreams.fromString(content));
   }
 
-  private SignaturePositionResolver(Path fileUri, CharStream charStream) {
-    this.fileUri = fileUri;
-    util = new JimpleConverterUtil(fileUri);
-    JimpleParser parser = JimpleConverterUtil.createJimpleParser(charStream, fileUri);
+  private SignaturePositionResolver(Path path, CharStream charStream) {
+    this.path = path;
+    util = new JimpleConverterUtil(path);
+    JimpleParser parser = JimpleConverterUtil.createJimpleParser(charStream, path);
 
     ParseTreeWalker walker = new ParseTreeWalker();
     walker.walk(occurences, parser.file());
@@ -52,16 +57,46 @@ public class SignaturePositionResolver {
     return occurences.resolve(position);
   }
 
+  @Nullable
+  public List<Location> resolve(Signature signature) {
+    return occurences.resolve(signature).stream().map(range -> new Location(Util.pathToUri(path), range)).collect(Collectors.toList());
+  }
+
+
+  /** skips e.g. the methods returntype to get the identifier (or class type) */
+   @Nullable
+   public Location findFirstMatchingSignature(Signature signature, Position position) {
+    final Range firstMatchingSignature = occurences.findFirstMatchingSignature(signature, position);
+    if(firstMatchingSignature == null){
+      return null;
+    }
+    return new Location( Util.pathToUri(path) ,firstMatchingSignature);
+  }
+
   private final class SignatureOccurenceAggregator extends JimpleBaseListener {
+
     SmartDatastructure positionContainer = new SmartDatastructure();
     ClassType clazz;
+
+    @Nullable
+    public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {
+      return positionContainer.resolve(position);
+    }
+
+    public List<Range> resolve(Signature signature) {
+      return positionContainer.resolve(signature);
+    }
+
+    public Range findFirstMatchingSignature(Signature signature, Position position) {
+      return positionContainer.findFirstMatchingSignature(signature, position);
+    }
 
     @Override
     public void enterFile(JimpleParser.FileContext ctx) {
       if (ctx.classname == null) {
         throw new ResolveException(
             "Identifier for this unit is not found.",
-            fileUri,
+                path,
             JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
       String classname = Jimple.unescape(ctx.classname.getText());
@@ -86,19 +121,22 @@ public class SignaturePositionResolver {
       Type type = util.getType(ctx.method_subsignature().type().getText());
       if (type == null) {
         throw new ResolveException(
-            "Returntype not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
+            "Returntype not found.", path, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
       String methodname = ctx.method_subsignature().method_name().getText();
       if (methodname == null) {
         throw new ResolveException(
-            "Methodname not found.", fileUri, JimpleConverterUtil.buildPositionFromCtx(ctx));
+            "Methodname not found.", path, JimpleConverterUtil.buildPositionFromCtx(ctx));
       }
 
       List<Type> params = util.getTypeList(ctx.method_subsignature().type_list());
       MethodSignature methodSignature =
           util.getIdentifierFactory()
               .getMethodSignature(Jimple.unescape(methodname), clazz, type, params);
-      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx), methodSignature);
+
+      final Position startPos = JimpleConverterUtil.buildPositionFromCtx(ctx.method_subsignature().method_name());
+      final Position endPos = JimpleConverterUtil.buildPositionFromCtx(ctx);
+      positionContainer.add( new Position(startPos.getFirstLine(), startPos.getFirstCol(), endPos.getLastLine(), endPos.getLastCol()), methodSignature);
 
       super.enterMethod(ctx);
     }
@@ -154,16 +192,12 @@ public class SignaturePositionResolver {
 
     @Override
     public void enterType(JimpleParser.TypeContext ctx) {
-      final Type returnType = util.getType(ctx.getText());
-      if (returnType instanceof ClassType) {
-        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()), (Signature) returnType);
+      final Type type = util.getType(ctx.getText());
+      if (type instanceof ClassType) {
+        positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()), (Signature) type);
       }
       super.enterType(ctx);
     }
 
-    @Nullable
-    public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {
-      return positionContainer.resolve(position);
-    }
   }
 }

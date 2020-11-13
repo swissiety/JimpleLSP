@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieWorkspaceService;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
+import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.eclipse.lsp4j.*;
 
 public class JimpleWorkspaceService extends MagpieWorkspaceService {
@@ -48,8 +49,9 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
                             return;
                           }
 
+                          final SignaturePositionResolver signaturePositionResolver = ((JimpleTextDocumentService) getServer().getTextDocumentService()).getSignaturePositionResolver(Util.classToUri((SootClass) clazz));
                           JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(
-                              list, query, (SootClass) clazz, symbolKind, limit);
+                              list, query, (SootClass) clazz, signaturePositionResolver, symbolKind, limit);
                         });
               }
               return list;

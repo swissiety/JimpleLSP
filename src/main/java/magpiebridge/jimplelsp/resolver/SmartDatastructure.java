@@ -1,24 +1,25 @@
 package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.antlr.v4.runtime.ParserRuleContext;
+
 import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
-// TODO: improve ds: implement or use dependency for sth like segment/intervaltree
 class SmartDatastructure {
 
   @Nonnull List<Position> startPositions = new ArrayList<>();
   @Nonnull List<Position> endPositions = new ArrayList<>();
-  @Nonnull List<Signature> signaturesAndIdentifiers = new ArrayList<>();
+  @Nonnull List<Signature> signatures = new ArrayList<>();
 
   Comparator<Position> comparator = new PositionComparator();
 
@@ -29,21 +30,40 @@ class SmartDatastructure {
     if (idx < 0) {
       // calculate insertion index
       idx = -idx - 1;
+
+      // assert there is no overlapping/nesting of ranges -> new position starts after the endposition of previous item in the list
+      assert PositionComparator.getInstance().compare( startPos, endPositions.get(idx-1)) > 0;
+
     } else {
-      throw new IllegalStateException("position " + startPos + " is already taken.");
+      throw new IllegalStateException("position " + startPos + " is already taken by "+ signatures.get(idx));
     }
 
     startPositions.add(idx, startPos);
     endPositions.add(idx, new Position(position.getLastLine(), position.getLastCol()));
 
-    signaturesAndIdentifiers.add(idx, sig);
+    signatures.add(idx, sig);
   }
 
   @Nullable
-  Pair<Signature, Range> resolve(Position position) {
+  Pair<Signature, Range> resolve(@Nonnull Position position) {
     if (startPositions.isEmpty()) {
       return null;
     }
+    int index = getStartingIndex(position);
+
+    if (index < 0) {
+      return null;
+    }
+
+    final Position startPos = startPositions.get(index);
+    final Position endPos = endPositions.get(index);
+    if (comparator.compare(startPos, position) <= 0 && comparator.compare(position, endPos) <= 0) {
+      return Pair.of(signatures.get(index), new Range(startPos, endPos));
+    }
+    return null;
+  }
+
+  private int getStartingIndex(@Nonnull Position position) {
     int index =
         Collections.binarySearch(startPositions, position, PositionComparator.getInstance());
     if (index < 0) {
@@ -54,16 +74,33 @@ class SmartDatastructure {
       // surrounding it
       index = index - 1;
     }
+    return index;
+  }
 
-    if (index < 0) {
-      return null;
+  public List<Range> resolve(@Nonnull Signature signature) {
+    final List<Range> ranges = new ArrayList<>();
+    for (int i = 0, signaturesSize = signatures.size(); i < signaturesSize; i++) {
+      Signature sig = signatures.get(i);
+      if (sig.equals(signature)) {
+        ranges.add( new Range( startPositions.get(i), endPositions.get(i) ) );
+      }
     }
+    return ranges;
+  }
 
-    final Position startPos = startPositions.get(index);
-    final Position endPos = endPositions.get(index);
-    if (comparator.compare(startPos, position) <= 0 && comparator.compare(position, endPos) <= 0) {
-      return Pair.of(signaturesAndIdentifiers.get(index), new Range(startPos, endPos));
+  @Nullable
+  public Range findFirstMatchingSignature(Signature signature, de.upb.swt.soot.core.model.Position position) {
+
+    int idx = getStartingIndex(new Position(position.getFirstLine(), position.getFirstCol()));
+
+    // loop is expected to do max. 2 iterations
+    for (int i = idx, signaturesSize = signatures.size(); i < signaturesSize; i++) {
+      Signature sig = signatures.get(i);
+      if (sig.equals(signature)) {
+        return new Range( startPositions.get(i), endPositions.get(i) );
+      }
     }
     return null;
   }
+
 }
