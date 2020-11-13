@@ -31,9 +31,6 @@ class SmartDatastructure {
       // calculate insertion index
       idx = -idx - 1;
 
-      // assert there is no overlapping/nesting of ranges -> new position starts after the endposition of previous item in the list
-      assert PositionComparator.getInstance().compare( startPos, endPositions.get(idx-1)) > 0;
-
     } else {
       throw new IllegalStateException("position " + startPos + " is already taken by "+ signatures.get(idx));
     }
@@ -74,7 +71,7 @@ class SmartDatastructure {
       // surrounding it
       index = index - 1;
     }
-    return Math.min(0, index);
+    return Math.max(0, index);
   }
 
   public List<Range> resolve(@Nonnull Signature signature) {
