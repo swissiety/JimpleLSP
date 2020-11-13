@@ -497,6 +497,19 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
                   str = Modifier.toString(sc.getModifiers()) + " " + sc.toString();
+                  if( sc.hasSuperclass()) {
+                    str += "\n extends " + sc.getSuperclass();
+                  }
+
+                  Iterator<ClassType> interfaceIt = sc.getInterfaces().iterator();
+                  if (interfaceIt.hasNext()) {
+                    str += " implements " + interfaceIt.next();
+                    while (interfaceIt.hasNext()) {
+                      str += ", " + interfaceIt.next();
+                    }
+                  }
+
+
                 }
               } else if (sig instanceof MethodSignature) {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
