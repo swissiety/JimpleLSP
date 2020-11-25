@@ -28,6 +28,8 @@ import org.eclipse.lsp4j.*;
 
 public class JimpleLspServer extends MagpieServer {
 
+  public static boolean enabled = true;
+
   @Nonnull private final Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
   private View view;
   private boolean isViewDirty = true;

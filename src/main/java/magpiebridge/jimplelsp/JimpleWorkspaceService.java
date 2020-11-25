@@ -21,6 +21,10 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
 
   @Override
   public CompletableFuture<List<? extends SymbolInformation>> symbol(WorkspaceSymbolParams params) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     return getServer()
         .pool(
             () -> {

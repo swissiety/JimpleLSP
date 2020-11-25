@@ -51,6 +51,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
+    Util.logUsage("didopen(" + params.getTextDocument().getUri() + ")");
+
     // FIXME: [ms] make magpiebridge:SourceFileModule.getSuffix() protected or create a central/open
     // language->suffix allocation
     //  super.didOpen(params);
@@ -90,6 +92,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
+    Util.logUsage("didclose(" + params.getTextDocument().getUri() + ")");
+
     // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
     //    super.didClose(params);
     if (params == null
@@ -128,6 +132,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       definition(TextDocumentPositionParams position) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
     if (position == null) {
       return null;
     }
@@ -211,6 +218,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       implementation(TextDocumentPositionParams position) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (position == null) {
       return null;
     }
@@ -280,6 +291,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (params == null) {
       return null;
     }
@@ -372,6 +387,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       typeDefinition(TextDocumentPositionParams position) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (position == null) {
       return null;
     }
@@ -463,6 +482,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (position == null) {
       return null;
     }
@@ -539,6 +562,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
       TextDocumentPositionParams position) {
+
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (position == null) {
       return null;
     }
@@ -570,6 +598,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
+
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (params == null) {
       return null;
     }
@@ -616,6 +649,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     // possibilities: fold imports | fold multiline comments
     if (params == null) {
       return null;
@@ -653,6 +690,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(
       DocumentSymbolParams params) {
+
+    if (!JimpleLspServer.enabled) {
+      return null;
+    }
+
     if (params == null) {
       return null;
     }
