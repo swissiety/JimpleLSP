@@ -48,7 +48,7 @@ public class LocalResolver {
   }
 
   @Nullable
-  private List<Pair<Position, String>> getLocals(SootClass sc, TextDocumentPositionParams pos) {
+  private List<Pair<Position, String>> getLocals(SootClass sc, org.eclipse.lsp4j.Position pos) {
     final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     if (!surroundingMethod.isPresent()) {
       return null;
@@ -58,42 +58,37 @@ public class LocalResolver {
 
   @Nonnull
   private Optional<SootMethod> getSootMethodFromPosition(
-      @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
-    return sc.getMethods().stream()
-        .filter(m -> isInRangeOf(pos.getPosition(), m.getPosition()))
-        .findAny();
+      @Nonnull SootClass sc, @Nonnull org.eclipse.lsp4j.Position pos) {
+    return sc.getMethods().stream().filter(m -> isInRangeOf(pos, m.getPosition())).findAny();
   }
 
   private Optional<Pair<Position, String>> getSelectedLocalInfo(
-      @Nonnull List<Pair<Position, String>> locals, @Nonnull TextDocumentPositionParams pos) {
+      @Nonnull List<Pair<Position, String>> locals, @Nonnull org.eclipse.lsp4j.Position pos) {
     // determine name/range of selected local
-    return locals.stream().filter(p -> isInRangeOf(pos.getPosition(), p.getLeft())).findAny();
+    return locals.stream().filter(p -> isInRangeOf(pos, p.getLeft())).findAny();
   }
 
-  @Nullable
-  public List<? extends DocumentHighlight> resolveReferences(
-      SootClass sc, TextDocumentPositionParams pos) {
-    List<Pair<Position, String>> locals = getLocals(sc, pos);
+  @Nonnull
+  public List<? extends Location> resolveReferences(SootClass sc, TextDocumentPositionParams pos) {
+    List<Pair<Position, String>> locals = getLocals(sc, pos.getPosition());
     if (locals == null) {
-      return null;
+      return Collections.emptyList();
     }
-    final Optional<Pair<Position, String>> localOpt = getSelectedLocalInfo(locals, pos);
+    final Optional<Pair<Position, String>> localOpt =
+        getSelectedLocalInfo(locals, pos.getPosition());
     if (!localOpt.isPresent()) {
-      return null;
+      return Collections.emptyList();
     }
     final String localname = localOpt.get().getRight();
     return locals.stream()
         .filter(l -> l.getRight().equals(localname))
-        .map(
-            l ->
-                new DocumentHighlight(
-                    Util.positionToRange(l.getLeft()), DocumentHighlightKind.Text))
+        .map(l -> Util.positionToLocation(pos.getTextDocument().getUri(), l.getLeft()))
         .collect(Collectors.toList());
   }
 
   @Nullable
   public Type resolveTypeDefinition(
-      @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+      @Nonnull SootClass sc, @Nonnull org.eclipse.lsp4j.Position pos) {
     final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     if (!surroundingMethod.isPresent()) {
       return null;
@@ -120,11 +115,12 @@ public class LocalResolver {
   @Nullable
   public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(
       @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
-    List<Pair<Position, String>> locals = getLocals(sc, pos);
+    List<Pair<Position, String>> locals = getLocals(sc, pos.getPosition());
     if (locals == null) {
       return null;
     }
-    final Optional<Pair<Position, String>> localOpt = getSelectedLocalInfo(locals, pos);
+    final Optional<Pair<Position, String>> localOpt =
+        getSelectedLocalInfo(locals, pos.getPosition());
     if (!localOpt.isPresent()) {
       return null;
     }

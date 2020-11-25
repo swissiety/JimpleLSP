@@ -49,9 +49,16 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
                             return;
                           }
 
-                          final SignaturePositionResolver signaturePositionResolver = ((JimpleTextDocumentService) getServer().getTextDocumentService()).getSignaturePositionResolver(Util.classToUri((SootClass) clazz));
+                          final SignaturePositionResolver signaturePositionResolver =
+                              ((JimpleTextDocumentService) getServer().getTextDocumentService())
+                                  .getSignaturePositionResolver(Util.classToUri((SootClass) clazz));
                           JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(
-                              list, query, (SootClass) clazz, signaturePositionResolver, symbolKind, limit);
+                              list,
+                              query,
+                              (SootClass) clazz,
+                              signaturePositionResolver,
+                              symbolKind,
+                              limit);
                         });
               }
               return list;

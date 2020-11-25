@@ -1,17 +1,13 @@
 package magpiebridge.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
@@ -23,7 +19,7 @@ class SmartDatastructure {
 
   Comparator<Position> comparator = new PositionComparator();
 
-  void add( de.upb.swt.soot.core.model.Position position, Signature sig) {
+  void add(de.upb.swt.soot.core.model.Position position, Signature sig) {
     // insert sorted to be accessed via binary search
     final Position startPos = new Position(position.getFirstLine(), position.getFirstCol());
     int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
@@ -32,7 +28,8 @@ class SmartDatastructure {
       idx = -idx - 1;
 
     } else {
-      throw new IllegalStateException("position " + startPos + " is already taken by "+ signatures.get(idx));
+      throw new IllegalStateException(
+          "position " + startPos + " is already taken by " + signatures.get(idx));
     }
 
     startPositions.add(idx, startPos);
@@ -79,14 +76,15 @@ class SmartDatastructure {
     for (int i = 0, signaturesSize = signatures.size(); i < signaturesSize; i++) {
       Signature sig = signatures.get(i);
       if (sig.equals(signature)) {
-        ranges.add( new Range( startPositions.get(i), endPositions.get(i) ) );
+        ranges.add(new Range(startPositions.get(i), endPositions.get(i)));
       }
     }
     return ranges;
   }
 
   @Nullable
-  public Range findFirstMatchingSignature(Signature signature, de.upb.swt.soot.core.model.Position position) {
+  public Range findFirstMatchingSignature(
+      Signature signature, de.upb.swt.soot.core.model.Position position) {
 
     int idx = getStartingIndex(new Position(position.getFirstLine(), position.getFirstCol()));
 
@@ -94,10 +92,9 @@ class SmartDatastructure {
     for (int i = idx, signaturesSize = signatures.size(); i < signaturesSize; i++) {
       Signature sig = signatures.get(i);
       if (sig.equals(signature)) {
-        return new Range( startPositions.get(i), endPositions.get(i) );
+        return new Range(startPositions.get(i), endPositions.get(i));
       }
     }
     return null;
   }
-
 }

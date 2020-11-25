@@ -74,7 +74,7 @@ public class JimpleLsp {
           MagpieServer server = new JimpleLspServer(config);
           // TODO: e.g. extract apk on demand
           Map<String, String> conf = new HashMap<>();
-          conf.put("Extract Apk", "extractthatthing");
+          conf.put("Extract Apk", "extractJimpleFromAPK");
           server.setConfigurationOptions(conf);
 
           String language = "jimple";

@@ -5,7 +5,6 @@ import de.upb.swt.soot.core.model.SootField;
 import de.upb.swt.soot.core.model.SootMethod;
 import java.util.List;
 import javax.annotation.Nonnull;
-import magpiebridge.jimplelsp.Util;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -33,7 +32,8 @@ public class JimpleSymbolProvider {
     if (clientSupportedSymbolKinds.contains(SymbolKind.Class)) {
       // retrieve classes
       if (query == null || clazz.getName().toLowerCase().contains(query)) {
-        Location location = resolver.findFirstMatchingSignature( clazz.getType(), clazz.getPosition() );
+        Location location =
+            resolver.findFirstMatchingSignature(clazz.getType(), clazz.getPosition());
         resultList.add(new SymbolInformation(clazz.getName(), SymbolKind.Class, location));
       }
     }
@@ -43,7 +43,8 @@ public class JimpleSymbolProvider {
       for (SootMethod method : clazz.getMethods()) {
         if (query == null || method.getName().toLowerCase().contains(query)) {
           // find first signature matching
-          Location location = resolver.findFirstMatchingSignature( method.getSignature(), method.getPosition() );
+          Location location =
+              resolver.findFirstMatchingSignature(method.getSignature(), method.getPosition());
           resultList.add(new SymbolInformation(method.getName(), SymbolKind.Method, location));
         }
       }
@@ -53,7 +54,8 @@ public class JimpleSymbolProvider {
       // retrieve fields
       for (SootField field : clazz.getFields()) {
         if (query == null || field.getName().toLowerCase().contains(query)) {
-          Location location = resolver.findFirstMatchingSignature( field.getSignature(), field.getPosition() );
+          Location location =
+              resolver.findFirstMatchingSignature(field.getSignature(), field.getPosition());
           resultList.add(new SymbolInformation(field.getName(), SymbolKind.Field, location));
         }
       }
