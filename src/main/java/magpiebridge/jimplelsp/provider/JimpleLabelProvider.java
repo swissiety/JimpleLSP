@@ -1,8 +1,8 @@
 package magpiebridge.jimplelsp.provider;
 
+import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +10,8 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import magpiebridge.jimplelsp.Util;
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.DocumentLink;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 /**
  * This listener implementation lists all label usage positions when its passed into the Jimple
@@ -19,23 +19,15 @@ import org.eclipse.lsp4j.Range;
  *
  * @author Markus Schmidt
  */
-public class JimpleLabelReferenceProvider extends JimpleBaseListener {
+public class JimpleLabelProvider extends JimpleBaseListener {
   @Nonnull private final Map<String, Range> labelTargets = new HashMap<>();
   @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
 
   @Nonnull
-  public List<DocumentLink> getLinks(Path fileUri) {
-    // traverse label usages and assign the respective target (which is in the same file and
-    // method).
-    List<DocumentLink> links = new ArrayList<>();
-    for (Pair<String, Range> usage : labelUsage) {
-      final Range position = labelTargets.get(usage.getLeft());
-      if (position != null) {
-        String target = fileUri + "#" + position.getStart().getLine();
-        links.add(new DocumentLink(usage.getRight(), target));
-      }
-    }
-    return links;
+  public void resolve(SootClass sc, TextDocumentPositionParams pos) {
+
+    // TODO: implement
+
   }
 
   @Override

@@ -13,7 +13,6 @@ import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import magpiebridge.jimplelsp.Util;
