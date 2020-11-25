@@ -80,10 +80,14 @@ public class LocalResolver {
       return Collections.emptyList();
     }
     final String localname = localOpt.get().getRight();
-    return locals.stream()
-        .filter(l -> l.getRight().equals(localname))
-        .map(l -> Util.positionToLocation(pos.getTextDocument().getUri(), l.getLeft()))
-        .collect(Collectors.toList());
+    List<Location> list = new ArrayList<>();
+    for (Pair<Position, String> l : locals) {
+      if (l.getRight().equals(localname)) {
+        Location location = Util.positionToLocation(pos.getTextDocument().getUri(), l.getLeft());
+        list.add(location);
+      }
+    }
+    return list;
   }
 
   @Nullable
