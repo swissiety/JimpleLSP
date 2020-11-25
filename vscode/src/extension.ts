@@ -7,30 +7,28 @@ var client: LanguageClient = null;
 
 async function configureAndStartClient(context: ExtensionContext) {
 
+    // TODO: [ms] remove
+    window.showErrorMessage("starting to configure jimpls lsp ")
+
 	// Startup options for the language server
 	const settings = workspace.getConfiguration("JimpleLSP");
 	const lspTransport: string = settings.get("lspTransport");
-	const auto: boolean = settings.get("auto");
-	const timeout = settings.get("timeout");
-	const dockerImage: string = settings.get("dockerImage");
-	let script = 'java';
+	let executable = 'java';
 	let relativePath = "jimplelsp-0.0.1.jar";
 	let args = ['-jar', context.asAbsolutePath(relativePath)];
-	if (auto)
-		args.push("--auto", timeout.toString())
-	if (dockerImage)
-		args.push("-i", dockerImage);
+
 	const serverOptionsStdio = {
-		run: { command: script, args: args },
-		debug: { command: script, args: args }
+		run: { command: executable, args: args },
+		debug: { command: executable, args: args }
 	}
 
 	const serverOptionsSocket = () => {
-		const socket = net.connect({ port: 5007 })
+		const socket = net.connect({ port: 2403 })
 		const result: StreamInfo = {
 			writer: socket,
 			reader: socket
 		}
+
 		return new Promise<StreamInfo>((resolve) => {
 			socket.on("connect", () => resolve(result))
 			socket.on("error", _ => {
@@ -57,7 +55,6 @@ async function configureAndStartClient(context: ExtensionContext) {
 	// Create the language client and start the client.
 	client = new LanguageClient('JimpleLSP', 'JimpleLSP', serverOptions, clientOptions);
 	client.start();
-
 
 	await client.onReady();
 }

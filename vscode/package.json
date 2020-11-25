@@ -14,7 +14,7 @@
 	},
 	"publisher": "MarkusSchmidt",
 	"categories": [
-		"Programming Languages"
+		"Languages"
 	],
 	"keywords": [
 		"Soot, Jimple, Language Server, LSP, .jimple"
@@ -25,6 +25,11 @@
 	"activationEvents": [
 		"onLanguage:jimple"
 	],
+	"languages": [{
+		"id": "jimple",
+		"extensions": [ ".jimple"],
+		"aliases": [ "Jimple", "jimple" ]
+	}],
 	"main": "./out/extension",
 	"contributes": {
 		"configuration": {
@@ -40,24 +45,6 @@
 					],
 					"default": "off",
 					"description": "Traces the communication between VS Code and the language server."
-				},
-				"JimpleLSP.auto": {
-					"scope": "window",
-					"type": "boolean",
-					"default": true,
-					"description": "Specifies if JimpleLSP should be ran automatically when the user is idle."
-				},
-				"JimpleLSP.timeout": {
-					"scope": "window",
-					"type": "integer",
-					"default": 5,
-					"description": "Specifies the time to wait for idle when Auto is enabled."
-				},
-				"JimpleLSP.dockerImage": {
-					"scope": "window",
-					"type": "string",
-					"default": "",
-					"description": "Specifies the docker image to be used."
 				},
 				"JimpleLSP.lspTransport": {
 					"scope": "window",
