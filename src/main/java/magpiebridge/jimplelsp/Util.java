@@ -21,7 +21,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class Util {
 
-  private static Date starttime = new Date(System.currentTimeMillis());
+  public static Date starttime = new Date(System.currentTimeMillis());
 
   // [ms] for the sus test
   public static void logUsage(String msg) {
@@ -29,7 +29,7 @@ public class Util {
     SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
     Date date = new Date(System.currentTimeMillis());
 
-    long timediff = ((starttime.getTime() - date.getTime()) / 1000);
+    long timediff = ((date.getTime() - starttime.getTime()) / 1000);
 
     try (PrintWriter output = new PrintWriter(new FileWriter("usagelog.txt", true))) {
       output.println(formatter.format(date) + ": " + msg + " #" + timediff);

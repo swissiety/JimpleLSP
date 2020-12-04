@@ -1,5 +1,6 @@
 package magpiebridge.jimplelsp;
 
+import static magpiebridge.jimplelsp.Util.logUsage;
 import static magpiebridge.jimplelsp.Util.positionToRange;
 
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
@@ -29,7 +30,6 @@ import org.eclipse.lsp4j.*;
 public class JimpleLspServer extends MagpieServer {
 
   public static boolean enabled = true;
-
   @Nonnull private final Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
   private View view;
   private boolean isViewDirty = true;
@@ -225,6 +225,8 @@ public class JimpleLspServer extends MagpieServer {
     double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
     System.out.println("Workspace indexing took " + runtimeMs + " ms");
 
+    Util.starttime = new Date(System.currentTimeMillis());
+    logUsage("initialized");
   }
 
   @Nullable

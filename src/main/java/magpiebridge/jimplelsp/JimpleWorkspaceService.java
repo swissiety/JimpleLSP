@@ -24,6 +24,7 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
     if (!JimpleLspServer.enabled) {
       return null;
     }
+    Util.logUsage("workspacesymbol");
 
     return getServer()
         .pool(
