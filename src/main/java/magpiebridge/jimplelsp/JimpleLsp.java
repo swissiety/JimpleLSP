@@ -34,8 +34,7 @@ public class JimpleLsp {
                 "port",
                 true,
                 MessageFormat.format(
-                    "sets the port for socket mode, standard port is {0}", DEFAULT_PORT))
-            .addOption("sus", "sus", false, "sets sus test mode");
+                    "sets the port for socket mode, standard port is {0}", DEFAULT_PORT));
 
     CommandLineParser parser = new DefaultParser();
 
@@ -83,11 +82,6 @@ public class JimpleLsp {
           server.addAnalysis(Either.forLeft(analysis), language);
           return server;
         };
-
-    if (cmd.hasOption("sus")) {
-      JimpleLspServer.enabled = false;
-      Util.logUsage("jimple lsp utilities are disabled");
-    }
 
     if (cmd.hasOption("socket")) {
       int port = Integer.parseInt(cmd.getOptionValue("port", DEFAULT_PORT));

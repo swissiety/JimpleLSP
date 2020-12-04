@@ -51,11 +51,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
-
-    String sanitizedUri = params.getTextDocument().getUri();
-    sanitizedUri = sanitizedUri.substring(sanitizedUri.lastIndexOf('/'));
-    magpiebridge.jimplelsp.Util.logUsage("didopen(" + sanitizedUri + ")");
-
     // FIXME: [ms] make magpiebridge:SourceFileModule.getSuffix() protected or create a central/open
     // language->suffix allocation
     //  super.didOpen(params);
@@ -95,10 +90,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
-    String sanitizedUri = params.getTextDocument().getUri();
-    sanitizedUri = sanitizedUri.substring(sanitizedUri.lastIndexOf('/'));
-    magpiebridge.jimplelsp.Util.logUsage("didclose(" + sanitizedUri + ")");
-
     // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
     //    super.didClose(params);
     if (params == null
@@ -108,7 +99,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
-    // FIXME: [ms] magpiebridge getsuffix() super.didChange(params);
+    super.didChange(params);
 
     final String uri = params.getTextDocument().getUri();
     String language = inferLanguage(uri);
@@ -137,10 +128,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       definition(TextDocumentPositionParams position) {
-    if (!magpiebridge.jimplelsp.JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (position == null) {
       return null;
     }
@@ -172,18 +159,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalResolver localResolver =
-                    new LocalResolver(Util.uriToPath(uri));
-                final Either<List<? extends Location>, List<? extends LocationLink>>
-                    listListEither = localResolver.resolveDefinition(sc, position);
-                if (listListEither != null) {
-                  magpiebridge.jimplelsp.Util.logUsage("definition:local");
-                }
-                return listListEither;
+                final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
+                return localResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
-                magpiebridge.jimplelsp.Util.logUsage("definition:signature:" + sig);
                 return Either.forLeft(
                     Collections.singletonList(getDefinitionLocation(resolver, sig)));
               }
@@ -231,11 +211,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       implementation(TextDocumentPositionParams position) {
-
-    if (!JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (position == null) {
       return null;
     }
@@ -271,8 +246,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                           sootClass ->
                               list.add(
                                   Util.positionToLocation(
-                                      Util.pathToUri(
-                                          sootClass.getClassSource().getSourcePath()),
+                                      Util.pathToUri(sootClass.getClassSource().getSourcePath()),
                                       sootClass.getPosition())));
                     });
 
@@ -288,13 +262,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                         final Optional<SootMethod> methodOpt =
                             sc.getMethod(((MethodSignature) sig).getSubSignature());
                         final String methodsClassUri =
-                            Util.pathToUri(
-                                sc.getClassSource().getSourcePath());
+                            Util.pathToUri(sc.getClassSource().getSourcePath());
                         methodOpt.ifPresent(
                             method -> {
                               list.add(
-                                  Util.positionToLocation(
-                                      methodsClassUri, method.getPosition()));
+                                  Util.positionToLocation(methodsClassUri, method.getPosition()));
                             });
                       }
                     });
@@ -308,10 +280,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends Location>> references(ReferenceParams params) {
-    if (!JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (params == null) {
       return null;
     }
@@ -339,21 +307,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     view.getClass(classType);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  final LocalResolver localResolver =
-                      new LocalResolver(Util.uriToPath(uri));
-                  final List<? extends Location> collection =
-                      localResolver.resolveReferences(sc, params);
-                  if (!collection.isEmpty()) {
-                    Util.logUsage("references:local");
-                    list.addAll(collection);
-                  }
+                  final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
+                  list.addAll(localResolver.resolveReferences(sc, params));
                   return list;
                 }
 
                 return null;
               }
               Signature sig = sigInstance.getLeft();
-              Util.logUsage("references:signature:" + sig);
 
               boolean includeDef =
                   params.getContext() != null && params.getContext().isIncludeDeclaration();
@@ -374,12 +335,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 }
                 list.addAll(resolvedList);
               }
+
               return list;
             });
   }
 
   @Nullable
-  private SignaturePositionResolver getSignaturePositionResolver(@Nonnull Path path) {
+  private SignaturePositionResolver getSignaturePositionResolver(Path path) {
     return getSignaturePositionResolver(path, Util.pathToUri(path));
   }
 
@@ -411,10 +373,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       typeDefinition(TextDocumentPositionParams position) {
-    if (!JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (position == null) {
       return null;
     }
@@ -444,8 +402,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalResolver localResolver =
-                    new LocalResolver(magpiebridge.jimplelsp.Util.uriToPath(uri));
+                final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
                 final Type type = localResolver.resolveTypeDefinition(sc, position.getPosition());
 
                 if (!(type instanceof ClassType)) {
@@ -455,9 +412,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
                 if (typeClass.isPresent()) {
                   final SootClass sootClass = typeClass.get();
-                  return magpiebridge.jimplelsp.Util.positionToLocationList(
-                      magpiebridge.jimplelsp.Util.pathToUri(
-                          sootClass.getClassSource().getSourcePath()),
+                  return Util.positionToLocationList(
+                      Util.pathToUri(sootClass.getClassSource().getSourcePath()),
                       sootClass.getPosition());
                 }
                 return null;
@@ -508,10 +464,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
-    if (!JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (position == null) {
       return null;
     }
@@ -588,10 +540,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
       TextDocumentPositionParams position) {
-    if (!magpiebridge.jimplelsp.JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (position == null) {
       return null;
     }
@@ -601,8 +549,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         .pool(
             () -> {
               final String uri = position.getTextDocument().getUri();
-              final LocalResolver resolver =
-                  new LocalResolver(magpiebridge.jimplelsp.Util.uriToPath(uri));
+              final LocalResolver resolver = new LocalResolver(Util.uriToPath(uri));
 
               final ClassType classType = getServer().uriToClasstype(uri);
               if (classType == null) {
@@ -624,11 +571,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
-
-    if (!magpiebridge.jimplelsp.JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (params == null) {
       return null;
     }
@@ -675,10 +617,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<FoldingRange>> foldingRange(FoldingRangeRequestParams params) {
-    if (!JimpleLspServer.enabled) {
-      return null;
-    }
-
     // possibilities: fold imports | fold multiline comments
     if (params == null) {
       return null;
@@ -716,10 +654,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(
       DocumentSymbolParams params) {
-    if (!JimpleLspServer.enabled) {
-      return null;
-    }
-
     if (params == null) {
       return null;
     }
