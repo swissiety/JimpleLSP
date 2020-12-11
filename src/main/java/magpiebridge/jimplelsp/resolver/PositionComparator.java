@@ -7,7 +7,7 @@ import org.eclipse.lsp4j.Position;
  * The PositionComparator helps to compare Position e.g. for creating an ordered Collection
  *
  * @author Markus Schmidt
- * */
+ */
 class PositionComparator implements Comparator<Position> {
   private static final PositionComparator INSTANCE = new PositionComparator();
 

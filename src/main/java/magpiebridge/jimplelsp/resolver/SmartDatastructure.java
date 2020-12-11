@@ -15,7 +15,7 @@ import org.eclipse.lsp4j.Range;
  * The Datastructure holds information about Signatures of Soot and their Range positions in a File.
  *
  * @author Markus Schmidt
- * */
+ */
 class SmartDatastructure {
 
   @Nonnull List<Position> startPositions = new ArrayList<>();

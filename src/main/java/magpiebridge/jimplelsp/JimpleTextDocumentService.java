@@ -21,7 +21,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import magpiebridge.jimplelsp.resolver.LocalResolver;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;

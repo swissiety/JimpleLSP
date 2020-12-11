@@ -140,7 +140,7 @@ public class JimpleLspServer extends MagpieServer {
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-    if(params.getWorkspaceFolders() != null ) {
+    if (params.getWorkspaceFolders() != null) {
       workspaceFolders = params.getWorkspaceFolders();
     }
 
@@ -224,7 +224,8 @@ public class JimpleLspServer extends MagpieServer {
     }
 
     double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
-    // TODO: channel to info log if necessary: System.out.println("Workspace indexing took " + runtimeMs + " ms");
+    // TODO: channel to info log if necessary: System.out.println("Workspace indexing took " +
+    // runtimeMs + " ms");
   }
 
   @Nullable
