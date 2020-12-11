@@ -15,6 +15,7 @@ import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+/** @author Markus Schmidt */
 public class Util {
 
   @Nonnull

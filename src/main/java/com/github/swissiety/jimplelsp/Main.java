@@ -13,6 +13,13 @@ import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 
+/**
+ * Entrypoint for JimpleLSP for Usecases where the MagpieBridge is not necessary.
+ *
+ * @author Markus Schmidt
+ * */
+
+@Deprecated
 public class Main {
 
   public static void main(@Nonnull String[] args) {

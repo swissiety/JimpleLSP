@@ -1,4 +1,4 @@
-package com.github.swissiety.jimplelsp.actions;
+package magpiebridge.jimplelsp.actions;
 
 import com.google.common.collect.Lists;
 import java.io.File;
@@ -11,9 +11,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.services.LanguageClient;
+import org.jheaps.annotations.Beta;
 import soot.Main;
 
 /** Helps the User extracting jimple code to his working directory */
+@Beta
 public class ProjectSetupAction {
 
   /**

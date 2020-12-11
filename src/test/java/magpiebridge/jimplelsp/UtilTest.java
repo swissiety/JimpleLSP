@@ -29,12 +29,6 @@ public class UtilTest {
     assertEquals(
         "file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/",
         Util.pathToUri(Paths.get("/home/smarkus/IdeaProjects/JimpleLspExampleProject/module1")));
-    // assertEquals("file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/",
-    // Util.pathToUri(Paths.get("file:/home/smarkus/IdeaProjects/JimpleLspExampleProject/module1")));
-    // assertEquals("file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/",
-    // Util.pathToUri(Paths.get("file://home/smarkus/IdeaProjects/JimpleLspExampleProject/module1")));
-    // assertEquals("file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/",
-    // Util.pathToUri(Paths.get("file:///home/smarkus/IdeaProjects/JimpleLspExampleProject/module1")));
 
   }
 

@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.eclipse.lsp4j.*;
 
+/** @author Markus Schmidt */
 public class JimpleLspServer extends MagpieServer {
 
   @Nonnull private final Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
@@ -139,7 +140,9 @@ public class JimpleLspServer extends MagpieServer {
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
-    workspaceFolders = params.getWorkspaceFolders();
+    if(params.getWorkspaceFolders() != null ) {
+      workspaceFolders = params.getWorkspaceFolders();
+    }
 
     final CompletableFuture<InitializeResult> initialize = super.initialize(params);
     try {
@@ -221,8 +224,7 @@ public class JimpleLspServer extends MagpieServer {
     }
 
     double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
-    System.out.println("Workspace indexing took " + runtimeMs + " ms");
-
+    // TODO: channel to info log if necessary: System.out.println("Workspace indexing took " + runtimeMs + " ms");
   }
 
   @Nullable

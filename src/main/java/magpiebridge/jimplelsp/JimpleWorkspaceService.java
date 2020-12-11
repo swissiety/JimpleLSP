@@ -10,6 +10,7 @@ import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.eclipse.lsp4j.*;
 
+/** @author Markus Schmidt */
 public class JimpleWorkspaceService extends MagpieWorkspaceService {
   public JimpleWorkspaceService(MagpieServer server) {
     super(server);
@@ -29,6 +30,7 @@ public class JimpleWorkspaceService extends MagpieWorkspaceService {
 
               final String query = params.getQuery().trim().toLowerCase();
 
+              // start searching if the query has sth relevant/"enough" input for searching
               if (query.length() >= 2) {
                 getServer()
                     .getView()

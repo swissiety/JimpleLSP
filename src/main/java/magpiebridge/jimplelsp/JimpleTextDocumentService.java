@@ -100,13 +100,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     super.didChange(params);
-
+    /* TODO: test & allow modifications
     final String uri = params.getTextDocument().getUri();
     String language = inferLanguage(uri);
     SourceFileManager fileManager = server.getSourceFileManager(language);
-    getServer()
-        .quarantineInputOrUpdate(
-            params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(uri).getText());
+    analyzeFile(params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(uri).getText());
+    */
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
@@ -119,6 +118,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   /* @Override
+  // TODO: implement syntaxHighlighting
   public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
     final String uri = params.getTextDocument().getUri();
     return getServer().pool( () -> new SemanticTokens( SyntaxHighlightingProvider.paintbrush(uri) ));

@@ -11,6 +11,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 
+/**
+ * The Datastructure holds information about Signatures of Soot and their Range positions in a File.
+ *
+ * @author Markus Schmidt
+ * */
 class SmartDatastructure {
 
   @Nonnull List<Position> startPositions = new ArrayList<>();
@@ -57,6 +62,7 @@ class SmartDatastructure {
     return null;
   }
 
+  // binary search for position or return next smaller occurence (i.e. start position of a Range)
   private int getStartingIndex(@Nonnull Position position) {
     int index =
         Collections.binarySearch(startPositions, position, PositionComparator.getInstance());

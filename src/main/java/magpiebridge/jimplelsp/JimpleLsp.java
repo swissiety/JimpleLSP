@@ -77,9 +77,11 @@ public class JimpleLsp {
           conf.put("Extract Apk", "extractJimpleFromAPK");
           server.setConfigurationOptions(conf);
 
+          // TODO: Magpie: reuse supported language definitions
           String language = "jimple";
           ServerAnalysis analysis = new JimpleServerAnalysis();
           server.addAnalysis(Either.forLeft(analysis), language);
+
           return server;
         };
 

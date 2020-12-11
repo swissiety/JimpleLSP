@@ -12,6 +12,7 @@ import magpiebridge.jimplelsp.Util;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.jheaps.annotations.Beta;
 
 /**
  * This listener implementation lists all label usage positions when its passed into the Jimple
@@ -19,6 +20,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
  *
  * @author Markus Schmidt
  */
+@Beta
 public class JimpleLabelProvider extends JimpleBaseListener {
   @Nonnull private final Map<String, Range> labelTargets = new HashMap<>();
   @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();

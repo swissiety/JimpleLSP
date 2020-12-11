@@ -1,4 +1,4 @@
-package com.github.swissiety.jimplelsp.actions;
+package magpiebridge.jimplelsp.actions;
 
 import junit.framework.TestCase;
 import org.junit.Test;

@@ -22,6 +22,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
+/**
+ * The LocalResolver handles gathering and queriing for Local Positions in a given File.
+ *
+ * @author Markus Schmidt */
 public class LocalResolver {
   @Nonnull final Path path;
 
