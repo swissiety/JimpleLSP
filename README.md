@@ -4,7 +4,7 @@ It allows you to use well known features of your IDE to be used while exploring 
 
 # Usage
 ## IntelliJ Idea
-1. Install or use an LSP Plugin in your IDE to enable Language Server Protocoll Support for your IDE.
+1. Install or use an LSP Plugin in your IDE to enable Language Server Protocol Support for your IDE.
 e.g. for IntelliJ you can use https://github.com/MagpieBridge/IntelliJLSP/tree/intellijclientlib
 2.
     a)  **Either** Download the JimpleLSP Server Release and extract it to any Location.
@@ -27,7 +27,7 @@ Assumes: npm is installed
 1. `cd vscode/ && npm install` to install the dependencies.
 2. `npm install -g vsce` to install the Visual Studio Code Extension Commandline tool. 
 3. `vsce package` to package the Plugin.
-4. `code --install-extension JimpleLSP-0.0.1.vsix` 
+4. `code --install-extension JimpleLSP-0.0.1.vsix` to install the packaged Plugin.
 5. restart VSCode
 
 ## Server Capabilities
