@@ -23,9 +23,67 @@ e.g. for IntelliJ you can use https://github.com/MagpieBridge/IntelliJLSP/tree/i
 
 
 ## VSCode
-1. Install the provided Plugin from vscode/ folder.
-2. 
+Assumes: npm is installed
+1. `cd vscode/ && npm install` to install the dependencies.
+2. `npm install -g vsce` to install the Visual Studio Code Extension Commandline tool. 
+3. `vsce package` to package the Plugin.
+4. `code --install-extension JimpleLSP-0.0.1.vsix` 
+5. restart VSCode
+
+## Server Capabilities
+This Server is oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in Jimple.
+
+### Text Document Capabilities
+- ✅ didOpen
+- ❌ [planned #17] didChange
+    - ❌ Full text sync
+    - ❌ Incremental text sync
+- ✅ didSave
+    - ✅ Include text
+- ❌ completion
+- ✅ hover
+- ❌ signatureHelp
+- ✅ declaration
+    - ❌ [planned #18] link support
+- ✅ definition
+    - ❌ [planned #18] link support
+- ✅ typeDefinition
+    - ❌ [planned #18] link support
+- ✅ implementation
+    - ❌ [planned #18] link support
+- ✅ references
+- ❌ [planned #11] documentHighlight
+- ✅ documentSymbol
+- ❌ codeAction
+    - ❌ resolve
+- ❌ codeLens
+- ❌ documentLink
+- ❌ formatting
+- ❌ rangeFormatting
+- ❌ onTypeFormatting
+- ❌ rename
+- ✅ publishDiagnostics
+- ❌ [WIP #16] foldingRange
+- ❌ selectionRange
+- ❌ [planned #1] semanticToken
+- ❌ callHierarchy
+
+### Workspace Capabilities
+- ❌ [planned #9] applyEdit
+- ❌ didChangeConfiguration
+- ❌ [planned #17] didChangeWatchedFiles
+- ✅ symbol
+- ❌ executeCommand
+
+### Window Capabilities
+
+- ❌ workDoneProgress
+    - ❌ create
+    - ❌ cancel
+- ✅ logMessage
+- ✅ showMessage
+- ✅ showMessage request
 
 
-
-This piece of Software was created as part of my Bachelor Thesis at UPB (University of Paderborn, Germany).
+## About
+This piece of software was created as part of a bachelor thesis at UPB (University of Paderborn, Germany).
