@@ -7,9 +7,6 @@ var client: LanguageClient = null;
 
 async function configureAndStartClient(context: ExtensionContext) {
 
-    // TODO: [ms] remove
-    window.showErrorMessage("starting to configure jimpls lsp ")
-
 	// Startup options for the language server
 	const settings = workspace.getConfiguration("JimpleLSP");
 	const lspTransport: string = settings.get("lspTransport");
@@ -48,15 +45,16 @@ async function configureAndStartClient(context: ExtensionContext) {
 		documentSelector: [{ scheme: 'file', language: 'jimple' }],
 		synchronize: {
 			configurationSection: 'jimple',
-			fileEvents: [workspace.createFileSystemWatcher('**/*.jimple')]
+			fileEvents: [workspace.createFileSystemWatcher('**/*.jimple')],
+
 		}
 	};
 
 	// Create the language client and start the client.
-	client = new LanguageClient('JimpleLSP', 'JimpleLSP', serverOptions, clientOptions);
-	client.start();
-
-	await client.onReady();
+	    client = new LanguageClient('JimpleLSP', 'JimpleLSP', serverOptions, clientOptions);
+        let disposable = client.start();
+        context.subscriptions.push(disposable);
+        await client.onReady();
 }
 
 export async function activate(context: ExtensionContext) {
