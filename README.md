@@ -18,9 +18,7 @@ You need a fresh build of FutureSoot in your local Maven Repository.
 ## IntelliJ Idea
 1. Install or use an LSP Plugin in your IDE to enable Language Server Protocol Support for your IDE.
 e.g. for IntelliJ you can use https://github.com/MagpieBridge/IntelliJLSP/tree/intellijclientlib
-2. Configure the LSP Plugin in your IDE to use the JimpleLSP Server Jar that was extracted or build in the previous step.
-3. Enjoy!
-
+2. Configure the LSP Plugin in your IDE to use the JimpleLSP Server Jar.
 
 ## VSCode
 Assumes: npm is installed
