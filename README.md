@@ -4,7 +4,6 @@ It allows you to use well known features of your IDE to be used while exploring 
 
 # Usage
 ## Get the server Jar.
-
 **Either:** download the JimpleLSP Server Release and extract it to any Location.
   
 **Or:** Compile from source.
