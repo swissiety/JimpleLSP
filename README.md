@@ -41,19 +41,19 @@ For checked capabilities there are previews of the functionality in the linked I
 - ✅ didSave
     - ✅ Include text
 - ❌ completion
-- ✅ hover [#15]
+- ✅ [hover](/../../issues/15)
 - ❌ signatureHelp
-- ✅ declaration [#4]
+- ✅ [declaration]((/../../issues/4)
     - ❌ [planned #18] link support
-- ✅ definition [#6]
+- ✅ [definition](/../../issues/6)
     - ❌ [planned #18] link support
-- ✅ typeDefinition [#5]
+- ✅ [typeDefinition](/../../issues/5)
     - ❌ [planned #18] link support
-- ✅ implementation [#2]
+- ✅ [implementation](/../../issues/2)
     - ❌ [planned #18] link support
-- ✅ references [#3]
+- ✅ [references](/../../issues/3)
 - ❌ [planned #11] documentHighlight
-- ✅ documentSymbol [#12]
+- ✅ [documentSymbol](/../../issues/12)
 - ❌ codeAction
     - ❌ resolve
 - ❌ codeLens
@@ -72,7 +72,7 @@ For checked capabilities there are previews of the functionality in the linked I
 - ❌ [planned #9] applyEdit
 - ❌ didChangeConfiguration
 - ❌ [planned #17] didChangeWatchedFiles
-- ✅ symbol [#13]
+- ✅ [symbol](/../../issues/13)
 - ❌ executeCommand
 
 ### Window Capabilities
