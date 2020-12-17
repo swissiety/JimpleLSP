@@ -31,6 +31,7 @@ Assumes: npm is installed
 
 ## Server Capabilities
 This Server is oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in Jimple.
+For checked capabilities there are previews of the functionality in the linked Issue.
 
 ### Text Document Capabilities
 - ✅ didOpen
@@ -40,19 +41,19 @@ This Server is oriented towards LSP 3.15. The currently implemented features are
 - ✅ didSave
     - ✅ Include text
 - ❌ completion
-- ✅ hover
+- ✅ hover [#15]
 - ❌ signatureHelp
-- ✅ declaration
+- ✅ declaration [#4]
     - ❌ [planned #18] link support
-- ✅ definition
+- ✅ definition [#6]
     - ❌ [planned #18] link support
-- ✅ typeDefinition
+- ✅ typeDefinition [#5]
     - ❌ [planned #18] link support
-- ✅ implementation
+- ✅ implementation [#2]
     - ❌ [planned #18] link support
-- ✅ references
+- ✅ references [#3]
 - ❌ [planned #11] documentHighlight
-- ✅ documentSymbol
+- ✅ documentSymbol [#12]
 - ❌ codeAction
     - ❌ resolve
 - ❌ codeLens
@@ -71,7 +72,7 @@ This Server is oriented towards LSP 3.15. The currently implemented features are
 - ❌ [planned #9] applyEdit
 - ❌ didChangeConfiguration
 - ❌ [planned #17] didChangeWatchedFiles
-- ✅ symbol
+- ✅ symbol [#13]
 - ❌ executeCommand
 
 ### Window Capabilities
