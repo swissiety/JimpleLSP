@@ -1,6 +1,6 @@
 # JimpleLSP
 This is an implementation of the Language Server Protocol for Jimple.
-It allows you to use well known features of your IDE to be used while exploring and editing .jimple files.
+A LSP Server implementation allows an IDE, which supports the LSP, to provide well known features of programming languages for a specific Language.
 
 # Usage
 ## Get the server Jar.
@@ -16,8 +16,8 @@ You need a fresh build of FutureSoot in your local Maven Repository.
 
 
 ## IntelliJ Idea
-1. Install or use an LSP Plugin in your IDE to enable Language Server Protocol Support for your IDE.
-e.g. for IntelliJ you can use https://github.com/MagpieBridge/IntelliJLSP/tree/intellijclientlib
+1. Install or use an LSP Plugin in your IDE to enable Language Server Protocol Support.
+You can use IntelliJLSP from https://github.com/MagpieBridge/IntelliJLSP/tree/intellijclientlib
 2. Configure the LSP Plugin in your IDE to use the JimpleLSP Server Jar.
 
 ## VSCode
