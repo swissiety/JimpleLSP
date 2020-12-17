@@ -43,7 +43,7 @@ For checked capabilities there are previews of the functionality in the linked I
 - ❌ completion
 - ✅ [hover](/../../issues/15)
 - ❌ signatureHelp
-- ✅ [declaration]((/../../issues/4)
+- ✅ [declaration](/../../issues/4)
     - ❌ [planned #18] link support
 - ✅ [definition](/../../issues/6)
     - ❌ [planned #18] link support
