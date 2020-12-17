@@ -3,6 +3,8 @@ This is an implementation of the Language Server Protocol for Jimple.
 It allows you to use well known features of your IDE to be used while exploring and editing .jimple files.
 
 # Usage
+## Get the server Jar.
+
 **Either:** download the JimpleLSP Server Release and extract it to any Location.
   
 **Or:** Compile from source.
@@ -12,7 +14,6 @@ You need a fresh build of FutureSoot in your local Maven Repository.
 
 2. run `git clone https://github.com/swissiety/JimpleLSP` to clone this Repository.
 3. run `mvn package` to build a Jar. The generated Jar can be found in target/jimplelsp-0.0.1-SNAPSHOT-jar-with-dependencies.jar.
-
 
 
 ## IntelliJ Idea
