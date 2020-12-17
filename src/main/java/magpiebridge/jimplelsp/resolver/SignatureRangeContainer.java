@@ -16,7 +16,7 @@ import org.eclipse.lsp4j.Range;
  *
  * @author Markus Schmidt
  */
-class SmartDatastructure {
+class SignatureRangeContainer {
 
   @Nonnull List<Position> startPositions = new ArrayList<>();
   @Nonnull List<Position> endPositions = new ArrayList<>();

@@ -75,7 +75,7 @@ public class SignaturePositionResolver {
 
   private final class SignatureOccurenceAggregator extends JimpleBaseListener {
 
-    SmartDatastructure positionContainer = new SmartDatastructure();
+    SignatureRangeContainer positionContainer = new SignatureRangeContainer();
     ClassType clazz;
 
     @Nullable
