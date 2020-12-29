@@ -1,6 +1,6 @@
 package magpiebridge.jimplelsp;
 
-import static magpiebridge.jimplelsp.Util.positionToRange;
+import static magpiebridge.jimplelsp.Util.positionToDefRange;
 
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.frontend.ResolveException;
@@ -109,7 +109,7 @@ public class JimpleLspServer extends MagpieServer {
       // feed error into diagnostics
       final Diagnostic d =
           new Diagnostic(
-              positionToRange(e.getRange()),
+              positionToDefRange(e.getRange()),
               e.getMessage(),
               DiagnosticSeverity.Error,
               "JimpleParser");
@@ -156,7 +156,7 @@ public class JimpleLspServer extends MagpieServer {
       capabilities.setHoverProvider(true);
 
       capabilities.setTypeDefinitionProvider(true);
-      capabilities.setFoldingRangeProvider(true);
+      capabilities.setFoldingRangeProvider(false);
       capabilities.setDocumentHighlightProvider(true);
       // check: capabilities.setDocumentFormattingProvider(true);
 

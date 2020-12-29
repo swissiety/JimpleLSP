@@ -27,7 +27,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
  *
  * @author Markus Schmidt
  */
-public class LocalResolver {
+public class LocalPositionResolver {
   @Nonnull final Path path;
 
   @Nonnull
@@ -36,7 +36,7 @@ public class LocalResolver {
 
   @Nonnull private final Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
 
-  public LocalResolver(Path path) {
+  public LocalPositionResolver(Path path) {
     this.path = path;
     final CharStream charStream;
     try {
@@ -140,7 +140,7 @@ public class LocalResolver {
     if (deflocalOpt.isPresent()) {
       return Either.forLeft(
           Collections.singletonList(
-              Util.positionToLocation(
+              Util.positionToDefLocation(
                   pos.getTextDocument().getUri(), deflocalOpt.get().getLeft())));
     }
     return null;

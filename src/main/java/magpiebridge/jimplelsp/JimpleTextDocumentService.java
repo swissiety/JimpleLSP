@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
 import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
-import magpiebridge.jimplelsp.resolver.LocalResolver;
+import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
 import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
@@ -125,13 +125,21 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   */
 
   @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> declaration(TextDocumentPositionParams params) {
+    // TODO: handle locals different if local declarations are present
+    // TODO: handle abstract method declarations
+    // otherwise its equal to definition
+    return definition(params);
+  }
+
+  @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       definition(TextDocumentPositionParams position) {
     if (position == null) {
       return null;
     }
 
-    //  go to declaration of Field/Method/Class/Local - if position resolves to a Type -> go to
+    //  go to definition of Field/Method/Class/Local - if position resolves to a Type -> go to
     // typeDefinition
     return getServer()
         .pool(
@@ -158,8 +166,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
-                return localResolver.resolveDefinition(sc, position);
+                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
+                return localPositionResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
@@ -244,7 +252,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       scOpt.ifPresent(
                           sootClass ->
                               list.add(
-                                  Util.positionToLocation(
+                                  Util.positionToDefLocation(
                                       Util.pathToUri(sootClass.getClassSource().getSourcePath()),
                                       sootClass.getPosition())));
                     });
@@ -265,7 +273,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                         methodOpt.ifPresent(
                             method -> {
                               list.add(
-                                  Util.positionToLocation(methodsClassUri, method.getPosition()));
+                                  Util.positionToDefLocation(methodsClassUri, method.getPosition()));
                             });
                       }
                     });
@@ -306,8 +314,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     view.getClass(classType);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
-                  list.addAll(localResolver.resolveReferences(sc, params));
+                  final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
+                  list.addAll(localPositionResolver.resolveReferences(sc, params));
                   return list;
                 }
 
@@ -401,8 +409,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalResolver localResolver = new LocalResolver(Util.uriToPath(uri));
-                final Type type = localResolver.resolveTypeDefinition(sc, position.getPosition());
+                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
+                final Type type = localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
 
                 if (!(type instanceof ClassType)) {
                   return null;
@@ -548,7 +556,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         .pool(
             () -> {
               final String uri = position.getTextDocument().getUri();
-              final LocalResolver resolver = new LocalResolver(Util.uriToPath(uri));
+              final LocalPositionResolver resolver = new LocalPositionResolver(Util.uriToPath(uri));
 
               final ClassType classType = getServer().uriToClasstype(uri);
               if (classType == null) {
