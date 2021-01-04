@@ -10,6 +10,18 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
+import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
+import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,22 +29,15 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
-import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
-import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-/** @author Markus Schmidt */
+/**
+ * @author Markus Schmidt
+ */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
   private final Map<String, SignaturePositionResolver> docSignaturePositionResolver =
-      new HashMap<>();
+          new HashMap<>();
+
+  public final SemanticTokensLegend tokenLegend = SyntaxHighlightingProvider.createLegend();
 
   /**
    * Instantiates a new magpie text document service.
@@ -115,15 +120,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
           uri, new SignaturePositionResolver(Util.uriToPath(uri), text));
     }
   }
-
-  /* @Override
-  // TODO: implement syntaxHighlighting
-  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-    final String uri = params.getTextDocument().getUri();
-    return getServer().pool( () -> new SemanticTokens( SyntaxHighlightingProvider.paintbrush(uri) ));
-  }
-  */
-
 
 
   /*
@@ -670,55 +666,73 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<Either<SymbolInformation, DocumentSymbol>>> documentSymbol(
-      DocumentSymbolParams params) {
+          DocumentSymbolParams params) {
     if (params == null) {
       return null;
     }
 
     return getServer()
-        .pool(
-            () -> {
-              final TextDocumentClientCapabilities textDocumentCap =
-                  getServer().getClientCapabilities().getTextDocument();
-              if (textDocumentCap == null) {
-                return null;
-              }
-              final DocumentSymbolCapabilities documentSymbol = textDocumentCap.getDocumentSymbol();
-              if (documentSymbol == null) {
-                return null;
-              }
-              final SymbolKindCapabilities symbolKind = documentSymbol.getSymbolKind();
-              if (symbolKind == null) {
-                return null;
-              }
-              final TextDocumentIdentifier textDoc = params.getTextDocument();
-              if (textDoc == null) {
-                return null;
-              }
-              final String uri = textDoc.getUri();
-              if (uri == null) {
-                return null;
-              }
-              final ClassType classType = getServer().uriToClasstype(uri);
-              if (classType == null) {
-                return null;
-              }
-              final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                  getServer().getView().getClass(classType);
-              if (!aClass.isPresent()) {
-                return null;
-              }
+            .pool(
+                    () -> {
+                      final TextDocumentClientCapabilities textDocumentCap =
+                              getServer().getClientCapabilities().getTextDocument();
+                      if (textDocumentCap == null) {
+                        return null;
+                      }
+                      final DocumentSymbolCapabilities documentSymbol = textDocumentCap.getDocumentSymbol();
+                      if (documentSymbol == null) {
+                        return null;
+                      }
+                      final SymbolKindCapabilities symbolKind = documentSymbol.getSymbolKind();
+                      if (symbolKind == null) {
+                        return null;
+                      }
+                      final TextDocumentIdentifier textDoc = params.getTextDocument();
+                      if (textDoc == null) {
+                        return null;
+                      }
+                      final String uri = textDoc.getUri();
+                      if (uri == null) {
+                        return null;
+                      }
+                      final ClassType classType = getServer().uriToClasstype(uri);
+                      if (classType == null) {
+                        return null;
+                      }
+                      final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                              getServer().getView().getClass(classType);
+                      if (!aClass.isPresent()) {
+                        return null;
+                      }
 
-              SootClass sc = (SootClass) aClass.get();
-              List<SymbolInformation> list = new ArrayList<>();
-              int limit = Integer.MAX_VALUE;
-              JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(
-                  list, null, sc, getSignaturePositionResolver(uri), symbolKind, limit);
+                      SootClass sc = (SootClass) aClass.get();
+                      List<SymbolInformation> list = new ArrayList<>();
+                      int limit = Integer.MAX_VALUE;
+                      JimpleSymbolProvider.retrieveAndFilterSymbolsFromClass(
+                              list, null, sc, getSignaturePositionResolver(uri), symbolKind, limit);
 
-              return list.stream()
-                  .<Either<SymbolInformation, DocumentSymbol>>map(Either::forLeft)
-                  .collect(Collectors.toCollection(() -> new ArrayList<>(list.size())));
-            });
+                      return list.stream()
+                              .<Either<SymbolInformation, DocumentSymbol>>map(Either::forLeft)
+                              .collect(Collectors.toCollection(() -> new ArrayList<>(list.size())));
+                    });
+  }
+
+  // TODO: [ms] PR with semanticToken utilities against lsp4j
+  @Override
+  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
+    return getServer().pool(() -> {
+      final SyntaxHighlightingProvider syntaxHighlightingProvider = new SyntaxHighlightingProvider(tokenLegend);
+
+      final TextDocumentIdentifier textDocument = params.getTextDocument();
+      if (textDocument == null) {
+        return null;
+      }
+      final String uri = textDocument.getUri();
+      if (uri == null) {
+        return null;
+      }
+      return syntaxHighlightingProvider.paintbrush(uri);
+    });
   }
 
   @Override
