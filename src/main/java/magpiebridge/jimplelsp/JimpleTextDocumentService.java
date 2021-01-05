@@ -503,8 +503,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
                   str = Modifier.toString(sc.getModifiers()) + " " + sc.toString();
-                  if (sc.hasSuperclass()) {
-                    str += "\n extends " + sc.getSuperclass();
+                  final Optional<ClassType> superclass = sc.getSuperclass();
+                  if (superclass.isPresent()) {
+                    str += "\n extends " + superclass.get().toString();
                   }
 
                   Iterator<ClassType> interfaceIt = sc.getInterfaces().iterator();
