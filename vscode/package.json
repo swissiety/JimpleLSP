@@ -20,7 +20,7 @@
 		"Soot, Jimple, Language Server, LSP, .jimple"
 	],
 	"engines": {
-		"vscode": "^1.30.0"
+		"vscode": "^1.42.0"
 	},
 	"activationEvents": [
 		"onLanguage:jimple"
@@ -67,14 +67,19 @@
 		"build": "vsce package"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^5.2.1"
+		"vscode-languageclient": "^6.1.4",
+		"xmlhttprequest-ts": "^1.0.1"
 	},
 	"devDependencies": {
-		"vscode": "^1.1.33",
+		"@angular/common": "^5.0.0",
+		"@angular/core": "^5.0.0",
 		"@types/mocha": "^5.2.6",
-		"@types/node": "^11.13.0",
+		"@types/node": "^11.15.43",
+		"rxjs": "^5.5.12",
 		"tslint": "^5.15.0",
 		"typescript": "^3.4.2",
-		"vsce": "^1.75.0"
+		"vsce": "^1.83.0",
+		"vscode": "^1.1.37",
+		"zone.js": "^0.8.29"
 	}
 }

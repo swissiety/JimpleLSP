@@ -1,7 +1,8 @@
 'use strict';
 import * as net from 'net';
-import { workspace, ExtensionContext, window } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo } from 'vscode-languageclient';
+import { XMLHttpRequest } from 'xmlhttprequest-ts';
+import { workspace, ExtensionContext, window, ViewColumn, env, Uri} from 'vscode';
+import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo, DynamicFeature, ClientCapabilities, DocumentSelector, InitializeParams, RegistrationData, RPCMessageType, ServerCapabilities, VersionedTextDocumentIdentifier } from 'vscode-languageclient';
 
 var client: LanguageClient = null;
 
@@ -31,7 +32,7 @@ async function configureAndStartClient(context: ExtensionContext) {
 			socket.on("error", _ => {
 
 				window.showErrorMessage(
-					"Failed to connect to Jimple language server. Make sure that the language server is running " +
+					"Failed to connect to the Jimple language server. Make sure that the language server is running " +
 					"-or- configure the extension to connect via standard IO.")
 				client = null;
 			});
@@ -52,9 +53,67 @@ async function configureAndStartClient(context: ExtensionContext) {
 
 	// Create the language client and start the client.
 	    client = new LanguageClient('JimpleLSP', 'JimpleLSP', serverOptions, clientOptions);
+    	client.registerFeature(new SupportsShowHTML(client));
         let disposable = client.start();
         context.subscriptions.push(disposable);
         await client.onReady();
+}
+
+export class SupportsShowHTML implements DynamicFeature<undefined> {
+
+	constructor(private _client: LanguageClient) {
+
+    }
+
+	messages: RPCMessageType | RPCMessageType[];
+	fillInitializeParams?: (params: InitializeParams) => void;
+	fillClientCapabilities(capabilities: ClientCapabilities): void {
+		capabilities.experimental = {
+			supportsShowHTML: true,
+		}
+	}
+
+	initialize(capabilities: ServerCapabilities<any>, documentSelector: DocumentSelector): void {
+		let client = this._client;
+        client.onNotification("magpiebridge/showHTML",(content: string)=>{
+			 const panel = window.createWebviewPanel("Configuration", "MagpieBridge Control Panel",ViewColumn.One,{
+				 enableScripts: true
+			 });
+			 panel.webview.html = content;
+			 panel.webview.onDidReceiveMessage(
+				message => {
+					switch(message.command){
+						case 'action':
+							 var httpRequest = new XMLHttpRequest();
+							 var url = message.text;
+							 httpRequest.open('GET',url);
+							 httpRequest.send();
+							 return ;
+						case 'configuration':
+							 var httpRequest = new XMLHttpRequest();
+							 var splits = message.text.split("?");
+							 var url = splits[0];
+							 var formData = splits[1];
+							 httpRequest.open('POST',url);
+							 httpRequest.send(formData);
+							 return ;
+
+					}
+				}
+			 );
+			})
+	}
+
+	register(message: RPCMessageType, data: RegistrationData<undefined>): void {
+
+	}
+	unregister(id: string): void {
+
+	}
+	dispose(): void {
+
+	}
+
 }
 
 export async function activate(context: ExtensionContext) {
