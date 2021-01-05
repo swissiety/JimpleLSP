@@ -1,5 +1,6 @@
 {
-	"name": "JimpleLSP",
+	"displayName": "JimpleLSP",
+	"name": "jimplelsp",
 	"description": "A language server implementation for Soots Jimple powered by the MagpieBridge framework.",
 	"author": "Markus Schmidt",
 	"license": "MIT",
@@ -14,24 +15,32 @@
 	},
 	"publisher": "MarkusSchmidt",
 	"categories": [
-		"Languages"
+		"Programming Languages"
 	],
 	"keywords": [
 		"Soot, Jimple, Language Server, LSP, .jimple"
 	],
 	"engines": {
-		"vscode": "^1.42.0"
+		"vscode": "^1.43.0"
 	},
 	"activationEvents": [
 		"onLanguage:jimple"
 	],
 	"main": "./out/extension",
 	"contributes": {
-		"languages": [{
-			"id": "jimple",
-			"aliases": ["Jimple", "jimple"],
-			"extensions": [".Jimple",".jimple"]
-		}],
+		"languages": [
+			{
+				"id": "jimple",
+				"aliases": [
+					"Jimple",
+					"jimple"
+				],
+				"extensions": [
+					".Jimple",
+					".jimple"
+				]
+			}
+		],
 		"configuration": {
 			"title": "JimpleLSP",
 			"properties": {
