@@ -31,6 +31,7 @@ public class SyntaxHighlightingProvider {
 
   public SyntaxHighlightingProvider(@Nonnull SemanticTokensLegend legend) {
     semanticTokenManager = new SemanticTokenManager(legend);
+
   }
 
   @Nullable
@@ -133,7 +134,7 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public void enterAssignments(JimpleParser.AssignmentsContext ctx) {
-      //paintTokenTypeEnum.Variable, ctx);
+      // TODO: paintTokenTypeEnum.Variable, ctx);
       super.enterAssignments(ctx);
     }
 
@@ -165,7 +166,6 @@ public class SyntaxHighlightingProvider {
       paint(SemanticTokenTypeEnum.Keyword, ctx.start);
       super.enterCase_stmt(ctx);
     }
-
 
     @Override
     public void enterInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
