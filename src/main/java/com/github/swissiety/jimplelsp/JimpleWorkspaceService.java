@@ -1,13 +1,13 @@
-package magpiebridge.jimplelsp;
+package com.github.swissiety.jimplelsp;
 
+import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
+import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.core.model.SootClass;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieWorkspaceService;
-import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
-import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.eclipse.lsp4j.*;
 
 /** @author Markus Schmidt */

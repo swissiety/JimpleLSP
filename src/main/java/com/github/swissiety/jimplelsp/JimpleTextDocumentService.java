@@ -1,5 +1,8 @@
-package magpiebridge.jimplelsp;
+package com.github.swissiety.jimplelsp;
 
+import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
+import com.github.swissiety.jimplelsp.resolver.LocalPositionResolver;
+import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.callgraph.typehierarchy.ViewTypeHierarchy;
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.model.*;
@@ -21,9 +24,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
-import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
-import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.Position;
@@ -125,7 +125,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   */
 
   @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> declaration(TextDocumentPositionParams params) {
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+      declaration(TextDocumentPositionParams params) {
     // TODO: handle locals different if local declarations are present
     // TODO: handle abstract method declarations
     // otherwise its equal to definition
@@ -166,13 +167,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
+                final LocalPositionResolver localPositionResolver =
+                    new LocalPositionResolver(Util.uriToPath(uri));
                 return localPositionResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
-                return Either.forLeft(
-                    Collections.singletonList(getDefinitionLocation(resolver, sig)));
+                Location definitionLocation = getDefinitionLocation(resolver, sig);
+                if (definitionLocation == null) {
+                  return null;
+                }
+                return Either.forLeft(Collections.singletonList(definitionLocation));
               }
               return null;
             });
@@ -273,7 +278,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                         methodOpt.ifPresent(
                             method -> {
                               list.add(
-                                  Util.positionToDefLocation(methodsClassUri, method.getPosition()));
+                                  Util.positionToDefLocation(
+                                      methodsClassUri, method.getPosition()));
                             });
                       }
                     });
@@ -314,7 +320,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     view.getClass(classType);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
+                  final LocalPositionResolver localPositionResolver =
+                      new LocalPositionResolver(Util.uriToPath(uri));
                   list.addAll(localPositionResolver.resolveReferences(sc, params));
                   return list;
                 }
@@ -409,8 +416,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
-                final Type type = localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
+                final LocalPositionResolver localPositionResolver =
+                    new LocalPositionResolver(Util.uriToPath(uri));
+                final Type type =
+                    localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
 
                 if (!(type instanceof ClassType)) {
                   return null;

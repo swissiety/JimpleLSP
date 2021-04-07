@@ -1,4 +1,4 @@
-package magpiebridge.jimplelsp.resolver;
+package com.github.swissiety.jimplelsp.resolver;
 
 import java.util.Comparator;
 import org.eclipse.lsp4j.Position;

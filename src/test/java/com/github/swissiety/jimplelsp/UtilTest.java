@@ -1,13 +1,10 @@
-package magpiebridge.jimplelsp;
+package com.github.swissiety.jimplelsp;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.File;
 import java.nio.file.Paths;
-import org.junit.Ignore;
 import org.junit.Test;
-import soot.Main;
 
 public class UtilTest {
 
@@ -60,29 +57,5 @@ public class UtilTest {
     } catch (IllegalArgumentException ignore) {
     }
     ;
-  }
-
-  @Test
-  @Ignore
-  public void extractJimpleFromAPK() {
-    // generate with old soot
-    String rtJar =
-        System.getProperty("java.home") + File.separator + "lib" + File.separator + "rt.jar";
-
-    String archivePath =
-        "/home/smarkus/IdeaProjects/JimpleLspExampleProject/module1/src/com.uberspot.a2048_25.apk";
-    String androidJarPath = " ";
-    String[] options =
-        new String[] {
-          "-cp",
-          archivePath + File.pathSeparator + rtJar,
-          "-android-jars",
-          androidJarPath,
-          "-hierarchy-dirs",
-          "-f",
-          "jimple",
-          archivePath
-        };
-    Main.main(options);
   }
 }

@@ -6,7 +6,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
 import javax.annotation.Nonnull;
-import magpiebridge.jimplelsp.JimpleLspServer;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
@@ -57,7 +56,6 @@ public class Main {
       }
 
     } else {
-      System.out.println(">STDINOUT");
       JimpleLspServer server = new JimpleLspServer();
       Launcher<LanguageClient> l =
           LSPLauncher.createServerLauncher(

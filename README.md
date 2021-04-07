@@ -2,7 +2,7 @@
 This is an implementation of the Language Server Protocol for Jimple.
 A LSP Server implementation allows an IDE, which supports the LSP, to provide well known features of programming languages for a specific Language.
 
-# Usage
+# Installation
 ## Get the server Jar.
 **Either:** download the JimpleLSP Server Release and extract it to any Location.
   
@@ -23,22 +23,38 @@ You can use IntelliJLSP from https://github.com/MagpieBridge/IntelliJLSP/tree/in
 2. Configure the LSP Plugin in your IDE to use the JimpleLSP Server Jar.
 
 ## VSCode
+
 Assumes: npm is installed
+
 1. `cd vscode/ && npm install` to install the dependencies.
-2. `npm install -g vsce` to install the Visual Studio Code Extension Commandline tool. 
+2. `npm install -g vsce` to install the Visual Studio Code Extension Commandline tool.
 3. `vsce package` to package the Plugin.
 4. `code --install-extension JimpleLSP-0.0.1.vsix` to install the packaged Plugin.
 5. restart VSCode
 
+# Usage
+
+You can import already extracted Jimple files into your workspace.
+
+JimpleLSP can extract Jimple from a .jar or an .apk file do simplify your workflow. To enable JimpleLSP to extract
+Jimple your .apk or .jar file needs to be in your workspace on startup of your IDE, but the workspace must not contain a
+.jimple file. Additionally you need to configure the following config key in your IDE: **
+JimpleLSP.jimpleextraction.androidplatforms** to tell Soot where it can find the Android runtimes usually located in
+ANDROID_HOME/platforms.
+
+A Collection of android.jars is available in the [android-platforms](https://github.com/Sable/android-platforms/) Repo.
+
 ## Server Capabilities
-This Server is oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in Jimple.
-For checked capabilities there are previews of the functionality in the linked Issue.
+
+This Server is oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in
+Jimple. For checked capabilities there are previews of the functionality in the linked Issue.
 
 ### Text Document Capabilities
+
 - ✅ didOpen
 - ❌ [planned #17] didChange
-    - ❌ Full text sync
-    - ❌ Incremental text sync
+  - ❌ Full text sync
+  - ❌ Incremental text sync
 - ✅ didSave
     - ✅ Include text
 - ❌ completion
