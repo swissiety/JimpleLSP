@@ -11,7 +11,7 @@ async function configureAndStartClient(context: ExtensionContext) {
 	const settings = workspace.getConfiguration("JimpleLSP");
 	const lspTransport: string = settings.get("lspTransport");
 	let executable = 'java';
-	let relativePath = "jimplelsp-0.0.1.jar";
+	let relativePath = "jimplelsp.jar";
 	let args = ['-jar', context.asAbsolutePath(relativePath)];
 
 	const serverOptionsStdio = {

@@ -5,7 +5,7 @@
     <name>JimpleLSP</name>
     <groupId>com.github.swissiety</groupId>
     <artifactId>jimplelsp</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <packaging>jar</packaging>
 
     <developers>
