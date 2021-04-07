@@ -1,19 +1,16 @@
 package magpiebridge.jimplelsp;
 
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerAnalysis;
+import magpiebridge.core.ServerConfiguration;
+import org.apache.commons.cli.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import magpiebridge.core.*;
-import magpiebridge.util.MagpieMessageLogger;
-import org.apache.commons.cli.*;
-import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.validation.ReflectiveMessageValidator;
 
 /** @author Markus Schmidt */
 public class JimpleLsp {
@@ -47,35 +44,35 @@ public class JimpleLsp {
 
     Supplier<MagpieServer> createServer =
         () -> {
-          ServerConfiguration config = new ServerConfiguration();
-          config.setDoAnalysisBySave(false);
-          config.setDoAnalysisByOpen(false);
-          config.setShowConfigurationPage(true, true);
-          config.setMagpieMessageLogger(
-              new MagpieMessageLogger() {
-                @Override
-                public Function<MessageConsumer, MessageConsumer> getWrapper() {
-                  return (MessageConsumer c) -> {
-                    MessageConsumer wrappedConsumer =
-                        message -> {
-                          String timeStamp =
-                              new SimpleDateFormat("[HH:mm:ss:SS]").format(new Date());
-                          System.out.println(timeStamp + message);
-                          new ReflectiveMessageValidator(c).consume(message);
-                        };
-                    return wrappedConsumer;
-                  };
-                }
+            ServerConfiguration config = new ServerConfiguration();
+            config.setDoAnalysisBySave(false);
+            config.setDoAnalysisByOpen(false);
+            config.setShowConfigurationPage(true, true);
+          /*config.setMagpieMessageLogger(
+                        new MagpieMessageLogger() {
+                          @Override
+                          public Function<MessageConsumer, MessageConsumer> getWrapper() {
+                            return (MessageConsumer c) -> {
+                              MessageConsumer wrappedConsumer =
+                                  message -> {
+                                    String timeStamp =
+                                        new SimpleDateFormat("[HH:mm:ss:SS]").format(new Date());
+                                    System.out.println(timeStamp + message);
+                                    new ReflectiveMessageValidator(c).consume(message);
+                                  };
+                              return wrappedConsumer;
+                            };
+                          }
 
-                @Override
-                public void cleanUp() {}
-              });
-
-          MagpieServer server = new JimpleLspServer(config);
-          // TODO: e.g. extract apk on demand
-          Map<String, String> conf = new HashMap<>();
-          conf.put("Extract Apk", "extractJimpleFromAPK");
-          server.setConfigurationOptions(conf);
+                          @Override
+                          public void cleanUp() {}
+                        });
+          */
+            MagpieServer server = new JimpleLspServer(config);
+            // TODO: e.g. extract apk on demand
+            Map<String, String> conf = new HashMap<>();
+            conf.put("Extract Apk", "extractJimpleFromAPK");
+            server.setConfigurationOptions(conf);
 
           // TODO: Magpie: reuse supported language definitions
           String language = "jimple";

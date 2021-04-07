@@ -134,15 +134,15 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         return definition(params);
     }
 
-  @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      definition(TextDocumentPositionParams position) {
-    if (position == null) {
-      return null;
-    }
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+    definition(TextDocumentPositionParams position) {
+        if (position == null) {
+            return null;
+        }
 
-    //  go to definition of Field/Method/Class/Local - if position resolves to a Type -> go to
-    // typeDefinition
+        //  go to definition of Field/Method/Class/Local - if position resolves to a Type -> go to
+        // typeDefinition
     return getServer()
         .pool(
             () -> {
@@ -153,12 +153,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
-                // try whether its a Local (which has no Signature!)
+                  // try whether its a Local (which has no Signature!)
 
-                final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType == null) {
-                  return null;
-                }
+                  final ClassType classType = getServer().uriToClasstype(uri);
+                  if (classType == null) {
+                      return null;
+                  }
 
                   final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                           getServer().getView().getClass(classType);
@@ -400,11 +400,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
-                // try whether its a Local (which has no Signature!)
-                final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType == null) {
-                  return null;
-                }
+                  // try whether its a Local (which has no Signature!)
+                  final ClassType classType = getServer().uriToClasstype(uri);
+                  if (classType == null) {
+                      return null;
+                  }
 
                   final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                           getServer().getView().getClass(classType);
@@ -428,9 +428,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       final SootClass sootClass = typeClass.get();
                       return Util.positionToLocationList(
                               Util.pathToUri(sootClass.getClassSource().getSourcePath()),
-                      sootClass.getPosition());
-                }
-                return null;
+                              sootClass.getPosition());
+                  }
+                  return null;
               }
               Signature sig = sigInst.getLeft();
 
