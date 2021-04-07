@@ -47,16 +47,16 @@ async function configureAndStartClient(context: ExtensionContext) {
 		synchronize: {
 			configurationSection: 'jimple',
 			fileEvents: [workspace.createFileSystemWatcher('**/*.jimple')],
-		},
 
+		}
 	};
 
 	// Create the language client and start the client.
-    client = new LanguageClient('JimpleLSP', 'JimpleLSP', serverOptions, clientOptions);
-    client.registerFeature(new SupportsShowHTML(client));
-    let disposable = client.start();
-    context.subscriptions.push(disposable);
-    await client.onReady();
+	    client = new LanguageClient('JimpleLSP', 'JimpleLSP', serverOptions, clientOptions);
+    	client.registerFeature(new SupportsShowHTML(client));
+        let disposable = client.start();
+        context.subscriptions.push(disposable);
+        await client.onReady();
 }
 
 export class SupportsShowHTML implements DynamicFeature<undefined> {
