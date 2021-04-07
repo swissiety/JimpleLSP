@@ -1,11 +1,10 @@
-package magpiebridge.jimplelsp;
-
-import org.junit.Test;
-
-import java.nio.file.Paths;
+package com.github.swissiety.jimplelsp;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.fail;
+
+import java.nio.file.Paths;
+import org.junit.Test;
 
 public class UtilTest {
 

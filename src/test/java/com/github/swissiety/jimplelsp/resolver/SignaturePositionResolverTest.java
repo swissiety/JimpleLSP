@@ -1,4 +1,4 @@
-package magpiebridge.jimplelsp.resolver;
+package com.github.swissiety.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
 import java.io.IOException;

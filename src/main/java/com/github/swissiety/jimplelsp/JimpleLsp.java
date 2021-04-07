@@ -1,4 +1,4 @@
-package magpiebridge.jimplelsp;
+package com.github.swissiety.jimplelsp;
 
 import magpiebridge.core.MagpieServer;
 import magpiebridge.core.ServerAnalysis;

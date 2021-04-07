@@ -1,11 +1,11 @@
-package magpiebridge.jimplelsp.provider;
+package com.github.swissiety.jimplelsp.provider;
 
+import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.model.SootField;
 import de.upb.swt.soot.core.model.SootMethod;
 import java.util.List;
 import javax.annotation.Nonnull;
-import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;

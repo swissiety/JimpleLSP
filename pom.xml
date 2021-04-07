@@ -97,7 +97,7 @@
                                 <!-- add Main-Class to manifest file -->
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>magpiebridge.jimplelsp.JimpleLsp</mainClass>
+                                    <mainClass>com.github.swissiety.jimplelsp.JimpleLsp</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>

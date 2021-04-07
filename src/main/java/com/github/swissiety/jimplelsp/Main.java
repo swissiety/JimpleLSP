@@ -1,18 +1,16 @@
 package com.github.swissiety.jimplelsp;
 
-import magpiebridge.jimplelsp.JimpleLspServer;
-import org.apache.commons.io.input.TeeInputStream;
-import org.apache.commons.io.output.TeeOutputStream;
-import org.eclipse.lsp4j.jsonrpc.Launcher;
-import org.eclipse.lsp4j.launch.LSPLauncher;
-import org.eclipse.lsp4j.services.LanguageClient;
-
-import javax.annotation.Nonnull;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
+import javax.annotation.Nonnull;
+import org.apache.commons.io.input.TeeInputStream;
+import org.apache.commons.io.output.TeeOutputStream;
+import org.eclipse.lsp4j.jsonrpc.Launcher;
+import org.eclipse.lsp4j.launch.LSPLauncher;
+import org.eclipse.lsp4j.services.LanguageClient;
 
 /**
  * Entrypoint for JimpleLSP for Usecases where the MagpieBridge is not necessary.

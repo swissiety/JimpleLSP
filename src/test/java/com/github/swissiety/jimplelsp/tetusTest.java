@@ -12,8 +12,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import magpiebridge.jimplelsp.JimpleLspServer;
-import magpiebridge.jimplelsp.Util;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;

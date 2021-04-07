@@ -1,5 +1,6 @@
-package magpiebridge.jimplelsp.resolver;
+package com.github.swissiety.jimplelsp.resolver;
 
+import com.github.swissiety.jimplelsp.Util;
 import de.upb.swt.soot.core.frontend.ResolveException;
 import de.upb.swt.soot.core.jimple.Jimple;
 import de.upb.swt.soot.core.model.Position;
@@ -16,7 +17,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import magpiebridge.jimplelsp.Util;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;

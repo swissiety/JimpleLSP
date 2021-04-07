@@ -1,4 +1,4 @@
-package magpiebridge.jimplelsp;
+package com.github.swissiety.jimplelsp;
 
 import com.ibm.wala.classLoader.Module;
 import java.util.Collection;

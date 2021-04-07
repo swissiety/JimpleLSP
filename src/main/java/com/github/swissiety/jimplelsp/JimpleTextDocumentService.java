@@ -1,5 +1,8 @@
-package magpiebridge.jimplelsp;
+package com.github.swissiety.jimplelsp;
 
+import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
+import com.github.swissiety.jimplelsp.resolver.LocalPositionResolver;
+import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.callgraph.typehierarchy.ViewTypeHierarchy;
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.model.*;
@@ -10,18 +13,6 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
-import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
-import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,6 +20,14 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
