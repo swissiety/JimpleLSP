@@ -17,32 +17,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 
-/**
- * TODO
- *
- * @echo off
- * set sootPath=soot-4.2.1-jar-with-dependencies.jar
- * rem set target=E:\Git\Github\callgraph\TaintBench\allApks\fakedaum.apk
- * rem set output=E:\Git\Github\callgraph\CGBench_Test\fakedaum\sootoutput
- * set target=E:\Git\Github\callgraph\CGBench_Test\fakedaum\placeholder-lib.jar
- * set output=E:\Git\Github\callgraph\CGBench_Test\fakedaum\sootoutput
- * <p>
- * rem echo build soot-reloaded
- * rem set "cmdf2=mvn -f %sootRepo% com.coveo:fmt-maven-plugin:format"
- * rem call %cmdf2%
- * rem set "cmd1=mvn -f %sootRepo% install -DskipTests"
- * rem call %cmd1%
- * <p>
- * echo run soot
- * set "cmd=java -cp %sootPath% soot.Main -process-dir %target% -pp -src-prec c -allow-phantom-refs -d %output% -output-format J"
- * rem set "cmd=java -cp %sootPath% soot.Main -process-dir %target% -pp -src-prec apk -android-jars E:\Git\androidPlatforms -allow-phantom-refs -d %output% -output-format J"
- * call %cmd%
- * set target2=E:\Git\Github\callgraph\CGBench_Test\fakedaum\averroes-lib-class.jar
- * set "cmd2=java -cp %sootPath% soot.Main -process-dir %target2% -pp -src-prec c -allow-phantom-refs -d %output% -output-format J"
- * call %cmd2%
- * <p>
- * pause
- */
 @Beta
 class ApkAndAndroidjar {
 
@@ -60,20 +34,20 @@ class ApkAndAndroidjar {
 
       System.out.println(IOUtils.toString(input, Charset.defaultCharset()));
       saxParser.parse(
-              input,
-              new DefaultHandler() {
-                @Override
-                public void startElement(String uri, String localName, String qName, Attributes attr)
-                        throws SAXException {
-                  if (qName.equals("manifest")) {
-                    String version = attr.getValue("android:versionCode");
-                    if (version != null) {
-                      apkVersion[0] = Integer.parseInt(version);
-                      throw new SAXException(""); // abort parsing bc we have all we wanted
-                    }
-                  }
+          input,
+          new DefaultHandler() {
+            @Override
+            public void startElement(String uri, String localName, String qName, Attributes attr)
+                throws SAXException {
+              if (qName.equals("manifest")) {
+                String version = attr.getValue("android:versionCode");
+                if (version != null) {
+                  apkVersion[0] = Integer.parseInt(version);
+                  throw new SAXException(""); // abort parsing bc we have all we wanted
                 }
-              });
+              }
+            }
+          });
 
     } catch (SAXException e) {
       if (!e.getMessage().equals("")) {
@@ -103,13 +77,13 @@ class ApkAndAndroidjar {
     }
 
     try (BufferedInputStream in =
-                 new BufferedInputStream(
-                         new URL(
-                                 "https://github.com/Sable/android-platforms/blob/master/android-"
-                                         + apkVersion
-                                         + "/android.jar")
-                                 .openStream());
-         FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
+            new BufferedInputStream(
+                new URL(
+                        "https://github.com/Sable/android-platforms/blob/master/android-"
+                            + apkVersion
+                            + "/android.jar")
+                    .openStream());
+        FileOutputStream fileOutputStream = new FileOutputStream(targetPath)) {
       byte[] dataBuffer = new byte[1024];
       int bytesRead;
       while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {

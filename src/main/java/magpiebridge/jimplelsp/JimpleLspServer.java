@@ -159,7 +159,7 @@ public class JimpleLspServer extends MagpieServer {
       capabilities.setDocumentHighlightProvider(true);
 
       // semantic token config
-      capabilities.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(((JimpleTextDocumentService) getTextDocumentService()).tokenLegend, true, false));
+      capabilities.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(((JimpleTextDocumentService) getTextDocumentService()).tokenLegend, true));
 
       capabilities.setFoldingRangeProvider(false);
       // check: capabilities.setDocumentFormattingProvider(true);
