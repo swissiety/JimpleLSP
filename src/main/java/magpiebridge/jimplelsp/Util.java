@@ -16,9 +16,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Markus Schmidt
- */
+/** @author Markus Schmidt */
 public class Util {
 
   @Nonnull
@@ -50,23 +48,23 @@ public class Util {
     // line numbers starting zero-based in LSP vs one-based in antlr
     // extract interesting part /beginning which usually is the signature of the current Range
     return new Range(
-            new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
-            // to next line
-            new org.eclipse.lsp4j.Position(position.getFirstLine() + 1, 0));
+        new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
+        // to next line
+        new org.eclipse.lsp4j.Position(position.getFirstLine() + 1, 0));
   }
 
   @Nonnull
   public static Range positionToRange(@Nonnull Position position) {
     // line numbers starting zero-based in LSP vs one-based in antlr
     return new Range(
-            new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
-            new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
+        new org.eclipse.lsp4j.Position(position.getFirstLine(), position.getFirstCol()),
+        new org.eclipse.lsp4j.Position(position.getLastLine(), position.getLastCol()));
   }
 
   public static Either<List<? extends Location>, List<? extends LocationLink>>
       positionToLocationList(@Nonnull String uri, @Nonnull Position position) {
     return Either.forLeft(
-            Collections.singletonList(new Location(uri, positionToDefRange(position))));
+        Collections.singletonList(new Location(uri, positionToDefRange(position))));
   }
 
   public static Location positionToDefLocation(@Nonnull String uri, @Nonnull Position position) {

@@ -125,24 +125,24 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
   */
 
-    @Override
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-    declaration(TextDocumentPositionParams params) {
-        // TODO: handle locals different if local declarations are present
-        // TODO: handle abstract method declarations
-        // otherwise its equal to definition
-        return definition(params);
+  @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+      declaration(TextDocumentPositionParams params) {
+    // TODO: handle locals different if local declarations are present
+    // TODO: handle abstract method declarations
+    // otherwise its equal to definition
+    return definition(params);
+  }
+
+  @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+      definition(TextDocumentPositionParams position) {
+    if (position == null) {
+      return null;
     }
 
-    @Override
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-    definition(TextDocumentPositionParams position) {
-        if (position == null) {
-            return null;
-        }
-
-        //  go to definition of Field/Method/Class/Local - if position resolves to a Type -> go to
-        // typeDefinition
+    //  go to definition of Field/Method/Class/Local - if position resolves to a Type -> go to
+    // typeDefinition
     return getServer()
         .pool(
             () -> {
@@ -153,29 +153,32 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
-                  // try whether its a Local (which has no Signature!)
+                // try whether its a Local (which has no Signature!)
 
-                  final ClassType classType = getServer().uriToClasstype(uri);
-                  if (classType == null) {
-                      return null;
-                  }
+                final ClassType classType = getServer().uriToClasstype(uri);
+                if (classType == null) {
+                  return null;
+                }
 
-                  final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                          getServer().getView().getClass(classType);
-                  if (!aClass.isPresent()) {
-                      return null;
-                  }
-                  SootClass sc = (SootClass) aClass.get();
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                    getServer().getView().getClass(classType);
+                if (!aClass.isPresent()) {
+                  return null;
+                }
+                SootClass sc = (SootClass) aClass.get();
 
-                  // maybe: cache instance for this file like for sigs
-                  final LocalPositionResolver localPositionResolver =
-                          new LocalPositionResolver(Util.uriToPath(uri));
-                  return localPositionResolver.resolveDefinition(sc, position);
+                // maybe: cache instance for this file like for sigs
+                final LocalPositionResolver localPositionResolver =
+                    new LocalPositionResolver(Util.uriToPath(uri));
+                return localPositionResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
-                return Either.forLeft(
-                    Collections.singletonList(getDefinitionLocation(resolver, sig)));
+                Location definitionLocation = getDefinitionLocation(resolver, sig);
+                if (definitionLocation == null) {
+                  return null;
+                }
+                return Either.forLeft(Collections.singletonList(definitionLocation));
               }
               return null;
             });
@@ -275,9 +278,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                             Util.pathToUri(sc.getClassSource().getSourcePath());
                         methodOpt.ifPresent(
                             method -> {
-                                list.add(
-                                        Util.positionToDefLocation(
-                                                methodsClassUri, method.getPosition()));
+                              list.add(
+                                  Util.positionToDefLocation(
+                                      methodsClassUri, method.getPosition()));
                             });
                       }
                     });
@@ -317,11 +320,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                     view.getClass(classType);
                 if (aClass.isPresent()) {
-                    SootClass sc = (SootClass) aClass.get();
-                    final LocalPositionResolver localPositionResolver =
-                            new LocalPositionResolver(Util.uriToPath(uri));
-                    list.addAll(localPositionResolver.resolveReferences(sc, params));
-                    return list;
+                  SootClass sc = (SootClass) aClass.get();
+                  final LocalPositionResolver localPositionResolver =
+                      new LocalPositionResolver(Util.uriToPath(uri));
+                  list.addAll(localPositionResolver.resolveReferences(sc, params));
+                  return list;
                 }
 
                 return null;
@@ -400,37 +403,37 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
-                  // try whether its a Local (which has no Signature!)
-                  final ClassType classType = getServer().uriToClasstype(uri);
-                  if (classType == null) {
-                      return null;
-                  }
-
-                  final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                          getServer().getView().getClass(classType);
-                  if (!aClass.isPresent()) {
-                      return null;
-                  }
-                  SootClass sc = (SootClass) aClass.get();
-
-                  // maybe: cache instance for this file like for sigs
-                  final LocalPositionResolver localPositionResolver =
-                          new LocalPositionResolver(Util.uriToPath(uri));
-                  final Type type =
-                          localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
-
-                  if (!(type instanceof ClassType)) {
-                      return null;
-                  }
-                  final Optional<SootClass> typeClass =
-                          (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
-                  if (typeClass.isPresent()) {
-                      final SootClass sootClass = typeClass.get();
-                      return Util.positionToLocationList(
-                              Util.pathToUri(sootClass.getClassSource().getSourcePath()),
-                              sootClass.getPosition());
-                  }
+                // try whether its a Local (which has no Signature!)
+                final ClassType classType = getServer().uriToClasstype(uri);
+                if (classType == null) {
                   return null;
+                }
+
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                    getServer().getView().getClass(classType);
+                if (!aClass.isPresent()) {
+                  return null;
+                }
+                SootClass sc = (SootClass) aClass.get();
+
+                // maybe: cache instance for this file like for sigs
+                final LocalPositionResolver localPositionResolver =
+                    new LocalPositionResolver(Util.uriToPath(uri));
+                final Type type =
+                    localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
+
+                if (!(type instanceof ClassType)) {
+                  return null;
+                }
+                final Optional<SootClass> typeClass =
+                    (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
+                if (typeClass.isPresent()) {
+                  final SootClass sootClass = typeClass.get();
+                  return Util.positionToLocationList(
+                      Util.pathToUri(sootClass.getClassSource().getSourcePath()),
+                      sootClass.getPosition());
+                }
+                return null;
               }
               Signature sig = sigInst.getLeft();
 

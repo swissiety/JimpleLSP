@@ -1,15 +1,10 @@
 package com.github.swissiety.jimplelsp;
 
+import static org.junit.Assert.assertEquals;
+
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.model.AbstractClass;
 import de.upb.swt.soot.core.model.SootClass;
-import magpiebridge.jimplelsp.JimpleLspServer;
-import magpiebridge.jimplelsp.Util;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -17,8 +12,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
+import magpiebridge.jimplelsp.JimpleLspServer;
+import magpiebridge.jimplelsp.Util;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.Before;
+import org.junit.Test;
 
 public class tetusTest {
 
