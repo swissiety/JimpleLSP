@@ -44,9 +44,12 @@ async function configureAndStartClient(context: ExtensionContext) {
 	let clientOptions: LanguageClientOptions = {
 		documentSelector: [{ scheme: 'file', language: 'jimple' }],
 		synchronize: {
-			configurationSection: 'jimplelsp',
-			fileEvents: [workspace.createFileSystemWatcher('**/*.jimple')],
-
+			configurationSection: 'JimpleLSP',
+			fileEvents: [
+                workspace.createFileSystemWatcher('**/*.jimple'),
+                workspace.createFileSystemWatcher('**/*.apk'),
+                workspace.createFileSystemWatcher('**/*.jar')
+			],
 		}
 	};
 

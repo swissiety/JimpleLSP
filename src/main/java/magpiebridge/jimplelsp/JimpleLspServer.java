@@ -14,12 +14,13 @@ import magpiebridge.core.ServerConfiguration;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.eclipse.lsp4j.*;
-import soot.Main;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,12 +32,19 @@ import java.util.stream.Stream;
 
 import static magpiebridge.jimplelsp.Util.positionToDefRange;
 
-/** @author Markus Schmidt */
+/**
+ * @author Markus Schmidt
+ */
 public class JimpleLspServer extends MagpieServer {
 
-  @Nonnull private final Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
+  @Nonnull
+  private final Map<String, SootClassSource> textDocumentClassMapping = new HashMap<>();
   private View view;
   private boolean isViewDirty = true;
+
+  // config values
+  String sootpath = "";
+  String androidplatform = "";
 
   public JimpleLspServer() {
     super(new ServerConfiguration());
@@ -177,32 +185,32 @@ public class JimpleLspServer extends MagpieServer {
 
     long startNanos = System.nanoTime();
 
-    pool(() -> {
-      List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
-      rootPath.ifPresent(rootpaths::add);
+    pool(
+            () -> {
+              List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
+              rootPath.ifPresent(rootpaths::add);
 
-      workspaceFolders.forEach(
-              f -> {
-                final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
-                if (rootpaths.stream()
-                        .noneMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
-                  // add workspace folder if its not a subdirectory of an already existing path
-                  rootpaths.add(path);
-                }
-              });
+              workspaceFolders.forEach(
+                      f -> {
+                        final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
+                        if (rootpaths.stream()
+                                .noneMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
+                          // add workspace folder if its not a subdirectory of an already existing path
+                          rootpaths.add(path);
+                        }
+                      });
 
-      final boolean jimpleFound = scanWorkspaceForJimple(rootpaths);
-      if (!jimpleFound) {
-        extractFromAPKJAR(rootpaths);
-      }
+              final boolean jimpleFound = scanWorkspaceForJimple(rootpaths);
+              if (!jimpleFound) {
+                extractFromAPKJAR(rootpaths);
+              }
 
+              double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
+              // TODO: channel to info log if necessary: System.out.println("Workspace indexing took " +
+              // runtimeMs + " ms");
 
-      double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
-      // TODO: channel to info log if necessary: System.out.println("Workspace indexing took " +
-      // runtimeMs + " ms");
-
-      return null;
-    });
+              return null;
+            });
   }
 
   private void extractFromAPKJAR(List<Path> rootpaths) {
@@ -213,7 +221,9 @@ public class JimpleLspServer extends MagpieServer {
       // get ANDROIDHOME config from client
       final ConfigurationItem configurationItem = new ConfigurationItem();
       configurationItem.setSection("JimpleLSP.jimpleextraction");
-      final CompletableFuture<List<Object>> configuration = client.configuration(new ConfigurationParams(Collections.singletonList(configurationItem)));
+      final CompletableFuture<List<Object>> configuration =
+              client.configuration(
+                      new ConfigurationParams(Collections.singletonList(configurationItem)));
 
       final List<Object> configItems;
       try {
@@ -227,23 +237,26 @@ public class JimpleLspServer extends MagpieServer {
       }
 
       /* TODO: if not overriden in configuration try to get info frome $ANDROID_HOME global variable if set
-       final String androidhomeEnv = System.getenv("ANDROID_HOME");
-       // exists?
-       androidhomeEnv += "/";
-       // exists folder?
-       */
-
+      final String androidhomeEnv = System.getenv("ANDROID_HOME");
+      // exists?
+      androidhomeEnv += "/";
+      // exists folder?
+      */
 
       final JsonObject o = (JsonObject) configItems.get(0);
-      final String androidplatform = o.get("androidplatforms").getAsString();
+      androidplatform = o.get("androidplatforms").getAsString();
+      sootpath = o.get("sootpath").getAsString();
 
       for (Path rootpath : rootpaths) {
         // find apk
         try (Stream<Path> paths = Files.walk(rootpath)) {
-          paths.filter(f -> {
-            final String filename = f.toString().toLowerCase();
-            return filename.endsWith(".apk") || filename.endsWith(".jar");
-          }).forEach(apkJarFiles::add);
+          paths
+                  .filter(
+                          f -> {
+                            final String filename = f.toString().toLowerCase();
+                            return filename.endsWith(".apk") || filename.endsWith(".jar");
+                          })
+                  .forEach(apkJarFiles::add);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -258,7 +271,8 @@ public class JimpleLspServer extends MagpieServer {
         StringBuilder sb = new StringBuilder();
         List<MessageActionItem> actions = new ArrayList<>();
         if (apkJarFiles.size() > 1) {
-          sb.append("JimpleLSP found multiple APKs/Jars. Do you like to extract Jimple from them?\n");
+          sb.append(
+                  "JimpleLSP found multiple APKs/Jars. Do you like to extract Jimple from them?\n");
           actions.add(extract_all);
 
           for (Path apkJarFile : apkJarFiles) {
@@ -270,77 +284,93 @@ public class JimpleLspServer extends MagpieServer {
 
         } else {
           final Path apkJarFile = apkJarFiles.get(0);
-          sb.append("Do you like to extract Jimple from the following file ?");
+          sb.append("Do you wish to extract Jimple from the following file?");
           actions.add(new MessageActionItem(apkJarFile.toString()));
           actions.add(new MessageActionItem("No"));
-
         }
-
 
         messageRequestParams.setMessage(sb.toString());
         messageRequestParams.setActions(actions);
         messageRequestParams.setType(MessageType.Info);
 
-        final CompletableFuture<MessageActionItem> requestFutur = client.showMessageRequest(messageRequestParams);
+        final CompletableFuture<MessageActionItem> requestFutur =
+                client.showMessageRequest(messageRequestParams);
 
-        requestFutur.thenApplyAsync((MessageActionItem messageActionItem) -> {
-          if (messageActionItem.equals(extract_all)) {
-            for (Path apkJarFile : apkJarFiles) {
-              extractAPKJAR(apkJarFile, Paths.get(androidplatform));
-            }
-          } else {
-            // FIXME: security! check if answer is from proposed list
-            extractAPKJAR(Paths.get(messageActionItem.getTitle()), Paths.get(androidplatform));
-          }
+        requestFutur.thenApplyAsync(
+                (MessageActionItem messageActionItem) -> {
+                  final Path androidPlatforms = Paths.get(androidplatform);
+                  if (messageActionItem.equals(extract_all)) {
+                    for (Path apkJarFile : apkJarFiles) {
+                      extractAPKJAR(apkJarFile);
+                    }
+                  } else {
+                    // FIXME: security! check if answer is from proposed list
+                    extractAPKJAR(Paths.get(messageActionItem.getTitle()));
+                  }
 
-          return messageActionItem;
-        });
-
+                  return messageActionItem;
+                });
       }
-
     }
   }
 
-  private void extractAPKJAR(Path target, Path androidPlatforms) {
+  private void extractAPKJAR(Path target) {
     try {
 
       // build output directory name
       final String absoluteFilename = target.toAbsolutePath().toString();
       File outputdir = new File(absoluteFilename.substring(0, absoluteFilename.length() - 4));
 
+      if (!Files.exists(Paths.get(sootpath))) {
+        client.showMessage(
+                new MessageParams(
+                        MessageType.Error, "Configured path to the soot executable  \"" + sootpath + "\" does not exist."));
+        return;
+      }
+
       // dont overwrite
       if (outputdir.exists()) {
-        client.showMessage(new MessageParams(MessageType.Error, "Output Directory " + outputdir + " exists already."));
+        client.showMessage(
+                new MessageParams(
+                        MessageType.Error, "Output Directory " + outputdir + " exists already."));
         return;
       }
       if (!outputdir.mkdir()) {
-        client.showMessage(new MessageParams(MessageType.Error, "Can not create directory  \"" + outputdir + "\" for extracted files."));
+        client.showMessage(
+                new MessageParams(
+                        MessageType.Error,
+                        "Can not create directory  \"" + outputdir + "\" for extracted files."));
         return;
       }
 
       String[] options;
       if (target.toString().toLowerCase().endsWith("apk")) {
 
-        if (androidPlatforms.toString().isEmpty()) {
-          client.showMessage(new MessageParams(MessageType.Error, "The Configuration for androidplatform is empty."));
+        if (androidplatform.isEmpty()) {
+          client.showMessage(
+                  new MessageParams(
+                          MessageType.Error, "The Configuration for androidplatform is empty."));
           return;
         }
 
-        if (!Files.exists(androidPlatforms)) {
-          client.showMessage(new MessageParams(MessageType.Error, "Configured androidplatform path \"" + androidPlatforms.toString() + "\" does not exist."));
+        if (!Files.exists(Paths.get(androidplatform))) {
+          client.showMessage(
+                  new MessageParams(
+                          MessageType.Error,
+                          "Configured androidplatform path \"" + androidplatform + "\" does not exist."));
           return;
         }
 
-        // for APK
+        // soots arguments for an APK
         options =
                 new String[]{
                         "-process-dir",
                         target.toString(),
                         "-pp",
-                        "src-prec",
+                        "-src-prec",
                         "apk",
-                        "android-jars",
-                        androidPlatforms.toString(),
+                        "-android-jars",
+                        androidplatform,
                         "-allow-phantom-refs",
                         "-d",
                         outputdir.toString(),
@@ -349,30 +379,47 @@ public class JimpleLspServer extends MagpieServer {
                 };
 
       } else {
-        // for JAR
-        options = new String[]{
-                "-process-dir",
-                target.toString(),
-                "-pp",
-                "src-prec",
-                "c",
-                "-allow-phantom-refs",
-                "-d",
-                outputdir.toString(),
-                "-output-format",
-                "J"
-        };
-
-
+        // soots arguments for a JAR
+        options =
+                new String[]{
+                        "-process-dir",
+                        target.toString(),
+                        "-pp",
+                        "-src-prec",
+                        "c",
+                        "-allow-phantom-refs",
+                        "-d",
+                        outputdir.toString(),
+                        "-output-format",
+                        "J"
+                };
       }
-      Main.main(options);
 
+      // Main.v().run(options);
 
-    } catch (RuntimeException e) {
-      client.showMessage(new MessageParams(MessageType.Error, e.getMessage()));
+      Runtime rt = Runtime.getRuntime();
+      Process pr =
+              rt.exec(
+                      "java -jar " + sootpath + " soot.Main " + String.join(" ", Arrays.asList(options)));
+
+      final int ret = pr.waitFor();
+      if (ret == 0) {
+        client.showMessage(
+                new MessageParams(
+                        MessageType.Info, "Jimple extracted to \"" + outputdir.toString() + "\"."));
+      } else {
+        client.showMessage(new MessageParams(MessageType.Error, pr.getErrorStream().toString()));
+      }
+
+    } catch (Exception e) {
+
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      e.printStackTrace(new PrintStream(bos));
+      String stackStraceString = bos.toString();
+
+      client.showMessage(new MessageParams(MessageType.Error, stackStraceString));
       e.printStackTrace();
     }
-
   }
 
   private boolean scanWorkspaceForJimple(Iterable<Path> rootpaths) {

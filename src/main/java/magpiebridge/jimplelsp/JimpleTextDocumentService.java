@@ -10,6 +10,18 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
+import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
+import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,17 +29,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.jimplelsp.provider.JimpleSymbolProvider;
-import magpiebridge.jimplelsp.resolver.LocalPositionResolver;
-import magpiebridge.jimplelsp.resolver.SignaturePositionResolver;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -124,13 +125,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
   */
 
-  @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> declaration(TextDocumentPositionParams params) {
-    // TODO: handle locals different if local declarations are present
-    // TODO: handle abstract method declarations
-    // otherwise its equal to definition
-    return definition(params);
-  }
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+    declaration(TextDocumentPositionParams params) {
+        // TODO: handle locals different if local declarations are present
+        // TODO: handle abstract method declarations
+        // otherwise its equal to definition
+        return definition(params);
+    }
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
@@ -158,16 +160,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   return null;
                 }
 
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass(classType);
-                if (!aClass.isPresent()) {
-                  return null;
-                }
-                SootClass sc = (SootClass) aClass.get();
+                  final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                          getServer().getView().getClass(classType);
+                  if (!aClass.isPresent()) {
+                      return null;
+                  }
+                  SootClass sc = (SootClass) aClass.get();
 
-                // maybe: cache instance for this file like for sigs
-                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
-                return localPositionResolver.resolveDefinition(sc, position);
+                  // maybe: cache instance for this file like for sigs
+                  final LocalPositionResolver localPositionResolver =
+                          new LocalPositionResolver(Util.uriToPath(uri));
+                  return localPositionResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
@@ -272,8 +275,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                             Util.pathToUri(sc.getClassSource().getSourcePath());
                         methodOpt.ifPresent(
                             method -> {
-                              list.add(
-                                  Util.positionToDefLocation(methodsClassUri, method.getPosition()));
+                                list.add(
+                                        Util.positionToDefLocation(
+                                                methodsClassUri, method.getPosition()));
                             });
                       }
                     });
@@ -313,10 +317,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                     view.getClass(classType);
                 if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
-                  list.addAll(localPositionResolver.resolveReferences(sc, params));
-                  return list;
+                    SootClass sc = (SootClass) aClass.get();
+                    final LocalPositionResolver localPositionResolver =
+                            new LocalPositionResolver(Util.uriToPath(uri));
+                    list.addAll(localPositionResolver.resolveReferences(sc, params));
+                    return list;
                 }
 
                 return null;
@@ -401,26 +406,28 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   return null;
                 }
 
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                    getServer().getView().getClass(classType);
-                if (!aClass.isPresent()) {
-                  return null;
-                }
-                SootClass sc = (SootClass) aClass.get();
+                  final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                          getServer().getView().getClass(classType);
+                  if (!aClass.isPresent()) {
+                      return null;
+                  }
+                  SootClass sc = (SootClass) aClass.get();
 
-                // maybe: cache instance for this file like for sigs
-                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
-                final Type type = localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
+                  // maybe: cache instance for this file like for sigs
+                  final LocalPositionResolver localPositionResolver =
+                          new LocalPositionResolver(Util.uriToPath(uri));
+                  final Type type =
+                          localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
 
-                if (!(type instanceof ClassType)) {
-                  return null;
-                }
-                final Optional<SootClass> typeClass =
-                    (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
-                if (typeClass.isPresent()) {
-                  final SootClass sootClass = typeClass.get();
-                  return Util.positionToLocationList(
-                      Util.pathToUri(sootClass.getClassSource().getSourcePath()),
+                  if (!(type instanceof ClassType)) {
+                      return null;
+                  }
+                  final Optional<SootClass> typeClass =
+                          (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
+                  if (typeClass.isPresent()) {
+                      final SootClass sootClass = typeClass.get();
+                      return Util.positionToLocationList(
+                              Util.pathToUri(sootClass.getClassSource().getSourcePath()),
                       sootClass.getPosition());
                 }
                 return null;

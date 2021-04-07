@@ -66,6 +66,12 @@
 					"default": "stdio",
 					"description": "Specifies the mode of transport used to communicate with the Jimple language server."
 				},
+				"JimpleLSP.jimpleextraction.sootpath": {
+					"scope": "window",
+					"type": "string",
+					"default": "",
+					"description": "Tells JimpleLSP where it can find the Soot executable to extract Jimple on demand."
+				},
 				"JimpleLSP.jimpleextraction.androidplatforms": {
 					"scope": "window",
 					"type": "string",

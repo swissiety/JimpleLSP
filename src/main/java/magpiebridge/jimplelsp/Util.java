@@ -3,19 +3,22 @@ package magpiebridge.jimplelsp;
 import de.upb.swt.soot.core.model.Position;
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nonnull;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-/** @author Markus Schmidt */
+import javax.annotation.Nonnull;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * @author Markus Schmidt
+ */
 public class Util {
 
   @Nonnull
@@ -62,7 +65,8 @@ public class Util {
 
   public static Either<List<? extends Location>, List<? extends LocationLink>>
       positionToLocationList(@Nonnull String uri, @Nonnull Position position) {
-    return Either.forLeft(Collections.singletonList(new Location(uri, positionToDefRange(position))));
+    return Either.forLeft(
+            Collections.singletonList(new Location(uri, positionToDefRange(position))));
   }
 
   public static Location positionToDefLocation(@Nonnull String uri, @Nonnull Position position) {
@@ -72,5 +76,4 @@ public class Util {
   public static Location positionToLocation(@Nonnull String uri, @Nonnull Position position) {
     return new Location(uri, positionToRange(position));
   }
-
 }
