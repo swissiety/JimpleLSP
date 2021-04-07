@@ -78,57 +78,9 @@ public class SyntaxHighlightingProvider {
 
 
     @Override
-    public void enterModifier(JimpleParser.ModifierContext ctx) {
-      // mark modifier
-      paint(SemanticTokenTypeEnum.Modifier, ctx);
-      super.enterModifier(ctx);
-    }
-
-    @Override
-    public void enterType(JimpleParser.TypeContext ctx) {
-      // mark type as type
-      paint(SemanticTokenTypeEnum.Type, ctx);
-      super.enterType(ctx);
-    }
-
-    @Override
     public void enterIdentifier(JimpleParser.IdentifierContext ctx) {
-      // TODO: paint(SemanticTokenTypeEnum.Variable, ctx);
+      paint(SemanticTokenTypeEnum.Variable, ctx);
       super.enterIdentifier(ctx);
-    }
-
-    @Override
-    public void enterExtends_clause(JimpleParser.Extends_clauseContext ctx) {
-      // mark extends as keyword
-      paint(SemanticTokenTypeEnum.Keyword, ctx.start);
-      super.enterExtends_clause(ctx);
-    }
-
-    @Override
-    public void enterImplements_clause(JimpleParser.Implements_clauseContext ctx) {
-      //  mark implements as keyword
-      paint(SemanticTokenTypeEnum.Keyword, ctx.start);
-      super.enterImplements_clause(ctx);
-    }
-
-    @Override
-    public void enterImportItem(JimpleParser.ImportItemContext ctx) {
-      // mark import as keyword
-      paint(SemanticTokenTypeEnum.Keyword, ctx.start);
-      super.enterImportItem(ctx);
-    }
-
-    @Override
-    public void enterStatement(JimpleParser.StatementContext ctx) {
-      // mark "label" on stmt as keyword
-      paint(SemanticTokenTypeEnum.Keyword, ctx.start);
-      super.enterStatement(ctx);
-    }
-
-    @Override
-    public void enterStmt(JimpleParser.StmtContext ctx) {
-      // TODO: keyword: switch, if
-      super.enterStmt(ctx);
     }
 
     @Override
@@ -138,53 +90,38 @@ public class SyntaxHighlightingProvider {
     }
 
     @Override
-    public void enterIdentity_ref(JimpleParser.Identity_refContext ctx) {
-      // mark @...
-      if (ctx.caught != null) {
-        paint(SemanticTokenTypeEnum.Keyword, ctx.caught);
-      } else if (ctx.parameter_idx != null) {
-        paint(SemanticTokenTypeEnum.Keyword, ctx.parameter_idx);
-      } else {
-        // this
-        paint(SemanticTokenTypeEnum.Keyword, ctx);
-      }
-
-      super.enterIdentity_ref(ctx);
+    public void enterExtends_clause(JimpleParser.Extends_clauseContext ctx) {
+      // TODO: keyword
+//     paintTokenTypeEnum.Keyword, ctx);
+      super.enterExtends_clause(ctx);
     }
 
     @Override
-    public void enterGoto_stmt(JimpleParser.Goto_stmtContext ctx) {
-      // mark goto as keyword
-      paint(SemanticTokenTypeEnum.Keyword, ctx.GOTO().getSymbol());
-      super.enterGoto_stmt(ctx);
+    public void enterImplements_clause(JimpleParser.Implements_clauseContext ctx) {
+      // TODO: keyword
+//     paintTokenTypeEnum.Keyword, ctx);
+      super.enterImplements_clause(ctx);
     }
 
     @Override
-    public void enterCase_stmt(JimpleParser.Case_stmtContext ctx) {
-      // mark "case" as keyword
-      paint(SemanticTokenTypeEnum.Keyword, ctx.start);
-      super.enterCase_stmt(ctx);
+    public void enterImportItem(JimpleParser.ImportItemContext ctx) {
+      // TODO: keyword
+//     paintTokenTypeEnum.Keyword, ctx);
+      super.enterImportItem(ctx);
     }
-
 
     @Override
     public void enterInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
-      // mark *invoke stmts as keyword
       if (ctx.dynamicinvoke != null) {
         paint(SemanticTokenTypeEnum.Keyword, ctx.dynamicinvoke);
       } else if (ctx.nonstaticinvoke != null) {
-        paint(SemanticTokenTypeEnum.Keyword, ctx.nonstaticinvoke);
+
       } else if (ctx.staticinvoke != null) {
-        paint(SemanticTokenTypeEnum.Keyword, ctx.staticinvoke);
+
       }
+
+      //     paintTokenTypeEnum.Keyword, ctx);
       super.enterInvoke_expr(ctx);
     }
-
-    @Override
-    public void enterInteger_constant(JimpleParser.Integer_constantContext ctx) {
-      paint(SemanticTokenTypeEnum.Number, ctx);
-      super.enterInteger_constant(ctx);
-    }
-
   }
 }
