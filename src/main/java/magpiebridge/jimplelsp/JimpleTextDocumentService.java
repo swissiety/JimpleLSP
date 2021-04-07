@@ -124,22 +124,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
   */
 
-
-
-  /*
   @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      declaration(DeclarationParams params) {
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> declaration(TextDocumentPositionParams params) {
     // TODO: handle locals different if local declarations are present
     // TODO: handle abstract method declarations
     // otherwise its equal to definition
     return definition(params);
   }
-  */
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      definition(DefinitionParams position) {
+      definition(TextDocumentPositionParams position) {
     if (position == null) {
       return null;
     }
@@ -171,8 +166,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalPositionResolver localPositionResolver =
-                    new LocalPositionResolver(Util.uriToPath(uri));
+                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
                 return localPositionResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
@@ -223,7 +217,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      implementation(ImplementationParams position) {
+      implementation(TextDocumentPositionParams position) {
     if (position == null) {
       return null;
     }
@@ -279,8 +273,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                         methodOpt.ifPresent(
                             method -> {
                               list.add(
-                                  Util.positionToDefLocation(
-                                      methodsClassUri, method.getPosition()));
+                                  Util.positionToDefLocation(methodsClassUri, method.getPosition()));
                             });
                       }
                     });
@@ -321,8 +314,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     view.getClass(classType);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
-                  final LocalPositionResolver localPositionResolver =
-                      new LocalPositionResolver(Util.uriToPath(uri));
+                  final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
                   list.addAll(localPositionResolver.resolveReferences(sc, params));
                   return list;
                 }
@@ -387,7 +379,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      typeDefinition(TypeDefinitionParams position) {
+      typeDefinition(TextDocumentPositionParams position) {
     if (position == null) {
       return null;
     }
@@ -417,10 +409,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 SootClass sc = (SootClass) aClass.get();
 
                 // maybe: cache instance for this file like for sigs
-                final LocalPositionResolver localPositionResolver =
-                    new LocalPositionResolver(Util.uriToPath(uri));
-                final Type type =
-                    localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
+                final LocalPositionResolver localPositionResolver = new LocalPositionResolver(Util.uriToPath(uri));
+                final Type type = localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
 
                 if (!(type instanceof ClassType)) {
                   return null;
@@ -480,7 +470,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Override
-  public CompletableFuture<Hover> hover(HoverParams position) {
+  public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
     if (position == null) {
       return null;
     }
@@ -556,7 +546,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
-      DocumentHighlightParams position) {
+      TextDocumentPositionParams position) {
     if (position == null) {
       return null;
     }
