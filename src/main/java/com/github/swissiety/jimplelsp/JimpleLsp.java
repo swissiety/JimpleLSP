@@ -1,14 +1,5 @@
 package com.github.swissiety.jimplelsp;
 
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerAnalysis;
-import magpiebridge.core.ServerConfiguration;
-import magpiebridge.util.MagpieMessageLogger;
-import org.apache.commons.cli.*;
-import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.validation.ReflectiveMessageValidator;
-
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -17,6 +8,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerAnalysis;
+import magpiebridge.core.ServerConfiguration;
+import magpiebridge.util.MagpieMessageLogger;
+import org.apache.commons.cli.*;
+import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.validation.ReflectiveMessageValidator;
 
 /** @author Markus Schmidt */
 public class JimpleLsp {
@@ -63,7 +62,7 @@ public class JimpleLsp {
                         message -> {
                           String timeStamp =
                               new SimpleDateFormat("[HH:mm:ss:SS]").format(new Date());
-                          System.err.println(timeStamp + message);
+                          //                          System.err.println(timeStamp + message);
                           new ReflectiveMessageValidator(c).consume(message);
                         };
                     return wrappedConsumer;
@@ -73,6 +72,9 @@ public class JimpleLsp {
                 @Override
                 public void cleanUp() {}
               });
+
+          // to disable unnecessarily showing the control panel
+          // config.setShowConfigurationPage(false, false);
 
           MagpieServer server = new JimpleLspServer(config);
           // TODO: e.g. extract apk on demand
