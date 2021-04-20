@@ -106,7 +106,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     final String uri = params.getTextDocument().getUri();
     String language = inferLanguage(uri);
     SourceFileManager fileManager = server.getSourceFileManager(language);
-    analyzeFile(params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(URI.create(uri)).getText());
+    analyzeFile(
+        params.getTextDocument().getUri(),
+        fileManager.getVersionedFiles().get(URI.create(uri)).getText());
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
@@ -115,9 +117,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       // calculate and cache interesting i.e.signature positions of the opened file
       docSignaturePositionResolver.put(
           uri, new SignaturePositionResolver(Util.uriToPath(uri), text));
-    }else{
-        // if its a change and invalid: remove
-        docSignaturePositionResolver.remove(uri);
+    } else {
+      // if its a change and invalid: remove
+      docSignaturePositionResolver.remove(uri);
     }
   }
 
@@ -348,13 +350,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
                 final List<Location> resolvedList = sigresolver.resolve(sig);
 
-
                 if (resolvedList != null) {
-                    // remove definition if requested
-                    if (!includeDef) {
-                            resolvedList.removeIf(loc -> loc.equals(definitionLocation));
-                    }
-                    list.addAll(resolvedList);
+                  // remove definition if requested
+                  if (!includeDef) {
+                    resolvedList.removeIf(loc -> loc.equals(definitionLocation));
+                  }
+                  list.addAll(resolvedList);
                 }
               }
 
