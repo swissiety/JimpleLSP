@@ -9,6 +9,14 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerConfiguration;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.eclipse.lsp4j.*;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -21,13 +29,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerConfiguration;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.eclipse.lsp4j.*;
 
 /** @author Markus Schmidt */
 public class JimpleLspServer extends MagpieServer {
@@ -109,6 +110,11 @@ public class JimpleLspServer extends MagpieServer {
         // necessary
       }
       isViewDirty = true;
+
+      // FIXME: merge with other diagnostics in magpie
+      // clean up errors in IDE if the file is valid (again)
+      client.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.emptyList()));
+
       return true;
     } catch (ResolveException e) {
       // feed error into diagnostics
