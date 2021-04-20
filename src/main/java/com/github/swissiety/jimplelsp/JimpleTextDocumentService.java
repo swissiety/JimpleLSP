@@ -13,21 +13,24 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -52,7 +55,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   public void didOpen(DidOpenTextDocumentParams params) {
     // FIXME: [ms] make magpiebridge:SourceFileModule.getSuffix() protected or create a central/open
     // language->suffix allocation
-    //  super.didOpen(params);
+    super.didOpen(params);
     if (params == null || params.getTextDocument() == null) {
       return;
     }
@@ -90,7 +93,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
     // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
-    //    super.didClose(params);
+    super.didClose(params);
     if (params == null
         || params.getTextDocument() == null
         || params.getTextDocument().getUri() == null) {}
@@ -99,12 +102,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
     super.didChange(params);
-    /* TODO: test & allow modifications
+
     final String uri = params.getTextDocument().getUri();
     String language = inferLanguage(uri);
     SourceFileManager fileManager = server.getSourceFileManager(language);
-    analyzeFile(params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(uri).getText());
-    */
+    analyzeFile(params.getTextDocument().getUri(), fileManager.getVersionedFiles().get(URI.create(uri)).getText());
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
@@ -113,6 +115,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       // calculate and cache interesting i.e.signature positions of the opened file
       docSignaturePositionResolver.put(
           uri, new SignaturePositionResolver(Util.uriToPath(uri), text));
+    }else{
+        // if its a change and invalid: remove
+        docSignaturePositionResolver.remove(uri);
     }
   }
 
@@ -343,11 +348,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
                 final List<Location> resolvedList = sigresolver.resolve(sig);
 
-                // remove definition if requested
-                if (!includeDef) {
-                  resolvedList.removeIf(loc -> loc.equals(definitionLocation));
+
+                if (resolvedList != null) {
+                    // remove definition if requested
+                    if (!includeDef) {
+                            resolvedList.removeIf(loc -> loc.equals(definitionLocation));
+                    }
+                    list.addAll(resolvedList);
                 }
-                list.addAll(resolvedList);
               }
 
               return list;
