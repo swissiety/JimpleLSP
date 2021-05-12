@@ -1,6 +1,7 @@
 package com.github.swissiety.jimplelsp;
 
 import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
+import com.github.swissiety.jimplelsp.provider.SyntaxHighlightingProvider;
 import com.github.swissiety.jimplelsp.resolver.LocalPositionResolver;
 import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.callgraph.typehierarchy.ViewTypeHierarchy;
@@ -37,7 +38,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   private final Map<String, SignaturePositionResolver> docSignaturePositionResolver =
       new HashMap<>();
 
-  /**
+   public final SemanticTokensLegend tokenLegend = SyntaxHighlightingProvider.createLegend();
+
+
+    /**
    * Instantiates a new magpie text document service.
    *
    * @param server the server
@@ -131,19 +135,21 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
   */
 
+    /*
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      declaration(TextDocumentPositionParams params) {
+      declaration(DeclarationParams params) {
     // TODO: handle locals different if local declarations are present
     // TODO: handle abstract method declarations
     // otherwise its equal to definition
     return definition(params);
   }
+  */
 
-  @Override
-  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      definition(TextDocumentPositionParams position) {
-    if (position == null) {
+    @Override
+    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+    definition(DefinitionParams position) {
+        if (position == null) {
       return null;
     }
 
@@ -229,7 +235,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      implementation(TextDocumentPositionParams position) {
+      implementation(ImplementationParams position) {
     if (position == null) {
       return null;
     }
@@ -395,7 +401,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      typeDefinition(TextDocumentPositionParams position) {
+      typeDefinition(TypeDefinitionParams position) {
     if (position == null) {
       return null;
     }
@@ -488,7 +494,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Override
-  public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+  public CompletableFuture<Hover> hover(HoverParams position) {
     if (position == null) {
       return null;
     }
@@ -564,7 +570,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
-      TextDocumentPositionParams position) {
+      DocumentHighlightParams position) {
     if (position == null) {
       return null;
     }
@@ -729,7 +735,22 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
-  @Override
+    @Override
+    public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
+        return super.semanticTokensFull(params);
+    }
+
+    @Override
+    public CompletableFuture<Either<SemanticTokens, SemanticTokensDelta>> semanticTokensFullDelta(SemanticTokensDeltaParams params) {
+        return super.semanticTokensFullDelta(params);
+    }
+
+    @Override
+    public CompletableFuture<SemanticTokens> semanticTokensRange(SemanticTokensRangeParams params) {
+        return super.semanticTokensRange(params);
+    }
+
+    @Override
   protected String inferLanguage(String uri) {
     if (uri.endsWith(".jimple")) {
       return "jimple";

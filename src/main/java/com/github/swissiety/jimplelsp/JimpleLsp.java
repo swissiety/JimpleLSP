@@ -59,7 +59,7 @@ public class JimpleLsp {
                         message -> {
                           String timeStamp =
                               new SimpleDateFormat("[HH:mm:ss:SS]").format(new Date());
-                          //                          System.err.println(timeStamp + message);
+                                                    System.err.println(timeStamp + message);
                           new ReflectiveMessageValidator(c).consume(message);
                         };
                     return wrappedConsumer;

@@ -43,6 +43,7 @@ async function configureAndStartClient(context: ExtensionContext) {
 		(lspTransport === "stdio") ? serverOptionsStdio : (lspTransport === "socket") ? serverOptionsSocket : null
 
 	let clientOptions: LanguageClientOptions = {
+
 		documentSelector: [{ scheme: 'file', language: 'jimple' }],
 		synchronize: {
 			configurationSection: 'JimpleLSP',

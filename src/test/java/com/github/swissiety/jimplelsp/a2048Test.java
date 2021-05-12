@@ -1,10 +1,13 @@
 package com.github.swissiety.jimplelsp;
 
-import static org.junit.Assert.assertEquals;
-
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.model.AbstractClass;
 import de.upb.swt.soot.core.model.SootClass;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -12,10 +15,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class a2048Test {
 
@@ -69,8 +70,8 @@ public class a2048Test {
 
   @Test
   public void testDefinition() throws ExecutionException, InterruptedException {
-    final TextDocumentPositionParams position =
-        new TextDocumentPositionParams(new TextDocumentIdentifier("uri"), new Position(0, 0));
+    final DefinitionParams position =
+        new DefinitionParams(new TextDocumentIdentifier("uri"), new Position(0, 0));
     final CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
         definition = jimpleLspServer.getTextDocumentService().definition(position);
     final Either<List<? extends Location>, List<? extends LocationLink>> listListEither =
