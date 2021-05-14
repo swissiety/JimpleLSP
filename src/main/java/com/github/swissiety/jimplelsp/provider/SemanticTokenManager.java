@@ -1,26 +1,27 @@
 package com.github.swissiety.jimplelsp.provider;
 
+import java.util.*;
+import javax.annotation.Nonnull;
 import org.eclipse.lsp4j.SemanticTokenModifiers;
 import org.eclipse.lsp4j.SemanticTokensLegend;
-
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
 
 /** @author Markus Schmidt */
 public class SemanticTokenManager {
   @Nonnull private final SemanticTokensLegend legend;
+  @Nonnull private final Map<String, Integer> tokenMapping = new HashMap<>();
 
   @Nonnull final List<Integer> encodedSemanticTokens = new ArrayList<>();
   int lastTokenLine, lastTokenColumn = 0;
 
   public SemanticTokenManager(SemanticTokensLegend legend) {
     this.legend = legend;
+
+    for (String tokenType : legend.getTokenTypes()) {
+      tokenMapping.put(tokenType, tokenMapping.size());
+    }
   }
 
-  public void paintText(
-      SemanticTokenTypeEnum type, SemanticTokenModifiers mod, int line, int col, int length) {
+  public void paintText(String type, SemanticTokenModifiers mod, int line, int col, int length) {
     //    at index 5*i - deltaLine: token line number, relative to the previous token
     encodedSemanticTokens.add(line - lastTokenLine);
 

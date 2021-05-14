@@ -4,51 +4,52 @@ import com.github.swissiety.jimplelsp.Util;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 
 /** @author Markus Schmidt */
 public class SyntaxHighlightingProvider {
-  final SemanticTokenManager semanticTokenManager;
+  static final String[] tokenTypes =
+      new String[] {
+        SemanticTokenTypes.Keyword,
+        SemanticTokenTypes.Comment,
+        SemanticTokenTypes.Modifier,
+        SemanticTokenTypes.Class,
+        SemanticTokenTypes.Member,
+        SemanticTokenTypes.Type,
+        SemanticTokenTypes.Variable,
+        SemanticTokenTypes.Parameter,
+        SemanticTokenTypes.String,
+        SemanticTokenTypes.Number
+      };
+
+  static final SemanticTokenManager semanticTokenManager = new SemanticTokenManager(createLegend());
 
   public static SemanticTokensLegend createLegend() {
-    SemanticTokenTypeEnum[] tokenTypes =
-        new SemanticTokenTypeEnum[] {
-          SemanticTokenTypeEnum.Keyword,
-          SemanticTokenTypeEnum.Comment,
-          SemanticTokenTypeEnum.Modifier,
-          SemanticTokenTypeEnum.Class,
-          SemanticTokenTypeEnum.Member,
-          SemanticTokenTypeEnum.Type,
-          SemanticTokenTypeEnum.Variable,
-          SemanticTokenTypeEnum.Parameter,
-          SemanticTokenTypeEnum.String,
-          SemanticTokenTypeEnum.Number
-        };
+
     return new SemanticTokensLegend(
-        Arrays.stream(tokenTypes).map(SemanticTokenTypeEnum::toString).collect(Collectors.toList()),
+        Arrays.asList(tokenTypes),
+        // TODO: add modifiers too
         Collections.emptyList());
   }
 
-  public SyntaxHighlightingProvider(@Nonnull SemanticTokensLegend legend) {
-    semanticTokenManager = new SemanticTokenManager(legend);
-  }
-
   @Nullable
-  public SemanticTokens paintbrush(@Nonnull String uri) {
+  public static SemanticTokens paintbrush(@Nonnull TextDocumentIdentifier doc) {
 
-    final Path path = Util.uriToPath(uri);
+    final Path path = Util.uriToPath(doc.getUri());
     final JimpleParser parser;
     try {
       parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
@@ -58,7 +59,7 @@ public class SyntaxHighlightingProvider {
     }
 
     ParseTreeWalker walker = new ParseTreeWalker();
-    SyntaxHighlightingListener listener = new SyntaxHighlightingListener();
+    SyntaxHighlightingListener listener = new SyntaxHighlightingListener(semanticTokenManager);
     walker.walk(listener, parser.file());
 
     return new SemanticTokens(semanticTokenManager.getCanvas());
@@ -74,9 +75,15 @@ public class SyntaxHighlightingProvider {
   //  SemanticTokenTypeEnum.Type, SemanticTokenTypeEnum.Variable,   SemanticTokenTypeEnum.Parameter,
   //  SemanticTokenTypeEnum.String,  SemanticTokenTypeEnum.Number
 
-  private class SyntaxHighlightingListener extends JimpleBaseListener {
+  private static class SyntaxHighlightingListener extends JimpleBaseListener {
 
-    private void paint(SemanticTokenTypeEnum tokentype, Token token) {
+    @Nonnull private final SemanticTokenManager semanticTokenManager;
+
+    private SyntaxHighlightingListener(SemanticTokenManager semanticTokenManager) {
+      this.semanticTokenManager = semanticTokenManager;
+    }
+
+    private void paint(String tokentype, Token token) {
       // TODO: add tokenModifier
       // zero offset line/column
       semanticTokenManager.paintText(
@@ -87,7 +94,7 @@ public class SyntaxHighlightingProvider {
           token.getText().length());
     }
 
-    private void paint(SemanticTokenTypeEnum tokentype, ParserRuleContext ctx) {
+    private void paint(String tokentype, ParserRuleContext ctx) {
       // TODO: add tokenModifier
       // zero offset line/column
       semanticTokenManager.paintText(
@@ -100,41 +107,41 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public void enterIdentifier(JimpleParser.IdentifierContext ctx) {
-      paint(SemanticTokenTypeEnum.Variable, ctx);
+      paint(SemanticTokenTypes.Variable, ctx);
       super.enterIdentifier(ctx);
     }
 
     @Override
     public void enterAssignments(JimpleParser.AssignmentsContext ctx) {
-      // paintTokenTypeEnum.Variable, ctx);
+      // paintTokenTypes.Variable, ctx);
       super.enterAssignments(ctx);
     }
 
     @Override
     public void enterExtends_clause(JimpleParser.Extends_clauseContext ctx) {
       // TODO: keyword
-      //     paintTokenTypeEnum.Keyword, ctx);
+      //     paintTokenTypes.Keyword, ctx);
       super.enterExtends_clause(ctx);
     }
 
     @Override
     public void enterImplements_clause(JimpleParser.Implements_clauseContext ctx) {
       // TODO: keyword
-      //     paintTokenTypeEnum.Keyword, ctx);
+      //     paintTokenTypes.Keyword, ctx);
       super.enterImplements_clause(ctx);
     }
 
     @Override
     public void enterImportItem(JimpleParser.ImportItemContext ctx) {
       // TODO: keyword
-      //     paintTokenTypeEnum.Keyword, ctx);
+      //     paintTokenTypes.Keyword, ctx);
       super.enterImportItem(ctx);
     }
 
     @Override
     public void enterInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
       if (ctx.dynamicinvoke != null) {
-        paint(SemanticTokenTypeEnum.Keyword, ctx.dynamicinvoke);
+        paint(SemanticTokenTypes.Keyword, ctx.dynamicinvoke);
       } else if (ctx.nonstaticinvoke != null) {
 
       } else if (ctx.staticinvoke != null) {

@@ -14,16 +14,6 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,6 +22,15 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -736,18 +735,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-    return super.semanticTokensFull(params);
-  }
 
-  @Override
-  public CompletableFuture<Either<SemanticTokens, SemanticTokensDelta>> semanticTokensFullDelta(
-      SemanticTokensDeltaParams params) {
-    return super.semanticTokensFullDelta(params);
-  }
+    final TextDocumentIdentifier textDoc = params.getTextDocument();
+    if (textDoc == null) {
+      return null;
+    }
 
-  @Override
-  public CompletableFuture<SemanticTokens> semanticTokensRange(SemanticTokensRangeParams params) {
-    return super.semanticTokensRange(params);
+    return getServer().pool(() -> SyntaxHighlightingProvider.paintbrush(textDoc));
   }
 
   @Override
