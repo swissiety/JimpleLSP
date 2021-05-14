@@ -1,24 +1,20 @@
 package com.github.swissiety.jimplelsp.provider;
 
-import java.util.*;
-import javax.annotation.Nonnull;
 import org.eclipse.lsp4j.SemanticTokenModifiers;
 import org.eclipse.lsp4j.SemanticTokensLegend;
+
+import javax.annotation.Nonnull;
+import java.util.*;
 
 /** @author Markus Schmidt */
 public class SemanticTokenManager {
   @Nonnull private final SemanticTokensLegend legend;
-  @Nonnull private final Map<String, Integer> tokenMapping = new HashMap<>();
 
   @Nonnull final List<Integer> encodedSemanticTokens = new ArrayList<>();
   int lastTokenLine, lastTokenColumn = 0;
 
   public SemanticTokenManager(SemanticTokensLegend legend) {
     this.legend = legend;
-
-    for (String tokenType : legend.getTokenTypes()) {
-      tokenMapping.put(tokenType, tokenMapping.size());
-    }
   }
 
   public void paintText(String type, SemanticTokenModifiers mod, int line, int col, int length) {
@@ -39,6 +35,9 @@ public class SemanticTokenManager {
     //    at index 5*i+3 - tokenType: will be looked up in SemanticTokensLegend.tokenTypes. We
     // currently ask that tokenType < 65536.
     final int typeIdx = legend.getTokenTypes().indexOf(type.toString()); // TODO [ms] performance
+    if(typeIdx < 0){
+      throw new RuntimeException(type +" is not supported in semantic token legend!");
+    }
     encodedSemanticTokens.add(Math.max(typeIdx, 0));
 
     //    at index 5*i+4 - tokenModifiers: each set bit will be looked up in

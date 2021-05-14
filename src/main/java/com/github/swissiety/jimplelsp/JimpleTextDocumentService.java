@@ -14,6 +14,16 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -22,15 +32,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -88,6 +89,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (text == null) {
       return;
     }
+
     // update classes
     analyzeFile(uri, text);
   }
@@ -124,14 +126,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       docSignaturePositionResolver.remove(uri);
     }
   }
-
-  /* @Override
-  // TODO: implement syntaxHighlighting
-  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-    final String uri = params.getTextDocument().getUri();
-    return getServer().pool( () -> new SemanticTokens( SyntaxHighlightingProvider.paintbrush(uri) ));
-  }
-  */
 
   /*
   @Override

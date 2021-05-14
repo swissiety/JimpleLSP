@@ -22,28 +22,21 @@ import java.util.Collections;
 
 /** @author Markus Schmidt */
 public class SyntaxHighlightingProvider {
-  static final String[] tokenTypes =
-      new String[] {
-        SemanticTokenTypes.Keyword,
-        SemanticTokenTypes.Comment,
-        SemanticTokenTypes.Modifier,
-        SemanticTokenTypes.Class,
-        SemanticTokenTypes.Member,
-        SemanticTokenTypes.Type,
-        SemanticTokenTypes.Variable,
-        SemanticTokenTypes.Parameter,
-        SemanticTokenTypes.String,
-        SemanticTokenTypes.Number
-      };
 
-  static final SemanticTokenManager semanticTokenManager = new SemanticTokenManager(createLegend());
+  @Nonnull
+  static final SemanticTokensLegend legend = new SemanticTokensLegend(   Arrays.asList(SemanticTokenTypes.Keyword,
+          SemanticTokenTypes.Comment,
+          SemanticTokenTypes.Modifier,
+          SemanticTokenTypes.Class,
+          SemanticTokenTypes.Function,
+          SemanticTokenTypes.Type,
+          SemanticTokenTypes.Variable,
+          SemanticTokenTypes.Parameter,
+          SemanticTokenTypes.String,
+          SemanticTokenTypes.Number), Collections.emptyList());
 
   public static SemanticTokensLegend createLegend() {
-
-    return new SemanticTokensLegend(
-        Arrays.asList(tokenTypes),
-        // TODO: add modifiers too
-        Collections.emptyList());
+    return legend;
   }
 
   @Nullable
@@ -58,6 +51,8 @@ public class SyntaxHighlightingProvider {
       return null;
     }
 
+    SemanticTokenManager semanticTokenManager = new SemanticTokenManager(legend);
+
     ParseTreeWalker walker = new ParseTreeWalker();
     SyntaxHighlightingListener listener = new SyntaxHighlightingListener(semanticTokenManager);
     walker.walk(listener, parser.file());
@@ -66,12 +61,9 @@ public class SyntaxHighlightingProvider {
   }
 
   public SemanticTokensLegend getLegend() {
-    return semanticTokenManager.getLegend();
+    return createLegend();
   }
 
-  // TODO: [ms] planned supported types:
-  //  SemanticTokenTypeEnum.Keyword, SemanticTokenTypeEnum.Comment,
-  //  SemanticTokenTypeEnum.Modifier, SemanticTokenTypeEnum.Class, SemanticTokenTypeEnum.Member,
   //  SemanticTokenTypeEnum.Type, SemanticTokenTypeEnum.Variable,   SemanticTokenTypeEnum.Parameter,
   //  SemanticTokenTypeEnum.String,  SemanticTokenTypeEnum.Number
 
@@ -106,49 +98,96 @@ public class SyntaxHighlightingProvider {
     }
 
     @Override
+    public void enterInteger_constant(JimpleParser.Integer_constantContext ctx) {
+      paint(SemanticTokenTypes.Number, ctx);
+      super.enterInteger_constant(ctx);
+    }
+
+    @Override
+    public void enterCase_label(JimpleParser.Case_labelContext ctx) {
+      paint( SemanticTokenTypes.Keyword, ctx.start );
+      super.enterCase_label(ctx);
+    }
+
+    @Override
+    public void enterModifier(JimpleParser.ModifierContext ctx) {
+      paint(SemanticTokenTypes.Modifier, ctx);
+      super.enterModifier(ctx);
+    }
+
+    @Override
+    public void enterMethod_signature(JimpleParser.Method_signatureContext ctx) {
+      paint(SemanticTokenTypes.Function, ctx.class_name);
+      super.enterMethod_signature(ctx);
+    }
+
+    @Override
     public void enterIdentifier(JimpleParser.IdentifierContext ctx) {
-      paint(SemanticTokenTypes.Variable, ctx);
+      paint(SemanticTokenTypes.Variable, ctx.start);
       super.enterIdentifier(ctx);
     }
 
     @Override
+    public void enterStmt(JimpleParser.StmtContext ctx) {
+      if( ctx.IF() != null || ctx.RETURN() != null || ctx.ENTERMONITOR() != null || ctx.ENTERMONITOR() != null || ctx.BREAKPOINT() != null || ctx.SWITCH() != null || ctx.THROW()!= null || ctx.NOP() != null){
+        paint(SemanticTokenTypes.Keyword, ctx.start);
+      }
+      super.enterStmt(ctx);
+    }
+
+    @Override
+    public void enterType(JimpleParser.TypeContext ctx) {
+      paint(SemanticTokenTypes.Type , ctx.start);
+      super.enterType(ctx);
+    }
+
+
+    @Override
     public void enterAssignments(JimpleParser.AssignmentsContext ctx) {
-      // paintTokenTypes.Variable, ctx);
+      JimpleParser.Identity_refContext identity_refContext = ctx.identity_ref();
+      if( identity_refContext != null){
+          paint(SemanticTokenTypes.Keyword, identity_refContext.start);
+      }
       super.enterAssignments(ctx);
     }
 
     @Override
+    public void enterGoto_stmt(JimpleParser.Goto_stmtContext ctx) {
+      paint(SemanticTokenTypes.Keyword, ctx.start);
+      super.enterGoto_stmt(ctx);
+    }
+
+    @Override
+    public void enterFile_type(JimpleParser.File_typeContext ctx) {
+      if( ctx.getText().charAt(0) == 'c') {
+        paint(SemanticTokenTypes.Class, ctx);
+      }else{
+        paint(SemanticTokenTypes.Interface, ctx);
+      }
+      super.enterFile_type(ctx);
+    }
+
+    @Override
     public void enterExtends_clause(JimpleParser.Extends_clauseContext ctx) {
-      // TODO: keyword
-      //     paintTokenTypes.Keyword, ctx);
+      paint(SemanticTokenTypes.Keyword, ctx.start );
       super.enterExtends_clause(ctx);
     }
 
     @Override
     public void enterImplements_clause(JimpleParser.Implements_clauseContext ctx) {
-      // TODO: keyword
-      //     paintTokenTypes.Keyword, ctx);
+           paint(SemanticTokenTypes.Keyword, ctx.start );
       super.enterImplements_clause(ctx);
     }
 
     @Override
     public void enterImportItem(JimpleParser.ImportItemContext ctx) {
-      // TODO: keyword
-      //     paintTokenTypes.Keyword, ctx);
+      paint(SemanticTokenTypes.Keyword, ctx.start);
       super.enterImportItem(ctx);
     }
 
     @Override
     public void enterInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
-      if (ctx.dynamicinvoke != null) {
-        paint(SemanticTokenTypes.Keyword, ctx.dynamicinvoke);
-      } else if (ctx.nonstaticinvoke != null) {
-
-      } else if (ctx.staticinvoke != null) {
-
-      }
-
-      //     paintTokenTypeEnum.Keyword, ctx);
+      paint(SemanticTokenTypes.Keyword, ctx.start);
       super.enterInvoke_expr(ctx);
     }
   }
