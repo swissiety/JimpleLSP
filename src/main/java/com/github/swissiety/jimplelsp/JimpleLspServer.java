@@ -162,7 +162,7 @@ public class JimpleLspServer extends MagpieServer {
 
     final CompletableFuture<InitializeResult> initialize = super.initialize(params);
 
-    if( params.getCapabilities().getTextDocument().getSemanticTokens() != null ){
+    if (params.getCapabilities().getTextDocument().getSemanticTokens() != null) {
       System.err.println("wuhuu semnatic tokens are supported!");
     }
 
@@ -181,7 +181,9 @@ public class JimpleLspServer extends MagpieServer {
       capabilities.setDocumentHighlightProvider(true);
 
       // semantic token config
-      capabilities.setSemanticTokensProvider(new SemanticTokensWithRegistrationOptions(((JimpleTextDocumentService) getTextDocumentService()).tokenLegend, true));
+      capabilities.setSemanticTokensProvider(
+          new SemanticTokensWithRegistrationOptions(
+              ((JimpleTextDocumentService) getTextDocumentService()).tokenLegend, true));
       // check: capabilities.setDocumentFormattingProvider(true);
 
     } catch (InterruptedException | ExecutionException e) {

@@ -2,7 +2,7 @@
 import * as net from 'net';
 import { XMLHttpRequest } from 'xmlhttprequest-ts';
 import { workspace, ExtensionContext, window, ViewColumn, env, Uri} from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo, DynamicFeature, ClientCapabilities, DocumentSelector, InitializeParams, RegistrationData, RPCMessageType, ServerCapabilities, VersionedTextDocumentIdentifier } from 'vscode-languageclient';
+import { LanguageClient, LanguageClientOptions, ServerOptions, StreamInfo, DynamicFeature, ClientCapabilities, DocumentSelector, InitializeParams, RegistrationData, ServerCapabilities, VersionedTextDocumentIdentifier, RegistrationType } from 'vscode-languageclient/node';
 
 var client: LanguageClient = null;
 
@@ -65,11 +65,12 @@ async function configureAndStartClient(context: ExtensionContext) {
 
 export class SupportsShowHTML implements DynamicFeature<undefined> {
 
+	registrationType: RegistrationType<undefined>;
+
 	constructor(private _client: LanguageClient) {
 
     }
-
-	messages: RPCMessageType | RPCMessageType[];
+	
 	fillInitializeParams?: (params: InitializeParams) => void;
 	fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.experimental = {
@@ -108,7 +109,7 @@ export class SupportsShowHTML implements DynamicFeature<undefined> {
 			})
 	}
 
-	register(message: RPCMessageType, data: RegistrationData<undefined>): void {
+	register( data: RegistrationData<undefined>): void {
 
 	}
 	unregister(id: string): void {

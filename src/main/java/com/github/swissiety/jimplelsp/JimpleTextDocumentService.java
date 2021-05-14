@@ -38,10 +38,9 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   private final Map<String, SignaturePositionResolver> docSignaturePositionResolver =
       new HashMap<>();
 
-   public final SemanticTokensLegend tokenLegend = SyntaxHighlightingProvider.createLegend();
+  public final SemanticTokensLegend tokenLegend = SyntaxHighlightingProvider.createLegend();
 
-
-    /**
+  /**
    * Instantiates a new magpie text document service.
    *
    * @param server the server
@@ -135,7 +134,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
   */
 
-    /*
+  /*
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       declaration(DeclarationParams params) {
@@ -146,10 +145,10 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
   */
 
-    @Override
-    public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-    definition(DefinitionParams position) {
-        if (position == null) {
+  @Override
+  public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
+      definition(DefinitionParams position) {
+    if (position == null) {
       return null;
     }
 
@@ -735,22 +734,23 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             });
   }
 
-    @Override
-    public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-        return super.semanticTokensFull(params);
-    }
+  @Override
+  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
+    return super.semanticTokensFull(params);
+  }
 
-    @Override
-    public CompletableFuture<Either<SemanticTokens, SemanticTokensDelta>> semanticTokensFullDelta(SemanticTokensDeltaParams params) {
-        return super.semanticTokensFullDelta(params);
-    }
+  @Override
+  public CompletableFuture<Either<SemanticTokens, SemanticTokensDelta>> semanticTokensFullDelta(
+      SemanticTokensDeltaParams params) {
+    return super.semanticTokensFullDelta(params);
+  }
 
-    @Override
-    public CompletableFuture<SemanticTokens> semanticTokensRange(SemanticTokensRangeParams params) {
-        return super.semanticTokensRange(params);
-    }
+  @Override
+  public CompletableFuture<SemanticTokens> semanticTokensRange(SemanticTokensRangeParams params) {
+    return super.semanticTokensRange(params);
+  }
 
-    @Override
+  @Override
   protected String inferLanguage(String uri) {
     if (uri.endsWith(".jimple")) {
       return "jimple";

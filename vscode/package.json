@@ -95,7 +95,7 @@
 		"build": "vsce package"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^6.1.4",
+		"vscode-languageclient": "^7.0.0",
 		"xmlhttprequest-ts": "^1.0.1"
 	},
 	"devDependencies": {
