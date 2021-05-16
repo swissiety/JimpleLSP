@@ -27,15 +27,18 @@ public class JimpleLabelProvider extends JimpleBaseListener {
   @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
 
   @Nonnull
-  public void resolve(SootClass sc, TextDocumentPositionParams pos) {
+  public void resolve(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     // TODO: implement label indexing
   }
 
   @Override
   public void enterStatement(JimpleParser.StatementContext ctx) {
     // add label preceeding a stmt as target into the map
-    if (ctx.label_name != null && ctx.label_name.getText().length() > 0) {
-      labelTargets.put(ctx.label_name.getText(), Util.ctxToRange(ctx));
+    if (ctx.label_name != null) {
+      String text = ctx.label_name.getText();
+      if (text.length() > 0) {
+        labelTargets.put(text, Util.ctxToRange(ctx));
+      }
     }
     super.enterStatement(ctx);
   }
@@ -48,6 +51,7 @@ public class JimpleLabelProvider extends JimpleBaseListener {
     if (labelCtx != null) {
       labelUsage.add(Pair.of(labelCtx.getText(), Util.ctxToRange(labelCtx)));
     }
+    super.enterGoto_stmt(ctx);
   }
 
   @Override
