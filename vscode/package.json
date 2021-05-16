@@ -4,7 +4,7 @@
 	"description": "A language server implementation for Soots Jimple powered by the MagpieBridge framework.",
 	"author": "Markus Schmidt",
 	"license": "MIT",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"homepage": "https://github.com/swissiety/JimpleLSP/blob/master/README.md",
 	"bugs": {
 		"url": "https://github.com/swissiety/JimpleLSP/issues"
@@ -88,7 +88,7 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "cp ../target/jimplelsp-0.0.4.jar jimplelsp.jar && npm run compile",
+		"vscode:prepublish": "cp ../target/jimplelsp-0.0.5.jar jimplelsp.jar && npm run compile",
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"postinstall": "node ./node_modules/vscode/bin/install",

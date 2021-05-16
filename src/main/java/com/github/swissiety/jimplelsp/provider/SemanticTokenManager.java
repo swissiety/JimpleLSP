@@ -4,7 +4,9 @@ import org.eclipse.lsp4j.SemanticTokenModifiers;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 
 import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /** @author Markus Schmidt */
 public class SemanticTokenManager {
@@ -13,11 +15,12 @@ public class SemanticTokenManager {
   @Nonnull final List<Integer> encodedSemanticTokens = new ArrayList<>();
   int lastTokenLine, lastTokenColumn = 0;
 
-  public SemanticTokenManager(SemanticTokensLegend legend) {
+  public SemanticTokenManager(@Nonnull SemanticTokensLegend legend) {
     this.legend = legend;
   }
 
-  public void paintText(String type, SemanticTokenModifiers mod, int line, int col, int length) {
+  public void paintText(
+      @Nonnull String type, @Nonnull SemanticTokenModifiers mod, int line, int col, int length) {
     //    at index 5*i - deltaLine: token line number, relative to the previous token
     encodedSemanticTokens.add(line - lastTokenLine);
 
@@ -34,9 +37,9 @@ public class SemanticTokenManager {
 
     //    at index 5*i+3 - tokenType: will be looked up in SemanticTokensLegend.tokenTypes. We
     // currently ask that tokenType < 65536.
-    final int typeIdx = legend.getTokenTypes().indexOf(type.toString()); // TODO [ms] performance
-    if(typeIdx < 0){
-      throw new RuntimeException(type +" is not supported in semantic token legend!");
+    final int typeIdx = legend.getTokenTypes().indexOf(type); // TODO [ms] performance
+    if (typeIdx < 0) {
+      throw new RuntimeException(type + " is not supported in semantic token legend!");
     }
     encodedSemanticTokens.add(Math.max(typeIdx, 0));
 
