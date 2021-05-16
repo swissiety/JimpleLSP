@@ -33,7 +33,12 @@ async function configureAndStartClient(context: ExtensionContext) {
 
 				window.showErrorMessage(
 					"Failed to connect to the Jimple language server. Make sure that the language server is running " +
-					"-or- configure the extension to connect via standard IO.")
+					"-or- configure the extension to connect via standard IO.", "Try to reconnect")
+					.then( function( str ){
+								if(str.startsWith("Try")){
+									configureAndStartClient(context);
+								}
+							});
 				client = null;
 			});
 		})
