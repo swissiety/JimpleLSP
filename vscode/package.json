@@ -88,11 +88,14 @@
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "cp ../target/jimplelsp-0.0.5.jar jimplelsp.jar && npm run compile",
+		"vscode:prepublish": "cp `ls -v ../target/jimplelsp-* | tail -n 1` ./  && npm run -S esbuild-base -- --minify",
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"postinstall": "node ./node_modules/vscode/bin/install",
-		"build": "vsce package"
+		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+		"esbuild": "npm run -S esbuild-base -- --sourcemap",
+		"esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
+		"test-compile": "tsc -p ./"
 	},
 	"dependencies": {
 		"vscode-languageclient": "^7.0.0",
@@ -103,6 +106,7 @@
 		"@angular/core": "^5.0.0",
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^11.15.53",
+		"esbuild": "^0.11.23",
 		"rxjs": "^5.5.12",
 		"tslint": "^5.15.0",
 		"typescript": "^3.4.2",

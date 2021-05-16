@@ -6,12 +6,14 @@
 		{
 			"type": "extensionHost",
 			"request": "launch",
-			"name": "Launch InferIDE Client",
+			"name": "Launch & Install LSP Client",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}",
+				"--extensionDevelopmentPath=${workspaceRoot}"
 			],
-			"outFiles": ["${workspaceRoot}/client/out/**/*.js"],
+			"outFiles": [
+				"${workspaceRoot}/client/out/**/*.js"
+			],
 			"preLaunchTask": {
 				"type": "npm",
 				"script": "compile"

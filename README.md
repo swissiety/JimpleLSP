@@ -44,6 +44,11 @@ ANDROID_HOME/platforms.
 
 A Collection of android.jars is available in the [android-platforms](https://github.com/Sable/android-platforms/) Repo.
 
+# Development
+
+The Language Server starts by default in STDIO mode. Use `-s` to start the Language Server executable in socket mode on
+Port 2403, to change the port use `-p <portnumber>`.
+
 ## Server Capabilities
 
 This Server is oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in
