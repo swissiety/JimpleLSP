@@ -1,6 +1,7 @@
 package com.github.swissiety.jimplelsp;
 
 import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
+import com.github.swissiety.jimplelsp.provider.SyntaxHighlightingProvider;
 import com.github.swissiety.jimplelsp.resolver.LocalPositionResolver;
 import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.callgraph.typehierarchy.ViewTypeHierarchy;
@@ -13,16 +14,6 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -31,6 +22,15 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -86,6 +86,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (text == null) {
       return;
     }
+
     // update classes
     analyzeFile(uri, text);
   }
@@ -123,26 +124,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     }
   }
 
-  /* @Override
-  // TODO: implement syntaxHighlighting
-  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-    final String uri = params.getTextDocument().getUri();
-    return getServer().pool( () -> new SemanticTokens( SyntaxHighlightingProvider.paintbrush(uri) ));
-  }
-  */
-
+  /*
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      declaration(TextDocumentPositionParams params) {
+      declaration(DeclarationParams params) {
     // TODO: handle locals different if local declarations are present
     // TODO: handle abstract method declarations
     // otherwise its equal to definition
     return definition(params);
   }
+  */
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      definition(TextDocumentPositionParams position) {
+      definition(DefinitionParams position) {
     if (position == null) {
       return null;
     }
@@ -229,7 +224,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      implementation(TextDocumentPositionParams position) {
+      implementation(ImplementationParams position) {
     if (position == null) {
       return null;
     }
@@ -395,7 +390,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
-      typeDefinition(TextDocumentPositionParams position) {
+      typeDefinition(TypeDefinitionParams position) {
     if (position == null) {
       return null;
     }
@@ -488,7 +483,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Override
-  public CompletableFuture<Hover> hover(TextDocumentPositionParams position) {
+  public CompletableFuture<Hover> hover(HoverParams position) {
     if (position == null) {
       return null;
     }
@@ -564,7 +559,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(
-      TextDocumentPositionParams position) {
+      DocumentHighlightParams position) {
     if (position == null) {
       return null;
     }
@@ -727,6 +722,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   .<Either<SymbolInformation, DocumentSymbol>>map(Either::forLeft)
                   .collect(Collectors.toCollection(() -> new ArrayList<>(list.size())));
             });
+  }
+
+  @Override
+  public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
+
+    final TextDocumentIdentifier textDoc = params.getTextDocument();
+    if (textDoc == null) {
+      return null;
+    }
+
+    return getServer().pool(() -> SyntaxHighlightingProvider.paintbrush(textDoc));
   }
 
   @Override

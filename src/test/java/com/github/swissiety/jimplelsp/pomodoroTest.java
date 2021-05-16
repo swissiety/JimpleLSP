@@ -69,8 +69,8 @@ public class pomodoroTest {
 
   @Test
   public void testDefinition() throws ExecutionException, InterruptedException {
-    final TextDocumentPositionParams position =
-        new TextDocumentPositionParams(new TextDocumentIdentifier("uri"), new Position(0, 0));
+    final DefinitionParams position =
+        new DefinitionParams(new TextDocumentIdentifier("uri"), new Position(0, 0));
     final CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
         definition = jimpleLspServer.getTextDocumentService().definition(position);
     final Either<List<? extends Location>, List<? extends LocationLink>> listListEither =

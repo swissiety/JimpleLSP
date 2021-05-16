@@ -19,17 +19,17 @@ Otherwise download the FutureSoot Snapshot and install it to your local reposito
 
 ## IntelliJ Idea
 1. Install or use an LSP Plugin in your IDE to enable Language Server Protocol Support.
-You can use IntelliJLSP from https://github.com/MagpieBridge/IntelliJLSP/tree/intellijclientlib
+You can use [IntelliJLSP](https://github.com/MagpieBridge/IntelliJLSP/tree/intellijclientlib)
 2. Configure the LSP Plugin in your IDE to use the JimpleLSP Server Jar.
 
 ## VSCode
+Install the [JimpleLSP Extension](https://marketplace.visualstudio.com/items?itemName=swissiety.jimplelsp) from the Marketplace.
 
-Assumes: npm is installed
-
+Or if you want to compile it yourself:
 1. `cd vscode/ && npm install` to install the dependencies.
-2. `npm install -g vsce` to install the Visual Studio Code Extension Commandline tool.
-3. `vsce package` to package the Plugin.
-4. `code --install-extension JimpleLSP-0.0.1.vsix` to install the packaged Plugin.
+2. `npm install -g vsce` to install the Visual Studio Code Extension commandline tool.
+3. `vsce package` to package the plugin.
+4. `code --install-extension JimpleLSP-0.0.5.vsix` to install the packaged plugin.
 5. restart VSCode
 
 # Usage
@@ -52,11 +52,11 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 ### Text Document Capabilities
 
 - ✅ didOpen
-- ❌ [planned #17] didChange
-  - ❌ Full text sync
+- ✅ didChange
+  - ✅ Full text sync
   - ❌ Incremental text sync
 - ✅ didSave
-    - ✅ Include text
+  - ✅ Include text
 - ❌ completion
 - ✅ [hover](/../../issues/15)
 - ❌ signatureHelp
@@ -69,7 +69,9 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 - ✅ [implementation](/../../issues/2)
     - ❌ [planned #18] link support
 - ✅ [references](/../../issues/3)
-- ❌ [planned #11] documentHighlight
+- ✅ [documentHighlight](/../../issues/11)
+  - ✅ for Locals
+  - ❌ types
 - ✅ [documentSymbol](/../../issues/12)
 - ❌ codeAction
     - ❌ resolve
@@ -82,7 +84,7 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 - ✅ publishDiagnostics
 - ❌ [WIP #16] foldingRange
 - ❌ selectionRange
-- ❌ [planned #1] semanticToken
+- ✅ [semanticTokens]](/../../issues/1)
 - ❌ callHierarchy
 
 ### Workspace Capabilities

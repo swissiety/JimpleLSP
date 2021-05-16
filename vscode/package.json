@@ -4,7 +4,7 @@
 	"description": "A language server implementation for Soots Jimple powered by the MagpieBridge framework.",
 	"author": "Markus Schmidt",
 	"license": "MIT",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"homepage": "https://github.com/swissiety/JimpleLSP/blob/master/README.md",
 	"bugs": {
 		"url": "https://github.com/swissiety/JimpleLSP/issues"
@@ -21,7 +21,7 @@
 		"Soot, Jimple, Language Server, LSP, .jimple"
 	],
 	"engines": {
-		"vscode": "^1.43.0"
+		"vscode": "^1.56.0"
 	},
 	"activationEvents": [
 		"onLanguage:jimple",
@@ -80,28 +80,33 @@
 					"description": "Tells Soot where it can find the necessary android.jar to convert an .apk to jimple. Usually found in ANDROID_HOME/platforms"
 				}
 			}
+		},
+		"configurationDefaults": {
+			"[jimple]": {
+				"editor.semanticHighlighting.enabled": true
+			}
 		}
 	},
 	"scripts": {
-		"vscode:prepublish": "cp ../target/jimplelsp-0.0.4.jar jimplelsp.jar && npm run compile",
+		"vscode:prepublish": "cp ../target/jimplelsp-0.0.5.jar jimplelsp.jar && npm run compile",
 		"compile": "tsc -b",
 		"watch": "tsc -b -w",
 		"postinstall": "node ./node_modules/vscode/bin/install",
 		"build": "vsce package"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^6.1.4",
+		"vscode-languageclient": "^7.0.0",
 		"xmlhttprequest-ts": "^1.0.1"
 	},
 	"devDependencies": {
 		"@angular/common": "^5.0.0",
 		"@angular/core": "^5.0.0",
 		"@types/mocha": "^5.2.6",
-		"@types/node": "^11.15.43",
+		"@types/node": "^11.15.53",
 		"rxjs": "^5.5.12",
 		"tslint": "^5.15.0",
 		"typescript": "^3.4.2",
-		"vsce": "^1.83.0",
+		"vsce": "^1.88.0",
 		"vscode": "^1.1.37",
 		"zone.js": "^0.8.29"
 	}

@@ -1,5 +1,6 @@
 package com.github.swissiety.jimplelsp;
 
+import com.github.swissiety.jimplelsp.provider.SyntaxHighlightingProvider;
 import com.google.gson.JsonObject;
 import de.upb.swt.soot.core.frontend.AbstractClassSource;
 import de.upb.swt.soot.core.frontend.ResolveException;
@@ -57,8 +58,8 @@ public class JimpleLspServer extends MagpieServer {
           try {
             return lambda.call();
           } catch (Throwable e) {
-            // TODO: send publishDiagnostics!
             e.printStackTrace();
+            // client.logMessage(new MessageParams(MessageType.Error, e.getMessage()));
           }
           return null;
         },
@@ -160,6 +161,7 @@ public class JimpleLspServer extends MagpieServer {
     }
 
     final CompletableFuture<InitializeResult> initialize = super.initialize(params);
+
     try {
       final ServerCapabilities capabilities = initialize.get().getCapabilities();
       capabilities.setWorkspaceSymbolProvider(true);
@@ -173,6 +175,13 @@ public class JimpleLspServer extends MagpieServer {
       capabilities.setTypeDefinitionProvider(true);
       capabilities.setFoldingRangeProvider(false);
       capabilities.setDocumentHighlightProvider(true);
+
+      // semantic token config
+      if (params.getCapabilities().getTextDocument().getSemanticTokens() != null) {
+        capabilities.setSemanticTokensProvider(
+            new SemanticTokensWithRegistrationOptions(
+                SyntaxHighlightingProvider.getLegend(), true));
+      }
       // check: capabilities.setDocumentFormattingProvider(true);
 
     } catch (InterruptedException | ExecutionException e) {
