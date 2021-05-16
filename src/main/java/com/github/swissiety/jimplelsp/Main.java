@@ -1,16 +1,17 @@
 package com.github.swissiety.jimplelsp;
 
-import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.Executors;
-import javax.annotation.Nonnull;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
+
+import javax.annotation.Nonnull;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.Executors;
 
 /**
  * Entrypoint for JimpleLSP for Usecases where the MagpieBridge is not necessary.
@@ -39,13 +40,13 @@ public class Main {
 
           final JimpleLspServer server = new JimpleLspServer();
           Launcher<LanguageClient> launcher =
-              new Launcher.Builder<LanguageClient>()
-                  .setLocalService(server)
-                  .setRemoteInterface(LanguageClient.class)
-                  .setInput(logStream(socket.getInputStream(), "serverOut"))
-                  .setOutput(logStream(socket.getOutputStream(), "serverIn"))
-                  .setExecutorService(Executors.newCachedThreadPool())
-                  .traceMessages(new PrintWriter(System.out)) // TODO
+                  new Launcher.Builder<LanguageClient>()
+                          .setLocalService(server)
+                          .setRemoteInterface(LanguageClient.class)
+                          .setInput(logStream(socket.getInputStream(), "serverOut"))
+                          .setOutput(logStream(socket.getOutputStream(), "serverIn"))
+                          .setExecutorService(Executors.newCachedThreadPool())
+                          .traceMessages(new PrintWriter(System.out))
                   .create();
           launcher.startListening();
           server.connect(launcher.getRemoteProxy());

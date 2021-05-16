@@ -222,9 +222,7 @@ public class JimpleLspServer extends MagpieServer {
           }
 
           double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
-          // TODO: channel to info log if necessary: System.out.println("Workspace indexing took " +
-          // runtimeMs + " ms");
-
+          client.logMessage(new MessageParams(MessageType.Log, "Workspace indexing took " + runtimeMs + " ms"));
           return null;
         });
   }

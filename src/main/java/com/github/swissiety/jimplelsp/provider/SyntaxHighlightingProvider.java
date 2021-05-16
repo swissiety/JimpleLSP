@@ -38,13 +38,14 @@ public class SyntaxHighlightingProvider {
                           SemanticTokenTypes.Operator),
                   Collections.emptyList());
 
+  public static SemanticTokensLegend getLegend() {
+    return legend;
+  }
+
   public static SemanticTokens paintbrush(@Nonnull TextDocumentIdentifier doc) throws IOException {
 
     final Path path = Util.uriToPath(doc.getUri());
-    final JimpleParser parser;
-
-    parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
-
+    final JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
     SemanticTokenManager semanticTokenManager = new SemanticTokenManager(legend);
 
     SyntaxHighlightingVisitor visitor = new SyntaxHighlightingVisitor(semanticTokenManager);
@@ -53,10 +54,10 @@ public class SyntaxHighlightingProvider {
     return new SemanticTokens(semanticTokenManager.getCanvas());
   }
 
-  public static SemanticTokensLegend getLegend() {
-    return legend;
-  }
 
+  /**
+   * 'Cause colors make the world go round
+   */
   private static class SyntaxHighlightingVisitor extends JimpleBaseVisitor<SemanticTokenManager> {
 
     @Nonnull

@@ -28,9 +28,7 @@ public class JimpleLabelProvider extends JimpleBaseListener {
 
   @Nonnull
   public void resolve(SootClass sc, TextDocumentPositionParams pos) {
-
-    // TODO: implement
-
+    // TODO: implement label indexing
   }
 
   @Override
