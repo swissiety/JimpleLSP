@@ -36,7 +36,7 @@ async function configureAndStartClient(context: ExtensionContext) {
 					"-or- configure the extension to connect via standard IO.", "Open settings", "Reconnect")
 					.then( function( str ){
 						if( str.startsWith("Open") ){
-							commands.executeCommand('workbench.action.openSettings', context.extension.packageJSON.contributes.configuration.title);
+							commands.executeCommand('workbench.action.openSettings', '@ext:' + context.extension.id);
 						 }else if(str.startsWith("Reconnect")){
 							configureAndStartClient(context);
 						 }
