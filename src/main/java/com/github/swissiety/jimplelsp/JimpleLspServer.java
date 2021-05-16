@@ -10,6 +10,14 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerConfiguration;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.eclipse.lsp4j.*;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -22,13 +30,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerConfiguration;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.eclipse.lsp4j.*;
 
 /** @author Markus Schmidt */
 public class JimpleLspServer extends MagpieServer {
@@ -58,8 +59,10 @@ public class JimpleLspServer extends MagpieServer {
           try {
             return lambda.call();
           } catch (Throwable e) {
-            e.printStackTrace();
-            // client.logMessage(new MessageParams(MessageType.Error, e.getMessage()));
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            e.printStackTrace(new PrintStream(bos));
+            String stackStraceString = bos.toString();
+            client.logMessage(new MessageParams(MessageType.Error, stackStraceString));
           }
           return null;
         },
