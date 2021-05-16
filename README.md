@@ -52,11 +52,11 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 ### Text Document Capabilities
 
 - ✅ didOpen
-- ❌ [planned #17] didChange
-  - ❌ Full text sync
+- ✅ didChange
+  - ✅ Full text sync
   - ❌ Incremental text sync
 - ✅ didSave
-    - ✅ Include text
+  - ✅ Include text
 - ❌ completion
 - ✅ [hover](/../../issues/15)
 - ❌ signatureHelp
@@ -69,7 +69,9 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 - ✅ [implementation](/../../issues/2)
     - ❌ [planned #18] link support
 - ✅ [references](/../../issues/3)
-- ❌ [planned #11] documentHighlight
+- ✅ [documentHighlight](/../../issues/11)
+  - ✅ for Locals
+  - ❌ types
 - ✅ [documentSymbol](/../../issues/12)
 - ❌ codeAction
     - ❌ resolve
@@ -82,7 +84,7 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 - ✅ publishDiagnostics
 - ❌ [WIP #16] foldingRange
 - ❌ selectionRange
-- ❌ [planned #1] semanticToken
+- ✅ [semanticTokens]](/../../issues/1)
 - ❌ callHierarchy
 
 ### Workspace Capabilities

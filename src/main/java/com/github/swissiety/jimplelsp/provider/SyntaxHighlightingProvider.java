@@ -4,13 +4,6 @@ import com.github.swissiety.jimplelsp.Util;
 import de.upb.swt.soot.jimple.JimpleBaseVisitor;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import javax.annotation.Nonnull;
-
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -18,6 +11,12 @@ import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
 
 /** @author Markus Schmidt */
 public class SyntaxHighlightingProvider {
@@ -57,9 +56,6 @@ public class SyntaxHighlightingProvider {
   public static SemanticTokensLegend getLegend() {
     return legend;
   }
-
-  //  SemanticTokenTypeEnum.Type, SemanticTokenTypeEnum.Variable,   SemanticTokenTypeEnum.Parameter,
-  //  SemanticTokenTypeEnum.String,  SemanticTokenTypeEnum.Number
 
   private static class SyntaxHighlightingVisitor extends JimpleBaseVisitor<SemanticTokenManager> {
 
@@ -290,6 +286,9 @@ public class SyntaxHighlightingProvider {
       JimpleParser.Identity_refContext identity_refContext = ctx.identity_ref();
       if (identity_refContext != null) {
         paint(SemanticTokenTypes.Keyword, identity_refContext.start);
+        if (identity_refContext.DEC_CONSTANT() != null) {
+          paint(SemanticTokenTypes.Keyword, identity_refContext.DEC_CONSTANT().getSymbol());
+        }
       }
       super.visitAssignments(ctx);
       return semanticTokenManager;
