@@ -14,6 +14,16 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -22,15 +32,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -508,19 +509,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                     getServer().getView().getClass((ClassType) sig);
                 if (aClass.isPresent()) {
-                  SootClass sc = (SootClass) aClass.get();
-                  str = Modifier.toString(sc.getModifiers()) + " " + sc.toString();
-                  if (sc.hasSuperclass()) {
-                    str += "\n extends " + sc.getSuperclass();
-                  }
-
-                  Iterator<ClassType> interfaceIt = sc.getInterfaces().iterator();
-                  if (interfaceIt.hasNext()) {
-                    str += " implements " + interfaceIt.next();
-                    while (interfaceIt.hasNext()) {
-                      str += ", " + interfaceIt.next();
+                    SootClass sc = (SootClass) aClass.get();
+                    str = Modifier.toString(sc.getModifiers()) + " " + sc;
+                    Optional<ClassType> superclass = sc.getSuperclass();
+                    if (superclass.isPresent()) {
+                        str += "\n extends " + superclass.get();
                     }
-                  }
+
+                    Iterator<ClassType> interfaceIt = sc.getInterfaces().iterator();
+                    if (interfaceIt.hasNext()) {
+                        str += " implements " + interfaceIt.next();
+                        while (interfaceIt.hasNext()) {
+                            str += ", " + interfaceIt.next();
+                        }
+                    }
                 }
               } else if (sig instanceof MethodSignature) {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
@@ -531,8 +533,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       sc.getMethod(((MethodSignature) sig).getSubSignature());
                   if (aMethod.isPresent()) {
                     final SootMethod sootMethod = aMethod.get();
-                    str =
-                        Modifier.toString(sootMethod.getModifiers()) + " " + sootMethod.toString();
+                      str =
+                              Modifier.toString(sootMethod.getModifiers()) + " " + sootMethod;
                   }
                 }
               } else if (sig instanceof FieldSignature) {
@@ -544,7 +546,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       sc.getField(((FieldSignature) sig).getSubSignature());
                   if (aField.isPresent()) {
                     final SootField sootField = aField.get();
-                    str = Modifier.toString(sootField.getModifiers()) + " " + sootField.toString();
+                      str = Modifier.toString(sootField.getModifiers()) + " " + sootField;
                   }
                 }
               }
