@@ -89,7 +89,7 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 - ✅ publishDiagnostics
 - ❌ [WIP #16] foldingRange
 - ❌ selectionRange
-- ✅ [semanticTokens]](/../../issues/1)
+- ✅ [semanticTokens](/../../issues/1)
 - ❌ callHierarchy
 
 ### Workspace Capabilities
