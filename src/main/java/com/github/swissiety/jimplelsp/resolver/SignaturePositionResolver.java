@@ -31,7 +31,9 @@ import java.util.stream.Collectors;
  * @author Markus Schmidt
  */
 public class SignaturePositionResolver {
-  @Nonnull private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
+  @Nonnull
+  private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
+
   @Nonnull private final Path path;
   @Nonnull private final JimpleConverterUtil util;
 

@@ -4,10 +4,13 @@ This is a Plugin to use [JimpleLSP](https://github.com/swissiety/JimpleLSP) - a 
 for Jimple - with Visual Studio Code.
 
 ### Usage
+Open existing **.jimple** files in your workspace and get spoiled by syntax highlighting as well as support for code exploring.
 
-To enable extraction of Jimple from APKs or Jars in the Workspace adapt the configuration accordingly.
+Or to enable extraction of Jimple from **.apk**s or **.jar**s in the workspace adapt the configuration accordingly.
+For more information on this please visit [JimpleLSP](https://github.com/swissiety/JimpleLSP).
 
-**Hint:** The extraction is only triggered if no jimple files are in the workspace!
+**Hint:** The extraction is only triggered if no jimple files are in the workspace on language server startup!
+
 
 ### Production mode
 

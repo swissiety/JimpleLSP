@@ -118,32 +118,32 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
-      // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
-      super.didClose(params);
-      TextDocumentIdentifier textDocument = params.getTextDocument();
-      if (textDocument==null || textDocument.getUri() == null){
-          return;
-      }
-      docParseTree.remove(Util.uriToPath(textDocument.getUri()));
+    // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
+    super.didClose(params);
+    TextDocumentIdentifier textDocument = params.getTextDocument();
+    if (textDocument == null || textDocument.getUri() == null) {
+      return;
+    }
+    docParseTree.remove(Util.uriToPath(textDocument.getUri()));
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
     final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
-      Path path = Util.uriToPath(uri);
-      if (valid) {
-          // calculate and cache interesting i.e.signature positions of the opened file
-            JimpleParser jimpleParser =
-                JimpleConverterUtil.createJimpleParser(CharStreams.fromString(text), path);
-            ParseTree parseTree = jimpleParser.file();
-            docParseTree.put(path, parseTree);
+    Path path = Util.uriToPath(uri);
+    if (valid) {
+      // calculate and cache interesting i.e.signature positions of the opened file
+      JimpleParser jimpleParser =
+          JimpleConverterUtil.createJimpleParser(CharStreams.fromString(text), path);
+      ParseTree parseTree = jimpleParser.file();
+      docParseTree.put(path, parseTree);
 
-            SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
-            docSignaturePositionResolver.put(path, sigposresolver);
-      }else {
-          // file is invalid Jimple -> clear cache
-          docParseTree.remove(path);
-          docSignaturePositionResolver.remove(uri);
-      }
+      SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
+      docSignaturePositionResolver.put(path, sigposresolver);
+    } else {
+      // file is invalid Jimple -> clear cache
+      docParseTree.remove(path);
+      docSignaturePositionResolver.remove(uri);
+    }
   }
 
   /*

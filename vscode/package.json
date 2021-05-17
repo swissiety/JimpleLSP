@@ -1,7 +1,7 @@
 {
 	"displayName": "JimpleLSP",
 	"name": "jimplelsp",
-	"description": "A language server implementation for Soots Jimple powered by the MagpieBridge framework.",
+	"description": "A Language Server implementation for Soots Jimple powered by FutureSoot & the MagpieBridge framework.",
 	"author": "Markus Schmidt",
 	"license": "MIT",
 	"version": "0.0.8",
