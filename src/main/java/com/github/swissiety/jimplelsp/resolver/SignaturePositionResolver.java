@@ -12,15 +12,17 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This Class organizes information about (open) jimple files. Especially range information about
@@ -29,11 +31,11 @@ import org.eclipse.lsp4j.Range;
  * @author Markus Schmidt
  */
 public class SignaturePositionResolver {
-  private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
-  private final Path path;
-  private final JimpleConverterUtil util;
+  @Nonnull private final SignatureOccurenceAggregator occurences = new SignatureOccurenceAggregator();
+  @Nonnull private final Path path;
+  @Nonnull private final JimpleConverterUtil util;
 
-  public SignaturePositionResolver(Path path, ParseTree parseTree) {
+  public SignaturePositionResolver(@Nonnull Path path, @Nonnull ParseTree parseTree) {
     this.path = path;
     util = new JimpleConverterUtil(path);
 
@@ -42,12 +44,12 @@ public class SignaturePositionResolver {
   }
 
   @Nullable
-  public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {
+  public Pair<Signature, Range> resolve(@Nonnull org.eclipse.lsp4j.Position position) {
     return occurences.resolve(position);
   }
 
   @Nullable
-  public List<Location> resolve(Signature signature) {
+  public List<Location> resolve(@Nonnull Signature signature) {
     return occurences.resolve(signature).stream()
         .map(range -> new Location(Util.pathToUri(path), range))
         .collect(Collectors.toList());

@@ -29,7 +29,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -119,9 +118,13 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
-    // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
-    super.didClose(params);
-    docParseTree.remove(Util.uriToPath(params.getTextDocument().getUri()));
+      // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
+      super.didClose(params);
+      TextDocumentIdentifier textDocument = params.getTextDocument();
+      if (textDocument==null || textDocument.getUri() == null){
+          return;
+      }
+      docParseTree.remove(Util.uriToPath(textDocument.getUri()));
   }
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
@@ -129,25 +132,18 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       Path path = Util.uriToPath(uri);
       if (valid) {
           // calculate and cache interesting i.e.signature positions of the opened file
-          try {
             JimpleParser jimpleParser =
-                JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
+                JimpleConverterUtil.createJimpleParser(CharStreams.fromString(text), path);
             ParseTree parseTree = jimpleParser.file();
             docParseTree.put(path, parseTree);
 
             SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
             docSignaturePositionResolver.put(path, sigposresolver);
-            return;
-
-          } catch (IOException e) {
-            forwardException(e);
-          }
-        }
-
-    // file is invalid Jimple -> clear cache
-    docParseTree.remove(path);
-    docSignaturePositionResolver.remove(uri);
-
+      }else {
+          // file is invalid Jimple -> clear cache
+          docParseTree.remove(path);
+          docSignaturePositionResolver.remove(uri);
+      }
   }
 
   /*
