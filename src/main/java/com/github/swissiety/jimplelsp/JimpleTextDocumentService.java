@@ -29,6 +29,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -176,7 +177,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               final Pair<Signature, Range> sigInst = resolver.resolve(position.getPosition());
               if (sigInst == null) {
-                // try whether its a Local (which has no Signature!)
+                // try if its a Local (which has no Signature!)
 
                 final ClassType classType = getServer().uriToClasstype(uri);
                 if (classType == null) {
@@ -213,12 +214,16 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Nullable
-  private Location getDefinitionLocation(SignaturePositionResolver resolver, Signature sig) {
+  private Location getDefinitionLocation(SignaturePositionResolver resolver, @Nonnull Signature sig) {
     if (sig instanceof ClassType) {
       final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
           getServer().getView().getClass((ClassType) sig);
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
+          resolver = getSignaturePositionResolver( Util.pathToUri(sc.getClassSource().getSourcePath()) );
+          if(resolver == null){
+              return null;
+          }
         return resolver.findFirstMatchingSignature(sc.getType(), sc.getPosition());
       }
 
@@ -397,13 +402,14 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getSignaturePositionResolver(Util.uriToPath(uri));
   }
 
+
   @Nullable
   private SignaturePositionResolver getSignaturePositionResolver(@Nonnull Path path) {
     return docSignaturePositionResolver.computeIfAbsent(
         path,
         k -> {
           try {
-            ParseTree parseTree = docParseTree.get(path);
+            ParseTree parseTree = getParseTree(path);
             if (parseTree == null) {
               return null;
             }
@@ -415,7 +421,19 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         });
   }
 
-  @Override
+    private ParseTree getParseTree(@Nonnull Path path) {
+      return docParseTree.computeIfAbsent(path, k -> {
+          try {
+              JimpleParser jimpleParser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
+              return jimpleParser.file();
+          } catch (IOException e) {
+              forwardException(e);
+              return null;
+          }
+      });
+    }
+
+    @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       typeDefinition(TypeDefinitionParams position) {
     if (position == null) {

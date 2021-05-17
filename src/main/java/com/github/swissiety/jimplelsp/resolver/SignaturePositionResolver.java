@@ -64,6 +64,7 @@ public class SignaturePositionResolver {
     if (firstMatchingSignature == null) {
       return null;
     }
+
     return new Location(Util.pathToUri(path), firstMatchingSignature);
   }
 

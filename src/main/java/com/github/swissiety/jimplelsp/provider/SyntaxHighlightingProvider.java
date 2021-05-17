@@ -51,11 +51,11 @@ public class SyntaxHighlightingProvider {
 
     @Nonnull private final SemanticTokenManager semanticTokenManager;
 
-    private SyntaxHighlightingVisitor(SemanticTokenManager semanticTokenManager) {
+    private SyntaxHighlightingVisitor(@Nonnull SemanticTokenManager semanticTokenManager) {
       this.semanticTokenManager = semanticTokenManager;
     }
 
-    private void paint(String tokentype, Token token) {
+    private void paint(@Nonnull String tokentype, @Nonnull Token token) {
       // TODO: add tokenModifier
       // zero offset line/column
       semanticTokenManager.paintText(
@@ -66,7 +66,7 @@ public class SyntaxHighlightingProvider {
           token.getText().length());
     }
 
-    private void paint(String tokentype, ParserRuleContext ctx) {
+    private void paint(@Nonnull String tokentype, @Nonnull ParserRuleContext ctx) {
       // TODO: add tokenModifier
       // zero offset line/column
       semanticTokenManager.paintText(
@@ -336,6 +336,12 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitBinop(JimpleParser.BinopContext ctx) {
+      paint(SemanticTokenTypes.Operator, ctx);
+      return semanticTokenManager;
+    }
+
+    @Override
+    public SemanticTokenManager visitUnop(JimpleParser.UnopContext ctx) {
       paint(SemanticTokenTypes.Operator, ctx);
       return semanticTokenManager;
     }
