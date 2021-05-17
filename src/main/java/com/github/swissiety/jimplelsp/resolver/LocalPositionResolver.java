@@ -11,17 +11,17 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.nio.file.Path;
-import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * The LocalResolver handles gathering and queriing for Local Positions in a given File.
@@ -113,7 +113,7 @@ public class LocalPositionResolver {
   }
 
   @Nullable
-  public Either<List<? extends Location>, List<? extends LocationLink>> resolveDefinition(
+  public LocationLink resolveDefinition(
       @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     List<Pair<Position, String>> locals = getLocals(sc, pos.getPosition());
     if (locals == null) {
@@ -124,16 +124,16 @@ public class LocalPositionResolver {
     if (!localOpt.isPresent()) {
       return null;
     }
-    final String localname = localOpt.get().getRight();
+    Pair<Position, String> positionStringPair = localOpt.get();
+    final String localname = positionStringPair.getRight();
     // first occurence of that local (in the current method) is the definition (or declaration if
     // existing).
     final Optional<Pair<Position, String>> deflocalOpt =
         locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
     if (deflocalOpt.isPresent()) {
-      return Either.forLeft(
-          Collections.singletonList(
-              Util.positionToDefLocation(
-                  pos.getTextDocument().getUri(), deflocalOpt.get().getLeft())));
+      Location location = Util.positionToDefLocation(
+              pos.getTextDocument().getUri(), deflocalOpt.get().getLeft());
+      return new LocationLink( location.getUri(), location.getRange(), location.getRange(), Util.positionToRange(positionStringPair.getLeft()) );
     }
     return null;
   }

@@ -16,6 +16,18 @@ import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,17 +37,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -198,7 +199,16 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 }
                 final LocalPositionResolver localPositionResolver =
                     new LocalPositionResolver(path, parseTree);
-                return localPositionResolver.resolveDefinition(sc, position);
+                  LocationLink locationLink = localPositionResolver.resolveDefinition(sc, position);
+                  if(locationLink == null){
+                      return null;
+                  }
+                  if (getServer().getClientCapabilities().getTextDocument().getDefinition().getLinkSupport() == Boolean.TRUE) {
+                      return Either.forRight(Collections.singletonList( locationLink));
+                  } else {
+                      return  Either.forLeft(Collections.singletonList( new Location(locationLink.getTargetUri(), locationLink.getTargetRange())));
+                  }
+
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
@@ -206,7 +216,12 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (definitionLocation == null) {
                   return null;
                 }
-                return Either.forLeft(Collections.singletonList(definitionLocation));
+
+                  if (getServer().getClientCapabilities().getTextDocument().getDefinition().getLinkSupport() == Boolean.TRUE) {
+                      return Either.forRight(Collections.singletonList( new LocationLink( definitionLocation.getUri(), definitionLocation.getRange(), definitionLocation.getRange(), sigInst.getRight() )));
+                  } else {
+                      return Either.forLeft(Collections.singletonList(definitionLocation));
+                  }
               }
               return null;
             });
