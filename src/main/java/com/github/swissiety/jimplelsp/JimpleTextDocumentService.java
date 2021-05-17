@@ -16,18 +16,6 @@ import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,6 +25,17 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -214,16 +213,17 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   }
 
   @Nullable
-  private Location getDefinitionLocation( @Nonnull Signature sig) {
+  private Location getDefinitionLocation(@Nonnull Signature sig) {
     if (sig instanceof ClassType) {
       final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
           getServer().getView().getClass((ClassType) sig);
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
-          SignaturePositionResolver resolver = getSignaturePositionResolver( Util.pathToUri(sc.getClassSource().getSourcePath()) );
-          if(resolver == null){
-              return null;
-          }
+        SignaturePositionResolver resolver =
+            getSignaturePositionResolver(Util.pathToUri(sc.getClassSource().getSourcePath()));
+        if (resolver == null) {
+          return null;
+        }
         return resolver.findFirstMatchingSignature(sc.getType(), sc.getPosition());
       }
 
@@ -235,10 +235,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         final Optional<SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig));
         if (methodOpt.isPresent()) {
           final SootMethod method = methodOpt.get();
-            SignaturePositionResolver resolver = getSignaturePositionResolver( Util.pathToUri(sc.getClassSource().getSourcePath()) );
-            if(resolver == null){
-                return null;
-            }
+          SignaturePositionResolver resolver =
+              getSignaturePositionResolver(Util.pathToUri(sc.getClassSource().getSourcePath()));
+          if (resolver == null) {
+            return null;
+          }
           return resolver.findFirstMatchingSignature(method.getSignature(), method.getPosition());
         }
       }
@@ -251,10 +252,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         final Optional<SootField> field = sc.getField(((FieldSignature) sig).getSubSignature());
         if (field.isPresent()) {
           final SootField sf = field.get();
-            SignaturePositionResolver resolver = getSignaturePositionResolver( Util.pathToUri(sc.getClassSource().getSourcePath()) );
-            if(resolver == null){
-                return null;
-            }
+          SignaturePositionResolver resolver =
+              getSignaturePositionResolver(Util.pathToUri(sc.getClassSource().getSourcePath()));
+          if (resolver == null) {
+            return null;
+          }
           return resolver.findFirstMatchingSignature(sf.getSignature(), sf.getPosition());
         }
       }
@@ -379,8 +381,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
               boolean includeDef =
                   params.getContext() != null && params.getContext().isIncludeDeclaration();
-              final Location definitionLocation =
-                  includeDef ? null : getDefinitionLocation(sig);
+              final Location definitionLocation = includeDef ? null : getDefinitionLocation(sig);
 
               final Collection<SootClass> classes =
                   (Collection<SootClass>) getServer().getView().getClasses();
@@ -410,7 +411,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getSignaturePositionResolver(Util.uriToPath(uri));
   }
 
-
   @Nullable
   private SignaturePositionResolver getSignaturePositionResolver(@Nonnull Path path) {
     return docSignaturePositionResolver.computeIfAbsent(
@@ -429,19 +429,22 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         });
   }
 
-    private ParseTree getParseTree(@Nonnull Path path) {
-      return docParseTree.computeIfAbsent(path, k -> {
+  private ParseTree getParseTree(@Nonnull Path path) {
+    return docParseTree.computeIfAbsent(
+        path,
+        k -> {
           try {
-              JimpleParser jimpleParser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
-              return jimpleParser.file();
+            JimpleParser jimpleParser =
+                JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
+            return jimpleParser.file();
           } catch (IOException e) {
-              forwardException(e);
-              return null;
+            forwardException(e);
+            return null;
           }
-      });
-    }
+        });
+  }
 
-    @Override
+  @Override
   public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>>
       typeDefinition(TypeDefinitionParams position) {
     if (position == null) {
