@@ -11,6 +11,10 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import java.nio.file.Path;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
@@ -18,11 +22,6 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * The LocalResolver handles gathering and queriing for Local Positions in a given File.
@@ -38,17 +37,19 @@ public class LocalPositionResolver {
 
   @Nonnull private final Map<MethodSubSignature, Map<String, Type>> localToType = new HashMap<>();
 
-    public LocalPositionResolver(Path path, ParseTree parseTree) {
-        this.path = path;
+  public LocalPositionResolver(Path path, ParseTree parseTree) {
+    this.path = path;
 
-        ParseTreeWalker walker = new ParseTreeWalker();
-        walker.walk(new LocalDeclarationFinder(path), parseTree);
-    }
+    ParseTreeWalker walker = new ParseTreeWalker();
+    walker.walk(new LocalDeclarationFinder(path), parseTree);
+  }
 
   @Nullable
   private List<Pair<Position, String>> getLocals(SootClass sc, org.eclipse.lsp4j.Position pos) {
     final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
-      return surroundingMethod.map(sootMethod -> localsOfMethod.get(sootMethod.getSubSignature())).orElse(null);
+    return surroundingMethod
+        .map(sootMethod -> localsOfMethod.get(sootMethod.getSubSignature()))
+        .orElse(null);
   }
 
   @Nonnull

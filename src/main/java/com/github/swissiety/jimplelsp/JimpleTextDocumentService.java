@@ -16,18 +16,6 @@ import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,79 +25,87 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-/**
- * @author Markus Schmidt
- */
+/** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
-    private final Map<Path, SignaturePositionResolver> docSignaturePositionResolver =
-            new HashMap<>();
+  private final Map<Path, SignaturePositionResolver> docSignaturePositionResolver = new HashMap<>();
 
-    private final Map<Path, ParseTree> docParseTree = new HashMap<>();
+  private final Map<Path, ParseTree> docParseTree = new HashMap<>();
 
-    /**
-     * Instantiates a new magpie text document service.
-     *
-     * @param server the server
-     */
-    public JimpleTextDocumentService(@Nonnull MagpieServer server) {
-        super(server);
+  /**
+   * Instantiates a new magpie text document service.
+   *
+   * @param server the server
+   */
+  public JimpleTextDocumentService(@Nonnull MagpieServer server) {
+    super(server);
+  }
+
+  @Nonnull
+  JimpleLspServer getServer() {
+    return (JimpleLspServer) server;
+  }
+
+  /** TODO: refactor into magpiebridge */
+  protected void forwardException(@Nonnull Exception e) {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    PrintWriter pw = new PrintWriter(bos);
+    e.printStackTrace(pw);
+    getServer().getClient().logMessage(new MessageParams(MessageType.Error, bos.toString()));
+  }
+
+  @Override
+  public void didOpen(DidOpenTextDocumentParams params) {
+    // FIXME: [ms] make magpiebridge:SourceFileModule.getSuffix() protected or create a central/open
+    // language->suffix allocation
+    super.didOpen(params);
+    if (params == null || params.getTextDocument() == null) {
+      return;
+    }
+    final String uri = params.getTextDocument().getUri();
+    if (uri == null) {
+      return;
+    }
+    final String text = params.getTextDocument().getText();
+    if (text == null) {
+      return;
     }
 
-    @Nonnull
-    JimpleLspServer getServer() {
-        return (JimpleLspServer) server;
+    analyzeFile(uri, text);
+  }
+
+  @Override
+  public void didChange(DidChangeTextDocumentParams params) {
+    super.didChange(params);
+
+    final String uri = params.getTextDocument().getUri();
+    String language = inferLanguage(uri);
+    SourceFileManager fileManager = server.getSourceFileManager(language);
+    analyzeFile(
+        params.getTextDocument().getUri(),
+        fileManager.getVersionedFiles().get(URI.create(uri)).getText());
+  }
+
+  @Override
+  public void didSave(DidSaveTextDocumentParams params) {
+    // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
+    if (params == null || params.getTextDocument() == null) {
+      return;
     }
-
-    /** TODO: refactor into magpiebridge */
-    protected void forwardException(@Nonnull Exception e) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        PrintWriter pw = new PrintWriter(bos);
-        e.printStackTrace(pw);
-        getServer().getClient().logMessage(new MessageParams(MessageType.Error, bos.toString()));
-    }
-
-    @Override
-    public void didOpen(DidOpenTextDocumentParams params) {
-        // FIXME: [ms] make magpiebridge:SourceFileModule.getSuffix() protected or create a central/open
-        // language->suffix allocation
-        super.didOpen(params);
-        if (params == null || params.getTextDocument() == null) {
-            return;
-        }
-        final String uri = params.getTextDocument().getUri();
-        if (uri == null) {
-            return;
-        }
-        final String text = params.getTextDocument().getText();
-        if (text == null) {
-            return;
-        }
-
-        analyzeFile(uri, text);
-    }
-
-    @Override
-    public void didChange(DidChangeTextDocumentParams params) {
-        super.didChange(params);
-
-        final String uri = params.getTextDocument().getUri();
-        String language = inferLanguage(uri);
-        SourceFileManager fileManager = server.getSourceFileManager(language);
-        analyzeFile(
-                params.getTextDocument().getUri(),
-                fileManager.getVersionedFiles().get(URI.create(uri)).getText());
-    }
-
-    @Override
-    public void didSave(DidSaveTextDocumentParams params) {
-        // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
-        if (params == null || params.getTextDocument() == null) {
-            return;
-        }
-        final String uri = params.getTextDocument().getUri();
-        if (uri == null) {
-            return;
+    final String uri = params.getTextDocument().getUri();
+    if (uri == null) {
+      return;
     }
     final String text = params.getText();
     if (text == null) {
@@ -123,26 +119,26 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
     // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
-      super.didClose(params);
-      docParseTree.remove(Util.uriToPath(params.getTextDocument().getUri()) );
+    super.didClose(params);
+    docParseTree.remove(Util.uriToPath(params.getTextDocument().getUri()));
   }
-
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
     final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
     if (valid) {
-        // calculate and cache interesting i.e.signature positions of the opened file
-        Path path = Util.uriToPath(uri);
-        try {
-            JimpleParser jimpleParser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
-            ParseTree parseTree = jimpleParser.file();
-            docParseTree.put(path, parseTree);
+      // calculate and cache interesting i.e.signature positions of the opened file
+      Path path = Util.uriToPath(uri);
+      try {
+        JimpleParser jimpleParser =
+            JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
+        ParseTree parseTree = jimpleParser.file();
+        docParseTree.put(path, parseTree);
 
-            SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
-            docSignaturePositionResolver.put(path, sigposresolver);
-        } catch (IOException e) {
-            forwardException(e);
-        }
+        SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
+        docSignaturePositionResolver.put(path, sigposresolver);
+      } catch (IOException e) {
+        forwardException(e);
+      }
     } else {
       // if its a change and invalid: remove
       docSignaturePositionResolver.remove(uri);
@@ -186,22 +182,22 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   return null;
                 }
 
-                  final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                          getServer().getView().getClass(classType);
-                  if (!aClass.isPresent()) {
-                      return null;
-                  }
-                  SootClass sc = (SootClass) aClass.get();
+                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+                    getServer().getView().getClass(classType);
+                if (!aClass.isPresent()) {
+                  return null;
+                }
+                SootClass sc = (SootClass) aClass.get();
 
-                  // maybe: cache instance for this file like for sigs
-                  Path path = Util.uriToPath(uri);
-                  ParseTree parseTree = docParseTree.get(path);
-                  if (parseTree == null) {
-                      return null;
-                  }
-                  final LocalPositionResolver localPositionResolver =
-                          new LocalPositionResolver(path, parseTree);
-                  return localPositionResolver.resolveDefinition(sc, position);
+                // maybe: cache instance for this file like for sigs
+                Path path = Util.uriToPath(uri);
+                ParseTree parseTree = docParseTree.get(path);
+                if (parseTree == null) {
+                  return null;
+                }
+                final LocalPositionResolver localPositionResolver =
+                    new LocalPositionResolver(path, parseTree);
+                return localPositionResolver.resolveDefinition(sc, position);
               }
               Signature sig = sigInst.getLeft();
               if (sig != null) {
@@ -218,16 +214,16 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
   @Nullable
   private Location getDefinitionLocation(SignaturePositionResolver resolver, Signature sig) {
     if (sig instanceof ClassType) {
-        final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                getServer().getView().getClass((ClassType) sig);
+      final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+          getServer().getView().getClass((ClassType) sig);
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
         return resolver.findFirstMatchingSignature(sc.getType(), sc.getPosition());
       }
 
     } else if (sig instanceof MethodSignature) {
-        final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
+      final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+          getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
         final Optional<SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig));
@@ -238,8 +234,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       }
 
     } else if (sig instanceof FieldSignature) {
-        final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
+      final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+          getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
       if (aClass.isPresent()) {
         SootClass sc = (SootClass) aClass.get();
         final Optional<SootField> field = sc.getField(((FieldSignature) sig).getSubSignature());
@@ -277,8 +273,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               }
               Signature sig = sigInstance.getLeft();
 
-                final View<?> view = getServer().getView();
-                final ViewTypeHierarchy typeHierarchy = new ViewTypeHierarchy(view);
+              final View<?> view = getServer().getView();
+              final ViewTypeHierarchy typeHierarchy = new ViewTypeHierarchy(view);
 
               if (sig instanceof ClassType) {
                 final Set<ClassType> subClassTypes = typeHierarchy.subtypesOf((ClassType) sig);
@@ -341,27 +337,27 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               final Pair<Signature, Range> sigInstance = resolver.resolve(params.getPosition());
 
               if (sigInstance == null) {
-                  // maybe its a Local?
+                // maybe its a Local?
 
-                  final ClassType classType = getServer().uriToClasstype(uri);
-                  if (classType == null) {
-                      return null;
+                final ClassType classType = getServer().uriToClasstype(uri);
+                if (classType == null) {
+                  return null;
+                }
+                final View<?> view = getServer().getView();
+                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+                    view.getClass(classType);
+                if (aClass.isPresent()) {
+                  SootClass sc = (SootClass) aClass.get();
+                  Path path = Util.uriToPath(uri);
+                  ParseTree parseTree = docParseTree.get(path);
+                  if (parseTree == null) {
+                    return null;
                   }
-                  final View<?> view = getServer().getView();
-                  final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                          view.getClass(classType);
-                  if (aClass.isPresent()) {
-                      SootClass sc = (SootClass) aClass.get();
-                      Path path = Util.uriToPath(uri);
-                      ParseTree parseTree = docParseTree.get(path);
-                      if (parseTree == null) {
-                          return null;
-                      }
-                      final LocalPositionResolver localPositionResolver =
-                              new LocalPositionResolver(path, parseTree);
-                      list.addAll(localPositionResolver.resolveReferences(sc, params));
-                      return list;
-                  }
+                  final LocalPositionResolver localPositionResolver =
+                      new LocalPositionResolver(path, parseTree);
+                  list.addAll(localPositionResolver.resolveReferences(sc, params));
+                  return list;
+                }
 
                 return null;
               }
@@ -375,20 +371,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               final Collection<SootClass> classes =
                   (Collection<SootClass>) getServer().getView().getClasses();
               for (SootClass sc : classes) {
-                  final Path scPath = sc.getClassSource().getSourcePath();
-                  final SignaturePositionResolver sigresolver = getSignaturePositionResolver(scPath);
-                  if (sigresolver == null) {
-                      continue;
-                  }
-                  final List<Location> resolvedList = sigresolver.resolve(sig);
+                final Path scPath = sc.getClassSource().getSourcePath();
+                final SignaturePositionResolver sigresolver = getSignaturePositionResolver(scPath);
+                if (sigresolver == null) {
+                  continue;
+                }
+                final List<Location> resolvedList = sigresolver.resolve(sig);
 
-                  if (resolvedList != null) {
-                      // remove definition if requested
-                      if (!includeDef) {
-                          resolvedList.removeIf(loc -> loc.equals(definitionLocation));
-                      }
-                      list.addAll(resolvedList);
+                if (resolvedList != null) {
+                  // remove definition if requested
+                  if (!includeDef) {
+                    resolvedList.removeIf(loc -> loc.equals(definitionLocation));
                   }
+                  list.addAll(resolvedList);
+                }
               }
 
               return list;
@@ -397,25 +393,25 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Nullable
   public SignaturePositionResolver getSignaturePositionResolver(@Nonnull String uri) {
-      return getSignaturePositionResolver(Util.uriToPath(uri));
+    return getSignaturePositionResolver(Util.uriToPath(uri));
   }
 
-    @Nullable
-    private SignaturePositionResolver getSignaturePositionResolver(@Nonnull Path path) {
-        return docSignaturePositionResolver.computeIfAbsent(
-                path,
-                k -> {
-                    try {
-                        ParseTree parseTree = docParseTree.get(path);
-                        if (parseTree == null) {
-                            return null;
-                        }
-                        return new SignaturePositionResolver(path, parseTree);
-                    } catch (IllegalStateException e) {
-                        forwardException(e);
-                    }
-                    return null;
-                });
+  @Nullable
+  private SignaturePositionResolver getSignaturePositionResolver(@Nonnull Path path) {
+    return docSignaturePositionResolver.computeIfAbsent(
+        path,
+        k -> {
+          try {
+            ParseTree parseTree = docParseTree.get(path);
+            if (parseTree == null) {
+              return null;
+            }
+            return new SignaturePositionResolver(path, parseTree);
+          } catch (IllegalStateException e) {
+            forwardException(e);
+          }
+          return null;
+        });
   }
 
   @Override
@@ -442,31 +438,31 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   return null;
                 }
 
-                  final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
-                          getServer().getView().getClass(classType);
-                  if (!aClass.isPresent()) {
-                      return null;
-                  }
-                  SootClass sc = (SootClass) aClass.get();
+                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                    getServer().getView().getClass(classType);
+                if (!aClass.isPresent()) {
+                  return null;
+                }
+                SootClass sc = (SootClass) aClass.get();
 
-                  // maybe: cache instance for this file like for sigs
-                  Path path = Util.uriToPath(uri);
-                  ParseTree parseTree = docParseTree.get(path);
-                  if (parseTree == null) {
-                      return null;
-                  }
-                  final LocalPositionResolver localPositionResolver =
-                          new LocalPositionResolver(path, parseTree);
-                  final Type type =
-                          localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
+                // maybe: cache instance for this file like for sigs
+                Path path = Util.uriToPath(uri);
+                ParseTree parseTree = docParseTree.get(path);
+                if (parseTree == null) {
+                  return null;
+                }
+                final LocalPositionResolver localPositionResolver =
+                    new LocalPositionResolver(path, parseTree);
+                final Type type =
+                    localPositionResolver.resolveTypeDefinition(sc, position.getPosition());
 
-                  if (!(type instanceof ClassType)) {
-                      return null;
-                  }
-                  final Optional<SootClass> typeClass =
-                          (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
-                  if (typeClass.isPresent()) {
-                      final SootClass sootClass = typeClass.get();
+                if (!(type instanceof ClassType)) {
+                  return null;
+                }
+                final Optional<SootClass> typeClass =
+                    (Optional<SootClass>) getServer().getView().getClass((ClassType) type);
+                if (typeClass.isPresent()) {
+                  final SootClass sootClass = typeClass.get();
                   return Util.positionToLocationList(
                       Util.pathToUri(sootClass.getClassSource().getSourcePath()),
                       sootClass.getPosition());
@@ -543,20 +539,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
                     getServer().getView().getClass((ClassType) sig);
                 if (aClass.isPresent()) {
-                    SootClass sc = (SootClass) aClass.get();
-                    str = Modifier.toString(sc.getModifiers()) + " " + sc;
-                    Optional<ClassType> superclass = sc.getSuperclass();
-                    if (superclass.isPresent()) {
-                        str += "\n extends " + superclass.get();
-                    }
+                  SootClass sc = (SootClass) aClass.get();
+                  str = Modifier.toString(sc.getModifiers()) + " " + sc;
+                  Optional<ClassType> superclass = sc.getSuperclass();
+                  if (superclass.isPresent()) {
+                    str += "\n extends " + superclass.get();
+                  }
 
-                    Iterator<ClassType> interfaceIt = sc.getInterfaces().iterator();
-                    if (interfaceIt.hasNext()) {
-                        str += " implements " + interfaceIt.next();
-                        while (interfaceIt.hasNext()) {
-                            str += ", " + interfaceIt.next();
-                        }
+                  Iterator<ClassType> interfaceIt = sc.getInterfaces().iterator();
+                  if (interfaceIt.hasNext()) {
+                    str += " implements " + interfaceIt.next();
+                    while (interfaceIt.hasNext()) {
+                      str += ", " + interfaceIt.next();
                     }
+                  }
                 }
               } else if (sig instanceof MethodSignature) {
                 final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
@@ -567,8 +563,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       sc.getMethod(((MethodSignature) sig).getSubSignature());
                   if (aMethod.isPresent()) {
                     final SootMethod sootMethod = aMethod.get();
-                      str =
-                              Modifier.toString(sootMethod.getModifiers()) + " " + sootMethod;
+                    str = Modifier.toString(sootMethod.getModifiers()) + " " + sootMethod;
                   }
                 }
               } else if (sig instanceof FieldSignature) {
@@ -580,7 +575,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       sc.getField(((FieldSignature) sig).getSubSignature());
                   if (aField.isPresent()) {
                     final SootField sootField = aField.get();
-                      str = Modifier.toString(sootField.getModifiers()) + " " + sootField;
+                    str = Modifier.toString(sootField.getModifiers()) + " " + sootField;
                   }
                 }
               }
@@ -604,30 +599,30 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
-                final String uri = position.getTextDocument().getUri();
-                Path path = Util.uriToPath(uri);
-                ParseTree parseTree = docParseTree.get(path);
-                if (parseTree == null) {
-                    return null;
-                }
-
-                final LocalPositionResolver resolver = new LocalPositionResolver(path, parseTree);
-
-                final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType == null) {
-                    return null;
-                }
-                final View<?> view = getServer().getView();
-                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                        view.getClass(classType);
-                if (aClass.isPresent()) {
-                    SootClass sc = (SootClass) aClass.get();
-                    return resolver.resolveReferences(sc, position).stream()
-                            .map(ref -> new DocumentHighlight(ref.getRange(), DocumentHighlightKind.Text))
-                            .collect(Collectors.toList());
-                }
-
+              final String uri = position.getTextDocument().getUri();
+              Path path = Util.uriToPath(uri);
+              ParseTree parseTree = docParseTree.get(path);
+              if (parseTree == null) {
                 return null;
+              }
+
+              final LocalPositionResolver resolver = new LocalPositionResolver(path, parseTree);
+
+              final ClassType classType = getServer().uriToClasstype(uri);
+              if (classType == null) {
+                return null;
+              }
+              final View<?> view = getServer().getView();
+              final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+                  view.getClass(classType);
+              if (aClass.isPresent()) {
+                SootClass sc = (SootClass) aClass.get();
+                return resolver.resolveReferences(sc, position).stream()
+                    .map(ref -> new DocumentHighlight(ref.getRange(), DocumentHighlightKind.Text))
+                    .collect(Collectors.toList());
+              }
+
+              return null;
             });
   }
 
@@ -648,23 +643,23 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
-                // warning: removes comments!
-                final ClassType classType = getServer().uriToClasstype(uri);
-                if (classType == null) {
-                    return null;
-                }
-                final View<?> view = getServer().getView();
-                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                        view.getClass(classType);
-                if (aClass.isPresent()) {
-                    SootClass sc = (SootClass) aClass.get();
+              // warning: removes comments!
+              final ClassType classType = getServer().uriToClasstype(uri);
+              if (classType == null) {
+                return null;
+              }
+              final View<?> view = getServer().getView();
+              final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+                  view.getClass(classType);
+              if (aClass.isPresent()) {
+                SootClass sc = (SootClass) aClass.get();
 
-                    final StringWriter out = new StringWriter();
-                    PrintWriter writer = new PrintWriter(out);
-                    de.upb.swt.soot.core.util.printer.Printer printer = new Printer();
-                    printer.printTo(sc, writer);
-                    writer.close();
-                    final String newText = out.toString();
+                final StringWriter out = new StringWriter();
+                PrintWriter writer = new PrintWriter(out);
+                de.upb.swt.soot.core.util.printer.Printer printer = new Printer();
+                printer.printTo(sc, writer);
+                writer.close();
+                final String newText = out.toString();
                 return Collections.singletonList(
                     new TextEdit(
                         new Range(
@@ -692,8 +687,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
               if (classType == null) {
                 return null;
               }
-                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
-                        getServer().getView().getClass(classType);
+              final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
+                  getServer().getView().getClass(classType);
               if (aClass.isPresent()) {
                 SootClass sc = (SootClass) aClass.get();
                 List<FoldingRange> frList = new ArrayList<>();
@@ -768,18 +763,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
-      final TextDocumentIdentifier textDoc = params.getTextDocument();
-      if (textDoc == null) {
-          return null;
-      }
-      final Path path = Util.uriToPath(textDoc.getUri());
-      return getServer().pool(() -> {
-          ParseTree parseTree = docParseTree.get(path);
-          if (parseTree == null) {
-              return null;
-          }
-          return SyntaxHighlightingProvider.paintbrush(parseTree);
-      });
+    final TextDocumentIdentifier textDoc = params.getTextDocument();
+    if (textDoc == null) {
+      return null;
+    }
+    final Path path = Util.uriToPath(textDoc.getUri());
+    return getServer()
+        .pool(
+            () -> {
+              ParseTree parseTree = docParseTree.get(path);
+              if (parseTree == null) {
+                return null;
+              }
+              return SyntaxHighlightingProvider.paintbrush(parseTree);
+            });
   }
 
   @Override

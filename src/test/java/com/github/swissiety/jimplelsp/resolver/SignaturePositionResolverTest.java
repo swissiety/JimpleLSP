@@ -21,12 +21,16 @@ public class SignaturePositionResolverTest extends TestCase {
   protected void setUp() {
     try {
       Path path = Paths.get("src/test/resources/signatureOccurences.jimple").toAbsolutePath();
-      resolver = new SignaturePositionResolver(path, JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path).file());
+      resolver =
+          new SignaturePositionResolver(
+              path,
+              JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path).file());
 
       Path path2 = Paths.get("src/test/resources/FieldSignatureOccurences.jimple");
       fieldResolver =
-              new SignaturePositionResolver(
-                      path2, JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path2), path2).file());
+          new SignaturePositionResolver(
+              path2,
+              JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path2), path2).file());
 
     } catch (IOException exception) {
       exception.printStackTrace();

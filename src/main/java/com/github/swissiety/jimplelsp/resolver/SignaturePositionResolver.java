@@ -12,16 +12,15 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
-
-import javax.annotation.Nullable;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This Class organizes information about (open) jimple files. Especially range information about
@@ -34,13 +33,13 @@ public class SignaturePositionResolver {
   private final Path path;
   private final JimpleConverterUtil util;
 
-    public SignaturePositionResolver(Path path, ParseTree parseTree) {
-        this.path = path;
-        util = new JimpleConverterUtil(path);
+  public SignaturePositionResolver(Path path, ParseTree parseTree) {
+    this.path = path;
+    util = new JimpleConverterUtil(path);
 
-        ParseTreeWalker walker = new ParseTreeWalker();
-        walker.walk(occurences, parseTree);
-    }
+    ParseTreeWalker walker = new ParseTreeWalker();
+    walker.walk(occurences, parseTree);
+  }
 
   @Nullable
   public Pair<Signature, Range> resolve(org.eclipse.lsp4j.Position position) {

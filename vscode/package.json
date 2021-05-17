@@ -4,7 +4,7 @@
 	"description": "A language server implementation for Soots Jimple powered by the MagpieBridge framework.",
 	"author": "Markus Schmidt",
 	"license": "MIT",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"homepage": "https://github.com/swissiety/JimpleLSP/",
 	"bugs": {
 		"url": "https://github.com/swissiety/JimpleLSP/issues"

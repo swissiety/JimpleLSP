@@ -19,21 +19,21 @@ public class SyntaxHighlightingProvider {
 
   @Nonnull
   static final SemanticTokensLegend legend =
-          new SemanticTokensLegend(
-                  Arrays.asList(
-                          SemanticTokenTypes.Keyword,
-                          SemanticTokenTypes.Comment,
-                          SemanticTokenTypes.Modifier,
-                          SemanticTokenTypes.Class,
-                          SemanticTokenTypes.Method,
-                          SemanticTokenTypes.Type,
-                          SemanticTokenTypes.Variable,
-                          SemanticTokenTypes.Parameter,
-                          SemanticTokenTypes.String,
-                          SemanticTokenTypes.Number,
-                          SemanticTokenTypes.Operator,
-                          SemanticTokenTypes.Interface),
-                  Collections.emptyList());
+      new SemanticTokensLegend(
+          Arrays.asList(
+              SemanticTokenTypes.Keyword,
+              SemanticTokenTypes.Comment,
+              SemanticTokenTypes.Modifier,
+              SemanticTokenTypes.Class,
+              SemanticTokenTypes.Method,
+              SemanticTokenTypes.Type,
+              SemanticTokenTypes.Variable,
+              SemanticTokenTypes.Parameter,
+              SemanticTokenTypes.String,
+              SemanticTokenTypes.Number,
+              SemanticTokenTypes.Operator,
+              SemanticTokenTypes.Interface),
+          Collections.emptyList());
 
   public static SemanticTokensLegend getLegend() {
     return legend;
@@ -46,14 +46,10 @@ public class SyntaxHighlightingProvider {
     return new SemanticTokens(semanticTokenManager.getCanvas());
   }
 
-
-  /**
-   * 'Cause colors make the world go round
-   */
+  /** 'Cause colors make the world go round */
   private static class SyntaxHighlightingVisitor extends JimpleBaseVisitor<SemanticTokenManager> {
 
-    @Nonnull
-    private final SemanticTokenManager semanticTokenManager;
+    @Nonnull private final SemanticTokenManager semanticTokenManager;
 
     private SyntaxHighlightingVisitor(SemanticTokenManager semanticTokenManager) {
       this.semanticTokenManager = semanticTokenManager;
@@ -63,22 +59,22 @@ public class SyntaxHighlightingProvider {
       // TODO: add tokenModifier
       // zero offset line/column
       semanticTokenManager.paintText(
-              tokentype,
-              null,
-              token.getLine() - 1,
-              token.getCharPositionInLine(),
-              token.getText().length());
+          tokentype,
+          null,
+          token.getLine() - 1,
+          token.getCharPositionInLine(),
+          token.getText().length());
     }
 
     private void paint(String tokentype, ParserRuleContext ctx) {
       // TODO: add tokenModifier
       // zero offset line/column
       semanticTokenManager.paintText(
-              tokentype,
-              null,
-              ctx.start.getLine() - 1,
-              ctx.start.getCharPositionInLine(),
-              ctx.getText().length());
+          tokentype,
+          null,
+          ctx.start.getLine() - 1,
+          ctx.start.getCharPositionInLine(),
+          ctx.getText().length());
     }
 
     @Override
@@ -90,7 +86,16 @@ public class SyntaxHighlightingProvider {
       } else {
         paint(SemanticTokenTypes.Interface, ctx.classname);
       }
-      visitExtends_clause(ctx.extends_clause());
+
+      JimpleParser.Extends_clauseContext extendsClauseCtx = ctx.extends_clause();
+      if (extendsClauseCtx != null) {
+        visitExtends_clause(extendsClauseCtx);
+      }
+
+      JimpleParser.Implements_clauseContext implements_clauseContext = ctx.implements_clause();
+      if(implements_clauseContext != null){
+        visitImplements_clause(implements_clauseContext);
+      }
       ctx.member().forEach(this::visitMember);
       return semanticTokenManager;
     }
@@ -117,6 +122,10 @@ public class SyntaxHighlightingProvider {
     @Override
     public SemanticTokenManager visitImplements_clause(JimpleParser.Implements_clauseContext ctx) {
       paint(SemanticTokenTypes.Keyword, ctx.start);
+      JimpleParser.Type_listContext typeList = ctx.type_list();
+      if(typeList != null) {
+        visitType_list(typeList);
+      }
       return semanticTokenManager;
     }
 
@@ -174,7 +183,7 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitMethod_subsignature(
-            JimpleParser.Method_subsignatureContext ctx) {
+        JimpleParser.Method_subsignatureContext ctx) {
       visitType(ctx.type());
       paint(SemanticTokenTypes.Method, ctx.method_name());
       if (ctx.type_list() != null) {
@@ -229,13 +238,13 @@ public class SyntaxHighlightingProvider {
     @Override
     public SemanticTokenManager visitStmt(JimpleParser.StmtContext ctx) {
       if (ctx.IF() != null
-              || ctx.RETURN() != null
-              || ctx.ENTERMONITOR() != null
-              || ctx.EXITMONITOR() != null
-              || ctx.BREAKPOINT() != null
-              || ctx.SWITCH() != null
-              || ctx.THROW() != null
-              || ctx.NOP() != null) {
+          || ctx.RETURN() != null
+          || ctx.ENTERMONITOR() != null
+          || ctx.EXITMONITOR() != null
+          || ctx.BREAKPOINT() != null
+          || ctx.SWITCH() != null
+          || ctx.THROW() != null
+          || ctx.NOP() != null) {
         paint(SemanticTokenTypes.Keyword, ctx.start);
       }
       if (ctx.immediate() != null) {
