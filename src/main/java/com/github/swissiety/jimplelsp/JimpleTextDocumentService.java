@@ -16,6 +16,18 @@ import de.upb.swt.soot.core.util.printer.Printer;
 import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,17 +37,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
@@ -125,24 +126,28 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   private void analyzeFile(@Nonnull String uri, @Nonnull String text) {
     final boolean valid = getServer().quarantineInputOrUpdate(uri, text);
-    if (valid) {
-      // calculate and cache interesting i.e.signature positions of the opened file
       Path path = Util.uriToPath(uri);
-      try {
-        JimpleParser jimpleParser =
-            JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
-        ParseTree parseTree = jimpleParser.file();
-        docParseTree.put(path, parseTree);
+      if (valid) {
+          // calculate and cache interesting i.e.signature positions of the opened file
+          try {
+            JimpleParser jimpleParser =
+                JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
+            ParseTree parseTree = jimpleParser.file();
+            docParseTree.put(path, parseTree);
 
-        SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
-        docSignaturePositionResolver.put(path, sigposresolver);
-      } catch (IOException e) {
-        forwardException(e);
-      }
-    } else {
-      // if its a change and invalid: remove
-      docSignaturePositionResolver.remove(uri);
-    }
+            SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
+            docSignaturePositionResolver.put(path, sigposresolver);
+            return;
+
+          } catch (IOException e) {
+            forwardException(e);
+          }
+        }
+
+    // file is invalid Jimple -> clear cache
+    docParseTree.remove(path);
+    docSignaturePositionResolver.remove(uri);
+
   }
 
   /*

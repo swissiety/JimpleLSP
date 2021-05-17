@@ -93,7 +93,7 @@ public class SyntaxHighlightingProvider {
       }
 
       JimpleParser.Implements_clauseContext implements_clauseContext = ctx.implements_clause();
-      if(implements_clauseContext != null){
+      if (implements_clauseContext != null) {
         visitImplements_clause(implements_clauseContext);
       }
       ctx.member().forEach(this::visitMember);
@@ -123,7 +123,7 @@ public class SyntaxHighlightingProvider {
     public SemanticTokenManager visitImplements_clause(JimpleParser.Implements_clauseContext ctx) {
       paint(SemanticTokenTypes.Keyword, ctx.start);
       JimpleParser.Type_listContext typeList = ctx.type_list();
-      if(typeList != null) {
+      if (typeList != null) {
         visitType_list(typeList);
       }
       return semanticTokenManager;
