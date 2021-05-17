@@ -1,12 +1,16 @@
 package com.github.swissiety.jimplelsp.resolver;
 
 import de.upb.swt.soot.core.signatures.Signature;
-import java.io.IOException;
-import java.nio.file.Paths;
+import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import junit.framework.TestCase;
+import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SignaturePositionResolverTest extends TestCase {
 
@@ -16,12 +20,14 @@ public class SignaturePositionResolverTest extends TestCase {
   @Override
   protected void setUp() {
     try {
-      resolver =
-          new SignaturePositionResolver(
-              Paths.get("src/test/resources/signatureOccurences.jimple").toAbsolutePath());
+      Path path = Paths.get("src/test/resources/signatureOccurences.jimple").toAbsolutePath();
+      resolver = new SignaturePositionResolver(path, JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path).file());
+
+      Path path2 = Paths.get("src/test/resources/FieldSignatureOccurences.jimple");
       fieldResolver =
-          new SignaturePositionResolver(
-              Paths.get("src/test/resources/FieldSignatureOccurences.jimple"));
+              new SignaturePositionResolver(
+                      path2, JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path2), path2).file());
+
     } catch (IOException exception) {
       exception.printStackTrace();
       fail("filenotfound");

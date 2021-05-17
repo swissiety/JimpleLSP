@@ -1,20 +1,16 @@
 package com.github.swissiety.jimplelsp.provider;
 
-import com.github.swissiety.jimplelsp.Util;
 import de.upb.swt.soot.jimple.JimpleBaseVisitor;
 import de.upb.swt.soot.jimple.JimpleParser;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
-import org.eclipse.lsp4j.TextDocumentIdentifier;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -42,14 +38,11 @@ public class SyntaxHighlightingProvider {
     return legend;
   }
 
-  public static SemanticTokens paintbrush(@Nonnull TextDocumentIdentifier doc) throws IOException {
+  public static SemanticTokens paintbrush(@Nonnull ParseTree parseTree) throws IOException {
 
-    final Path path = Util.uriToPath(doc.getUri());
-    final JimpleParser parser = JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
     SemanticTokenManager semanticTokenManager = new SemanticTokenManager(legend);
 
-    SyntaxHighlightingVisitor visitor = new SyntaxHighlightingVisitor(semanticTokenManager);
-    visitor.visitFile(parser.file());
+    new SyntaxHighlightingVisitor(semanticTokenManager).visit(parseTree);
 
     return new SemanticTokens(semanticTokenManager.getCanvas());
   }

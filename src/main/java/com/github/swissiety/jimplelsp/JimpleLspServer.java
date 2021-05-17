@@ -75,21 +75,21 @@ public class JimpleLspServer extends MagpieServer {
   }
 
   @Nonnull
-  public View getView() {
-    if (isViewDirty) {
-      view = recreateView();
-      isViewDirty = false;
-    }
-    return view;
+  public View<?> getView() {
+      if (isViewDirty) {
+          view = recreateView();
+          isViewDirty = false;
+      }
+      return view;
   }
 
-  @Nonnull
-  private View recreateView() {
-    Map<ClassType, AbstractClassSource> map = new HashMap<>();
-    textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
-    final JimpleProject project = new JimpleProject(new EagerInputLocation(map));
-    return project.createFullView();
-  }
+    @Nonnull
+    private View<?> recreateView() {
+        Map<ClassType, AbstractClassSource<?>> map = new HashMap<>();
+        textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
+        final JimpleProject project = new JimpleProject(new EagerInputLocation(map));
+        return project.createFullView();
+    }
 
   public boolean quarantineInputOrUpdate(@Nonnull String uri) throws ResolveException, IOException {
     return quarantineInputOrUpdate(uri, CharStreams.fromPath(Util.uriToPath(uri)));
@@ -102,20 +102,21 @@ public class JimpleLspServer extends MagpieServer {
 
   private boolean quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream)
       throws ResolveException {
+
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource scs =
-          jimpleConverter.run(charStream, new EagerInputLocation(), Util.uriToPath(uri));
-      // input is clean
-      final SootClassSource overriden = textDocumentClassMapping.put(uri, scs);
-      if (overriden != null) {
-        // possible optimization: compare if classes are still equal -> set dirty bit only when
-        // necessary
-      }
-      isViewDirty = true;
+        SootClassSource<?> scs =
+                jimpleConverter.run(charStream, new EagerInputLocation<>(), Util.uriToPath(uri));
+        // input is clean
+        final SootClassSource<?> overriden = textDocumentClassMapping.put(uri, scs);
+        if (overriden != null) {
+            // possible optimization: compare if classes are still equal -> set dirty bit only when
+            // necessary
+        }
+        isViewDirty = true;
 
-      // clean up errors in IDE if the file is valid (again)
-      // FIXME: merge with other diagnostics in magpie
+        // clean up errors in IDE if the file is valid (again)
+        // FIXME: merge with other diagnostics in magpie
       client.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.emptyList()));
 
       return true;
@@ -435,9 +436,9 @@ public class JimpleLspServer extends MagpieServer {
 
       final int ret = pr.waitFor();
       if (ret == 0) {
-        client.showMessage(
-            new MessageParams(
-                MessageType.Info, "Jimple extracted to \"" + outputdir.toString() + "\"."));
+          client.showMessage(
+                  new MessageParams(
+                          MessageType.Info, "Jimple extracted to \"" + outputdir + "\"."));
       } else {
         client.showMessage(new MessageParams(MessageType.Error, pr.getErrorStream().toString()));
       }
@@ -483,7 +484,7 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nullable
   public ClassType docIdentifierToClassType(@Nonnull String textDocument) {
-    final SootClassSource sootClassSource = textDocumentClassMapping.get(textDocument);
+      final SootClassSource<?> sootClassSource = textDocumentClassMapping.get(textDocument);
     if (sootClassSource == null) {
       return null;
     }
@@ -492,7 +493,7 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nullable
   public ClassType uriToClasstype(@Nonnull String strUri) {
-    final SootClassSource scs = textDocumentClassMapping.get(strUri);
+      final SootClassSource<?> scs = textDocumentClassMapping.get(strUri);
     if (scs == null) {
       return null;
     }
