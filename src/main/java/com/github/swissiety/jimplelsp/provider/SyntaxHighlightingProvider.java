@@ -31,7 +31,8 @@ public class SyntaxHighlightingProvider {
                           SemanticTokenTypes.Parameter,
                           SemanticTokenTypes.String,
                           SemanticTokenTypes.Number,
-                          SemanticTokenTypes.Operator),
+                          SemanticTokenTypes.Operator,
+                          SemanticTokenTypes.Interface),
                   Collections.emptyList());
 
   public static SemanticTokensLegend getLegend() {
@@ -41,9 +42,7 @@ public class SyntaxHighlightingProvider {
   public static SemanticTokens paintbrush(@Nonnull ParseTree parseTree) throws IOException {
 
     SemanticTokenManager semanticTokenManager = new SemanticTokenManager(legend);
-
     new SyntaxHighlightingVisitor(semanticTokenManager).visit(parseTree);
-
     return new SemanticTokens(semanticTokenManager.getCanvas());
   }
 
