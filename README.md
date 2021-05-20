@@ -51,7 +51,7 @@ Port 2403, to change the port use `-p <portnumber>`.
 
 ## Server Capabilities
 
-This Server is oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in
+This Server implementation was initially oriented towards LSP 3.15. The currently implemented features are focussed on improving code exploring in
 Jimple. For checked capabilities there are previews of the functionality in the linked Issue.
 
 ### Text Document Capabilities
@@ -68,7 +68,7 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 - ✅ [declaration](/../../issues/4)
     - ❌ [planned #18] link support
 - ✅ [definition](/../../issues/6)
-    - ❌ [planned #18] link support
+    - ✅ link support
 - ✅ [typeDefinition](/../../issues/5)
     - ❌ [planned #18] link support
 - ✅ [implementation](/../../issues/2)
@@ -110,4 +110,4 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 
 
 ## About
-This piece of software was created as part of a bachelor thesis at UPB (University of Paderborn, Germany).
+This piece of software has been created as part of a bachelor thesis at University of Paderborn (UPB), Germany.

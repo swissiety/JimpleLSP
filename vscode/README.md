@@ -6,7 +6,8 @@ for Jimple - with Visual Studio Code.
 ### Usage
 Open existing **.jimple** files in your workspace and get spoiled by syntax highlighting as well as support for code exploring.
 
-Or to enable extraction of Jimple from **.apk**s or **.jar**s in the workspace adapt the configuration accordingly.
+Or you can extract Jimple from **.apk**s or **.jar**s in the workspace.
+To enable the extraction of Jimple adapt the configuration accordingly so JimpleLSP can find [Soot]().
 For more information on this please visit [JimpleLSP](https://github.com/swissiety/JimpleLSP).
 
 **Hint:** The extraction is only triggered if no jimple files are in the workspace on language server startup!

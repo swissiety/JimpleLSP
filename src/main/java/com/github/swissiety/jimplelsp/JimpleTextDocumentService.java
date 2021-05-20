@@ -483,7 +483,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                   return null;
                 }
 
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
                     getServer().getView().getClass(classType);
                 if (!aClass.isPresent()) {
                   return null;
@@ -523,7 +523,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (!(type instanceof ClassType)) {
                   return null;
                 }
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
                     getServer().getView().getClass((ClassType) type);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
@@ -540,7 +540,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (!(type instanceof ClassType)) {
                   return null;
                 }
-                final Optional<? extends AbstractClass<? extends AbstractClassSource>> aClass =
+                final Optional<? extends AbstractClass<? extends AbstractClassSource<?>>> aClass =
                     getServer().getView().getClass((ClassType) type);
                 if (aClass.isPresent()) {
                   SootClass sc = (SootClass) aClass.get();
