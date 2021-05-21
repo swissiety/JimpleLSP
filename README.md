@@ -110,4 +110,4 @@ Jimple. For checked capabilities there are previews of the functionality in the 
 
 
 ## About
-This piece of software has been created as part of a bachelor thesis at University of Paderborn (UPB), Germany.
+This piece of software was created as part of a bachelor thesis at University of Paderborn (UPB), Germany.
