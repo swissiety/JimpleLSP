@@ -45,16 +45,16 @@ public class LocalPositionResolver {
   }
 
   @Nullable
-  private List<Pair<Position, String>> getLocals(SootClass sc, org.eclipse.lsp4j.Position pos) {
-    final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
+  private List<Pair<Position, String>> getLocals(SootClass<?> sc, org.eclipse.lsp4j.Position pos) {
+    final Optional<? extends SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     return surroundingMethod
         .map(sootMethod -> localsOfMethod.get(sootMethod.getSubSignature()))
         .orElse(null);
   }
 
   @Nonnull
-  private Optional<SootMethod> getSootMethodFromPosition(
-      @Nonnull SootClass sc, @Nonnull org.eclipse.lsp4j.Position pos) {
+  private Optional<? extends SootMethod> getSootMethodFromPosition(
+      @Nonnull SootClass<?> sc, @Nonnull org.eclipse.lsp4j.Position pos) {
     return sc.getMethods().stream().filter(m -> isInRangeOf(pos, m.getPosition())).findAny();
   }
 
@@ -65,7 +65,7 @@ public class LocalPositionResolver {
   }
 
   @Nonnull
-  public List<? extends Location> resolveReferences(SootClass sc, TextDocumentPositionParams pos) {
+  public List<? extends Location> resolveReferences(SootClass<?> sc, TextDocumentPositionParams pos) {
     List<Pair<Position, String>> locals = getLocals(sc, pos.getPosition());
     if (locals == null) {
       return Collections.emptyList();
@@ -88,8 +88,8 @@ public class LocalPositionResolver {
 
   @Nullable
   public Type resolveTypeDefinition(
-      @Nonnull SootClass sc, @Nonnull org.eclipse.lsp4j.Position pos) {
-    final Optional<SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
+      @Nonnull SootClass<?> sc, @Nonnull org.eclipse.lsp4j.Position pos) {
+    final Optional<? extends SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     if (!surroundingMethod.isPresent()) {
       return null;
     }
@@ -114,7 +114,7 @@ public class LocalPositionResolver {
 
   @Nullable
   public LocationLink resolveDefinition(
-      @Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
+      @Nonnull SootClass<?> sc, @Nonnull TextDocumentPositionParams pos) {
     List<Pair<Position, String>> locals = getLocals(sc, pos.getPosition());
     if (locals == null) {
       return null;
@@ -133,6 +133,7 @@ public class LocalPositionResolver {
     if (deflocalOpt.isPresent()) {
       Location location = Util.positionToDefLocation(
               pos.getTextDocument().getUri(), deflocalOpt.get().getLeft());
+      location.getRange().setEnd( new org.eclipse.lsp4j.Position(deflocalOpt.get().getLeft().getLastLine(), deflocalOpt.get().getLeft().getFirstCol()+deflocalOpt.get().getRight().length() ));
       return new LocationLink( location.getUri(), location.getRange(), location.getRange(), Util.positionToRange(positionStringPair.getLeft()) );
     }
     return null;

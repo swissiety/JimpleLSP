@@ -1,10 +1,12 @@
 package com.github.swissiety.jimplelsp;
 
-import static org.junit.Assert.assertEquals;
-
-import de.upb.swt.soot.core.frontend.AbstractClassSource;
-import de.upb.swt.soot.core.model.AbstractClass;
 import de.upb.swt.soot.core.model.SootClass;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -12,11 +14,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class pomodoroTest {
@@ -51,8 +50,7 @@ public class pomodoroTest {
 
     jimpleLspServer.initialize(params);
     jimpleLspServer.initialized(new InitializedParams());
-    final Collection<? extends AbstractClass<? extends AbstractClassSource>> classes =
-        (Collection<SootClass>) jimpleLspServer.getView().getClasses();
+    final Collection<SootClass<?>> classes = jimpleLspServer.getView().getClasses();
     assertEquals("Not all Classes are loaded/parsed", 65, classes.size());
   }
 
