@@ -2,17 +2,16 @@ package com.github.swissiety.jimplelsp.provider;
 
 import de.upb.swt.soot.jimple.JimpleBaseVisitor;
 import de.upb.swt.soot.jimple.JimpleParser;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import javax.annotation.Nonnull;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
-
-import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 
 /** @author Markus Schmidt */
 public class SyntaxHighlightingProvider {

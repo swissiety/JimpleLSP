@@ -239,7 +239,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             final Optional<SootClass<?>> aClass =
                     getServer().getView().getClass((ClassType) sig);
             if (aClass.isPresent()) {
-                SootClass<?> sc =  aClass.get();
+                SootClass<?> sc = aClass.get();
                 SignaturePositionResolver resolver =
                         getSignaturePositionResolver(Util.pathToUri(sc.getClassSource().getSourcePath()));
                 if (resolver == null) {
@@ -252,7 +252,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             final Optional<SootClass<?>> aClass =
                     getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
             if (aClass.isPresent()) {
-                SootClass<?> sc =  aClass.get();
+                SootClass<?> sc = aClass.get();
                 final Optional<? extends SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig));
                 if (methodOpt.isPresent()) {
                     final SootMethod method = methodOpt.get();
@@ -269,7 +269,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             final Optional<SootClass<?>> aClass =
                     getServer().getView().getClass(((FieldSignature) sig).getDeclClassType());
             if (aClass.isPresent()) {
-                SootClass<?> sc =  aClass.get();
+                SootClass<?> sc = aClass.get();
                 final Optional<? extends SootField> field = sc.getField(((FieldSignature) sig).getSubSignature());
                 if (field.isPresent()) {
                     final SootField sf = field.get();
@@ -327,13 +327,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                                                                             sootClass.getPosition())));
                                         });
 
-                                return Either.forLeft(list);
+
+                                if (getServer().getClientCapabilities().getTextDocument().getDefinition().getLinkSupport() == Boolean.TRUE) {
+                                    return Either.forRight(list.stream().map(i -> new LocationLink(i.getUri(), i.getRange(), i.getRange(), sigInstance.getRight())).collect(Collectors.toList()));
+                                } else {
+                                    return Either.forLeft(list);
+                                }
+
+
                             } else if (sig instanceof MethodSignature) {
                                 final Set<ClassType> classTypes =
                                         typeHierarchy.subtypesOf(((MethodSignature) sig).getDeclClassType());
                                 classTypes.forEach(
                                         csig -> {
-                                            Optional<SootClass<?>> scOpt =  view.getClass(csig);
+                                            Optional<SootClass<?>> scOpt = view.getClass(csig);
                                             if (scOpt.isPresent()) {
                                                 final SootClass<?> sc = scOpt.get();
                                                 final Optional<? extends SootMethod> methodOpt =
@@ -347,7 +354,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                                             }
                                         });
 
-                                return Either.forLeft(list);
+                                if (getServer().getClientCapabilities().getTextDocument().getDefinition().getLinkSupport() == Boolean.TRUE) {
+                                    return Either.forRight(list.stream().map(i -> new LocationLink(i.getUri(), i.getRange(), i.getRange(), sigInstance.getRight())).collect(Collectors.toList()));
+                                } else {
+                                    return Either.forLeft(list);
+                                }
                             }
 
                             return null;

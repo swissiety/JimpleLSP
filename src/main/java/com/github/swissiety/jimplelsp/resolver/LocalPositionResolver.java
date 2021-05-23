@@ -11,17 +11,16 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import java.nio.file.Path;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * The LocalResolver handles gathering and queriing for Local Positions in a given File.
@@ -65,7 +64,8 @@ public class LocalPositionResolver {
   }
 
   @Nonnull
-  public List<? extends Location> resolveReferences(SootClass<?> sc, TextDocumentPositionParams pos) {
+  public List<? extends Location> resolveReferences(
+      SootClass<?> sc, TextDocumentPositionParams pos) {
     List<Pair<Position, String>> locals = getLocals(sc, pos.getPosition());
     if (locals == null) {
       return Collections.emptyList();
@@ -131,10 +131,20 @@ public class LocalPositionResolver {
     final Optional<Pair<Position, String>> deflocalOpt =
         locals.stream().filter(p -> p.getRight().equals(localname)).findFirst();
     if (deflocalOpt.isPresent()) {
-      Location location = Util.positionToDefLocation(
-              pos.getTextDocument().getUri(), deflocalOpt.get().getLeft());
-      location.getRange().setEnd( new org.eclipse.lsp4j.Position(deflocalOpt.get().getLeft().getLastLine(), deflocalOpt.get().getLeft().getFirstCol()+deflocalOpt.get().getRight().length() ));
-      return new LocationLink( location.getUri(), location.getRange(), location.getRange(), Util.positionToRange(positionStringPair.getLeft()) );
+      Location location =
+          Util.positionToDefLocation(pos.getTextDocument().getUri(), deflocalOpt.get().getLeft());
+      location
+          .getRange()
+          .setEnd(
+              new org.eclipse.lsp4j.Position(
+                  deflocalOpt.get().getLeft().getLastLine(),
+                  deflocalOpt.get().getLeft().getFirstCol()
+                      + deflocalOpt.get().getRight().length()));
+      return new LocationLink(
+          location.getUri(),
+          location.getRange(),
+          location.getRange(),
+          Util.positionToRange(positionStringPair.getLeft()));
     }
     return null;
   }

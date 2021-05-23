@@ -4,12 +4,10 @@ import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
 import de.upb.swt.soot.core.model.SootClass;
 import de.upb.swt.soot.core.model.SootField;
 import de.upb.swt.soot.core.model.SootMethod;
-import java.util.List;
+import org.eclipse.lsp4j.*;
+
 import javax.annotation.Nonnull;
-import org.eclipse.lsp4j.Location;
-import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.lsp4j.SymbolKind;
-import org.eclipse.lsp4j.SymbolKindCapabilities;
+import java.util.List;
 
 /**
  * The JimpleSymbolProvider retrieves symbols for WorkspaceSymbolRequest and DocumentSymbolRequest
@@ -21,7 +19,7 @@ public class JimpleSymbolProvider {
   public static void retrieveAndFilterSymbolsFromClass(
       @Nonnull List<SymbolInformation> resultList,
       String query,
-      @Nonnull SootClass clazz,
+      @Nonnull SootClass<?> clazz,
       SignaturePositionResolver resolver,
       @Nonnull SymbolKindCapabilities symbolKind,
       int limit) {

@@ -1,12 +1,8 @@
 package com.github.swissiety.jimplelsp;
 
-import de.upb.swt.soot.core.model.SootClass;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+import de.upb.swt.soot.core.model.SootClass;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -14,8 +10,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-
-import static org.junit.Assert.assertEquals;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 @Ignore
 public class sms_googleTest {
@@ -50,8 +49,7 @@ public class sms_googleTest {
 
     jimpleLspServer.initialize(params);
     jimpleLspServer.initialized(new InitializedParams());
-    final Collection<SootClass<?>> classes =
-            jimpleLspServer.getView().getClasses();
+    final Collection<SootClass<?>> classes = jimpleLspServer.getView().getClasses();
     assertEquals("Not all Classes are loaded/parsed", 39, classes.size());
   }
 
