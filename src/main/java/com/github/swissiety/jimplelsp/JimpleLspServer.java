@@ -10,6 +10,14 @@ import de.upb.swt.soot.core.types.ClassType;
 import de.upb.swt.soot.jimple.parser.JimpleConverter;
 import de.upb.swt.soot.jimple.parser.JimpleProject;
 import de.upb.swt.soot.jimple.parser.JimpleView;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerConfiguration;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.eclipse.lsp4j.*;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -22,20 +30,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerConfiguration;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.eclipse.lsp4j.*;
 
 /** @author Markus Schmidt */
 public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
-  private final Map<String, SootClassSource<SootClass<?>>> textDocumentClassMapping =
-      new HashMap<>();
+  private final Map<String, SootClassSource<? extends SootClass<?>>> textDocumentClassMapping =
+          new HashMap<>();
 
   private JimpleView view;
   private boolean isViewDirty = true;
@@ -87,9 +88,9 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
   private JimpleView recreateView() {
-    HashMap<ClassType, SootClassSource<SootClass<?>>> map = new HashMap<>();
+    HashMap<ClassType, SootClassSource<? extends SootClass<?>>> map = new HashMap<>();
     textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
-    final JimpleProject project = new JimpleProject(new EagerInputLocation<>(map));
+    final JimpleProject project = new JimpleProject(new EagerInputLocation(map));
     return project.createFullView();
   }
 
@@ -107,10 +108,11 @@ public class JimpleLspServer extends MagpieServer {
 
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
-      SootClassSource<SootClass<?>> scs =
-          jimpleConverter.run(charStream, new EagerInputLocation<>(), Util.uriToPath(uri));
+      SootClassSource<? extends SootClass<?>> scs =
+              jimpleConverter.run(charStream, new EagerInputLocation<>(), Util.uriToPath(uri));
       // input is clean
-      final SootClassSource<SootClass<?>> overriden = textDocumentClassMapping.put(uri, scs);
+      final SootClassSource<? extends SootClass<?>> overriden =
+              textDocumentClassMapping.put(uri, scs);
       if (overriden != null) {
         // possible optimization: compare if classes are still equal -> set dirty bit only when
         // necessary
