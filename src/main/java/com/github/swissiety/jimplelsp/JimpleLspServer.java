@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
-  private final Map<String, SootClassSource<? extends SootClass<?>>> textDocumentClassMapping =
+  private final Map<Path, SootClassSource<? extends SootClass<?>>> textDocumentClassMapping =
           new HashMap<>();
 
   private JimpleView view;
@@ -58,18 +58,18 @@ public class JimpleLspServer extends MagpieServer {
   @Nonnull
   public <T> CompletableFuture<T> pool(Callable<T> lambda) {
     return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return lambda.call();
-          } catch (Throwable e) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            e.printStackTrace(new PrintStream(bos));
-            String stackStraceString = bos.toString();
-            client.logMessage(new MessageParams(MessageType.Error, stackStraceString));
-          }
-          return null;
-        },
-        THREAD_POOL);
+            () -> {
+              try {
+                return lambda.call();
+              } catch (Throwable e) {
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                e.printStackTrace(new PrintStream(bos));
+                String stackStraceString = bos.toString();
+                client.logMessage(new MessageParams(MessageType.Error, stackStraceString));
+              }
+              return null;
+            },
+            THREAD_POOL);
   }
 
   @Nonnull
@@ -99,20 +99,25 @@ public class JimpleLspServer extends MagpieServer {
   }
 
   public boolean quarantineInputOrUpdate(@Nonnull String uri, String content)
-      throws ResolveException {
+          throws ResolveException {
     return quarantineInputOrUpdate(uri, CharStreams.fromString(content));
   }
 
   private boolean quarantineInputOrUpdate(@Nonnull String uri, @Nonnull CharStream charStream)
-      throws ResolveException {
+          throws ResolveException {
 
     final JimpleConverter jimpleConverter = new JimpleConverter();
     try {
+
+      final Path path = Util.uriToPath(uri);
+      if( !Files.exists(path)){
+        return false;
+      }
       SootClassSource<? extends SootClass<?>> scs =
-              jimpleConverter.run(charStream, new EagerInputLocation<>(), Util.uriToPath(uri));
+              jimpleConverter.run(charStream, new EagerInputLocation<>(), path);
       // input is clean
       final SootClassSource<? extends SootClass<?>> overriden =
-              textDocumentClassMapping.put(uri, scs);
+              textDocumentClassMapping.put(path, scs);
       if (overriden != null) {
         // possible optimization: compare if classes are still equal -> set dirty bit only when
         // necessary
@@ -127,11 +132,11 @@ public class JimpleLspServer extends MagpieServer {
     } catch (ResolveException e) {
       // feed error into diagnostics
       final Diagnostic d =
-          new Diagnostic(
-              Util.positionToDefRange(e.getRange()),
-              e.getMessage(),
-              DiagnosticSeverity.Error,
-              "JimpleParser");
+              new Diagnostic(
+                      Util.positionToDefRange(e.getRange()),
+                      e.getMessage(),
+                      DiagnosticSeverity.Error,
+                      "JimpleParser");
       client.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.singletonList(d)));
       return false;
     } catch (Exception e) {
@@ -142,11 +147,11 @@ public class JimpleLspServer extends MagpieServer {
       String stackStraceString = bos.toString();
 
       final Diagnostic d =
-          new Diagnostic(
-              new Range(new Position(0, 0), new Position(0, Integer.MAX_VALUE)),
-              stackStraceString,
-              DiagnosticSeverity.Error,
-              "JimpleParser");
+              new Diagnostic(
+                      new Range(new Position(0, 0), new Position(0, Integer.MAX_VALUE)),
+                      stackStraceString,
+                      DiagnosticSeverity.Error,
+                      "JimpleParser");
       // FIXME: merge with other diagnostics in magpie
       client.publishDiagnostics(new PublishDiagnosticsParams(uri, Collections.singletonList(d)));
       return false;
@@ -161,6 +166,8 @@ public class JimpleLspServer extends MagpieServer {
   }
 
   List<WorkspaceFolder> workspaceFolders = Collections.emptyList();
+
+  boolean jimpleFound = false;
 
   @Override
   public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
@@ -184,11 +191,14 @@ public class JimpleLspServer extends MagpieServer {
       capabilities.setFoldingRangeProvider(false);
       capabilities.setDocumentHighlightProvider(true);
 
-      // semantic token config
-      if (params.getCapabilities().getTextDocument().getSemanticTokens() != null) {
-        capabilities.setSemanticTokensProvider(
-            new SemanticTokensWithRegistrationOptions(
-                SyntaxHighlightingProvider.getLegend(), true));
+
+      if (params.getCapabilities().getTextDocument() != null) {
+        // semantic token config
+        if (params.getCapabilities().getTextDocument().getSemanticTokens() != null) {
+          capabilities.setSemanticTokensProvider(
+                  new SemanticTokensWithRegistrationOptions(
+                          SyntaxHighlightingProvider.getLegend(), true));
+        }
       }
       // check: capabilities.setDocumentFormattingProvider(true);
 
@@ -197,6 +207,31 @@ public class JimpleLspServer extends MagpieServer {
       return null;
     }
 
+
+    long startNanos = System.nanoTime();
+    pool(
+            () -> {
+              List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
+              rootPath.ifPresent(rootpaths::add);
+
+              workspaceFolders.forEach(
+                      f -> {
+                        final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
+                        if (rootpaths.stream()
+                                .noneMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
+                          // add workspace folder if its not a subdirectory of an already existing path
+                          rootpaths.add(path);
+                        }
+                      });
+
+              jimpleFound = scanDirectoryForJimple(rootpaths);
+
+              double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
+              client.logMessage(
+                      new MessageParams(MessageType.Log, "Workspace indexing took " + runtimeMs + " ms"));
+              return null;
+            }).get();
+
     return initialize;
   }
 
@@ -204,33 +239,12 @@ public class JimpleLspServer extends MagpieServer {
   public void initialized(InitializedParams params) {
     super.initialized(params);
 
-    long startNanos = System.nanoTime();
+    if (!jimpleFound) {
+      extractFromAPKJAR(rootpaths);
+    }else{
+      indexJimple( textDocumentClassMapping.keySet() );
+    }
 
-    pool(
-        () -> {
-          List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
-          rootPath.ifPresent(rootpaths::add);
-
-          workspaceFolders.forEach(
-              f -> {
-                final Path path = Util.uriToPath(f.getUri()).toAbsolutePath();
-                if (rootpaths.stream()
-                    .noneMatch(existingPath -> path.startsWith(existingPath.toAbsolutePath()))) {
-                  // add workspace folder if its not a subdirectory of an already existing path
-                  rootpaths.add(path);
-                }
-              });
-
-          final boolean jimpleFound = scanDirectoryForJimple(rootpaths);
-          if (!jimpleFound) {
-            extractFromAPKJAR(rootpaths);
-          }
-
-          double runtimeMs = (System.nanoTime() - startNanos) / 1e6;
-          client.logMessage(
-              new MessageParams(MessageType.Log, "Workspace indexing took " + runtimeMs + " ms"));
-          return null;
-        });
   }
 
   private void extractFromAPKJAR(List<Path> rootpaths) {
@@ -242,8 +256,8 @@ public class JimpleLspServer extends MagpieServer {
       final ConfigurationItem configurationItem = new ConfigurationItem();
       configurationItem.setSection("JimpleLSP.jimpleextraction");
       final CompletableFuture<List<Object>> configuration =
-          client.configuration(
-              new ConfigurationParams(Collections.singletonList(configurationItem)));
+              client.configuration(
+                      new ConfigurationParams(Collections.singletonList(configurationItem)));
 
       final List<Object> configItems;
       try {
@@ -271,12 +285,12 @@ public class JimpleLspServer extends MagpieServer {
         // find apk
         try (Stream<Path> paths = Files.walk(rootpath)) {
           paths
-              .filter(
-                  f -> {
-                    final String filename = f.toString().toLowerCase();
-                    return filename.endsWith(".apk") || filename.endsWith(".jar");
-                  })
-              .forEach(apkJarFiles::add);
+                  .filter(
+                          f -> {
+                            final String filename = f.toString().toLowerCase();
+                            return filename.endsWith(".apk") || filename.endsWith(".jar");
+                          })
+                  .forEach(apkJarFiles::add);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -292,7 +306,7 @@ public class JimpleLspServer extends MagpieServer {
         List<MessageActionItem> actions = new ArrayList<>();
         if (apkJarFiles.size() > 1) {
           sb.append(
-              "JimpleLSP found multiple APKs/Jars. Do you like to extract Jimple from them?\n");
+                  "JimpleLSP found multiple APKs/Jars. Do you like to extract Jimple from them?\n");
           actions.add(extract_all);
 
           for (Path apkJarFile : apkJarFiles) {
@@ -314,42 +328,42 @@ public class JimpleLspServer extends MagpieServer {
         messageRequestParams.setType(MessageType.Info);
 
         final CompletableFuture<MessageActionItem> requestFutur =
-            client.showMessageRequest(messageRequestParams);
+                client.showMessageRequest(messageRequestParams);
 
         requestFutur.thenApplyAsync(
-            (MessageActionItem messageActionItem) -> {
-              if (messageActionItem.equals(extract_all)) {
-                for (Path apkJarFile : apkJarFiles) {
+                (MessageActionItem messageActionItem) -> {
+                  if (messageActionItem.equals(extract_all)) {
+                    for (Path apkJarFile : apkJarFiles) {
 
-                  final String absoluteFilename = apkJarFile.toAbsolutePath().toString();
-                  File outputdir =
-                      new File(absoluteFilename.substring(0, absoluteFilename.length() - 4));
+                      final String absoluteFilename = apkJarFile.toAbsolutePath().toString();
+                      File outputdir =
+                              new File(absoluteFilename.substring(0, absoluteFilename.length() - 4));
 
-                  if (!extractAPKJAR(apkJarFile, outputdir)) {
+                      if (!extractAPKJAR(apkJarFile, outputdir)) {
+                        client.showMessage(
+                                new MessageParams(MessageType.Info, "Extraction of Jimple aborted."));
+                        break;
+                      }
+                      scanDirectoryForJimple(Collections.singletonList(outputdir.toPath()));
+                    }
                     client.showMessage(
-                        new MessageParams(MessageType.Info, "Extraction of Jimple aborted."));
-                    break;
+                            new MessageParams(
+                                    MessageType.Warning,
+                                    "You extracted multiple .apk or .jar files into the same workspace. If there are identical fully qualified classnames across these files and hence in the workspace JimpleLSP will have problems resolving the intended class."));
+                  } else {
+                    // FIXME: security! check if answer is from proposed list
+                    Path target = Paths.get(messageActionItem.getTitle());
+
+                    final String absoluteFilename = target.toAbsolutePath().toString();
+                    File outputdir =
+                            new File(absoluteFilename.substring(0, absoluteFilename.length() - 4));
+                    extractAPKJAR(target, outputdir);
+
+                    scanDirectoryForJimple(Collections.singletonList(outputdir.toPath()));
                   }
-                  scanDirectoryForJimple(Collections.singletonList(outputdir.toPath()));
-                }
-                client.showMessage(
-                    new MessageParams(
-                        MessageType.Warning,
-                        "You extracted multiple .apk or .jar files into the same workspace. If there are identical fully qualified classnames across these files and hence in the workspace JimpleLSP will have problems resolving the intended class."));
-              } else {
-                // FIXME: security! check if answer is from proposed list
-                Path target = Paths.get(messageActionItem.getTitle());
 
-                final String absoluteFilename = target.toAbsolutePath().toString();
-                File outputdir =
-                    new File(absoluteFilename.substring(0, absoluteFilename.length() - 4));
-                extractAPKJAR(target, outputdir);
-
-                scanDirectoryForJimple(Collections.singletonList(outputdir.toPath()));
-              }
-
-              return messageActionItem;
-            });
+                  return messageActionItem;
+                });
       }
     }
   }
@@ -359,24 +373,24 @@ public class JimpleLspServer extends MagpieServer {
 
       if (!Files.exists(Paths.get(sootpath))) {
         client.showMessage(
-            new MessageParams(
-                MessageType.Error,
-                "Configured path to the soot executable  \"" + sootpath + "\" does not exist."));
+                new MessageParams(
+                        MessageType.Error,
+                        "Configured path to the soot executable  \"" + sootpath + "\" does not exist."));
         return false;
       }
 
       // dont overwrite
       if (outputdir.exists()) {
         client.showMessage(
-            new MessageParams(
-                MessageType.Error, "Output Directory " + outputdir + " exists already."));
+                new MessageParams(
+                        MessageType.Error, "Output Directory " + outputdir + " exists already."));
         return false;
       }
       if (!outputdir.mkdir()) {
         client.showMessage(
-            new MessageParams(
-                MessageType.Error,
-                "Can not create directory  \"" + outputdir + "\" for extracted files."));
+                new MessageParams(
+                        MessageType.Error,
+                        "Can not create directory  \"" + outputdir + "\" for extracted files."));
         return false;
       }
 
@@ -385,64 +399,64 @@ public class JimpleLspServer extends MagpieServer {
 
         if (androidplatform.isEmpty()) {
           client.showMessage(
-              new MessageParams(
-                  MessageType.Error, "The Configuration for androidplatform is empty."));
+                  new MessageParams(
+                          MessageType.Error, "The Configuration for androidplatform is empty."));
           return false;
         }
 
         if (!Files.exists(Paths.get(androidplatform))) {
           client.showMessage(
-              new MessageParams(
-                  MessageType.Error,
-                  "Configured androidplatform path \"" + androidplatform + "\" does not exist."));
+                  new MessageParams(
+                          MessageType.Error,
+                          "Configured androidplatform path \"" + androidplatform + "\" does not exist."));
           return false;
         }
 
         // soots arguments for an APK
         options =
-            new String[] {
-              "-process-dir",
-              target.toString(),
-              "-pp",
-              "-src-prec",
-              "apk",
-              "-android-jars",
-              androidplatform,
-              "-allow-phantom-refs",
-              "-d",
-              outputdir.toString(),
-              "-output-format",
-              "J"
-            };
+                new String[]{
+                        "-process-dir",
+                        target.toString(),
+                        "-pp",
+                        "-src-prec",
+                        "apk",
+                        "-android-jars",
+                        androidplatform,
+                        "-allow-phantom-refs",
+                        "-d",
+                        outputdir.toString(),
+                        "-output-format",
+                        "J"
+                };
 
       } else {
         // soots arguments for a JAR
         options =
-            new String[] {
-              "-process-dir",
-              target.toString(),
-              "-pp",
-              "-src-prec",
-              "c",
-              "-allow-phantom-refs",
-              "-d",
-              outputdir.toString(),
-              "-output-format",
-              "J"
-            };
+                new String[]{
+                        "-process-dir",
+                        target.toString(),
+                        "-pp",
+                        "-src-prec",
+                        "c",
+                        "-allow-phantom-refs",
+                        "-d",
+                        outputdir.toString(),
+                        "-output-format",
+                        "J"
+                };
       }
 
       // Main.v().run(options);
 
       Runtime rt = Runtime.getRuntime();
       Process pr =
-          rt.exec(
-              "java -jar " + sootpath + " soot.Main " + String.join(" ", Arrays.asList(options)));
+              rt.exec(
+                      "java -jar " + sootpath + " soot.Main " + String.join(" ", Arrays.asList(options)));
 
       final int ret = pr.waitFor();
       if (ret == 0) {
         client.showMessage(
-            new MessageParams(MessageType.Info, "Jimple extracted to \"" + outputdir + "\"."));
+                new MessageParams(MessageType.Info, "Jimple extracted to \"" + outputdir + "\"."));
       } else {
         client.showMessage(new MessageParams(MessageType.Error, pr.getErrorStream().toString()));
       }
@@ -468,39 +482,38 @@ public class JimpleLspServer extends MagpieServer {
     for (Path rootpath : rootpaths) {
       // jimple
       try (Stream<Path> paths = Files.walk(rootpath)) {
-        paths.filter(f -> f.toString().endsWith(".jimple")).forEach(jimpleFiles::add);
+        paths.filter(f -> f.toString().toLowerCase().endsWith(".jimple")).forEach(jimpleFiles::add);
       } catch (IOException e) {
         e.printStackTrace();
       }
     }
 
     for (Path jimpleFile : jimpleFiles) {
-      try {
-        final String uri = Util.pathToUri(jimpleFile);
-        quarantineInputOrUpdate(uri);
-      } catch (IOException exception) {
-        exception.printStackTrace();
-      }
+      textDocumentClassMapping.put(jimpleFile, null);
     }
 
     return !jimpleFiles.isEmpty();
   }
 
-  @Nullable
-  public ClassType docIdentifierToClassType(@Nonnull String textDocument) {
-    final SootClassSource<?> sootClassSource = textDocumentClassMapping.get(textDocument);
-    if (sootClassSource == null) {
-      return null;
-    }
-    return sootClassSource.getClassType();
+
+  private void indexJimple( Collection<Path> jimpleFiles) {
+      for(Path jimpleFile : jimpleFiles) {
+        try {
+          final String uri = Util.pathToUri(jimpleFile);
+          quarantineInputOrUpdate(uri);
+        } catch (IOException exception) {
+          exception.printStackTrace();
+        }
+      }
+
   }
 
   @Nullable
   public ClassType uriToClasstype(@Nonnull String strUri) {
-    final SootClassSource<?> scs = textDocumentClassMapping.get(strUri);
-    if (scs == null) {
+    final SootClassSource<?> sootClassSource = textDocumentClassMapping.get(Util.uriToPath(strUri));
+    if (sootClassSource == null) {
       return null;
     }
-    return scs.getClassType();
+    return sootClassSource.getClassType();
   }
 }
