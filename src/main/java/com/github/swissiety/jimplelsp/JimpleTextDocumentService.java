@@ -44,7 +44,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 public class JimpleTextDocumentService extends MagpieTextDocumentService {
   private final Map<Path, SignaturePositionResolver> docSignaturePositionResolver = new HashMap<>();
 
-  private final Map<Path, ParseTree> docParseTree = new HashMap<>();
+  private final Map<Path, JimpleParser> docParseTree = new HashMap<>();
 
   /**
    * Instantiates a new magpie text document service.
@@ -138,7 +138,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
       JimpleParser jimpleParser =
           JimpleConverterUtil.createJimpleParser(CharStreams.fromString(text), path);
       ParseTree parseTree = jimpleParser.file();
-      docParseTree.put(path, parseTree);
+      docParseTree.put(path, jimpleParser);
 
       SignaturePositionResolver sigposresolver = new SignaturePositionResolver(path, parseTree);
       docSignaturePositionResolver.put(path, sigposresolver);
@@ -194,7 +194,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
                 // maybe: cache instance for this file like for sigs
                 Path path = Util.uriToPath(uri);
-                ParseTree parseTree = getParseTree(path);
+                ParseTree parseTree = getParser(path).file();
                 if (parseTree == null) {
                   return null;
                 }
@@ -265,7 +265,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
           getServer().getView().getClass(((MethodSignature) sig).getDeclClassType());
       if (aClass.isPresent()) {
         SootClass<?> sc = aClass.get();
-        final Optional<? extends SootMethod> methodOpt = sc.getMethod(((MethodSignature) sig));
+        final Optional<? extends SootMethod> methodOpt =
+            sc.getMethod((((MethodSignature) sig).getSubSignature()));
         if (methodOpt.isPresent()) {
           final SootMethod method = methodOpt.get();
           SignaturePositionResolver resolver =
@@ -434,7 +435,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (aClass.isPresent()) {
                   SootClass<?> sc = aClass.get();
                   Path path = Util.uriToPath(uri);
-                  ParseTree parseTree = getParseTree(path);
+                  ParseTree parseTree = getParser(path).file();
                   if (parseTree == null) {
                     return null;
                   }
@@ -485,7 +486,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         path,
         k -> {
           try {
-            ParseTree parseTree = getParseTree(path);
+            ParseTree parseTree = getParser(path).file();
             if (parseTree == null) {
               return null;
             }
@@ -497,14 +498,16 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         });
   }
 
-  private ParseTree getParseTree(@Nonnull Path path) {
+  /**
+   * onlyValid: flag to specify whether a partial parsetree ie of invalid or incomplete jimple files
+   * are mandatory
+   */
+  private JimpleParser getParser(@Nonnull Path path) {
     return docParseTree.computeIfAbsent(
         path,
         k -> {
           try {
-            JimpleParser jimpleParser =
-                JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
-            return jimpleParser.file();
+            return JimpleConverterUtil.createJimpleParser(CharStreams.fromPath(path), path);
           } catch (IOException e) {
             forwardException(e);
             return null;
@@ -544,7 +547,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
                 // maybe: cache instance for this file like for sigs
                 Path path = Util.uriToPath(uri);
-                ParseTree parseTree = getParseTree(path);
+                ParseTree parseTree = getParser(path).file();
                 if (parseTree == null) {
                   return null;
                 }
@@ -580,7 +583,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                 if (aClass.isPresent()) {
                   SootClass<?> sc = aClass.get();
                   final Optional<? extends SootMethod> method =
-                      sc.getMethod(((MethodSignature) sig));
+                      sc.getMethod(((MethodSignature) sig).getSubSignature());
                   if (method.isPresent()) {
                     return Util.positionToLocationList(
                         Util.pathToUri(sc.getClassSource().getSourcePath()),
@@ -699,7 +702,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
             () -> {
               final String uri = position.getTextDocument().getUri();
               Path path = Util.uriToPath(uri);
-              ParseTree parseTree = getParseTree(path);
+              ParseTree parseTree = getParser(path).file();
               if (parseTree == null) {
                 return null;
               }
@@ -865,28 +868,33 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     return getServer()
         .pool(
             () -> {
-              ParseTree parseTree = getParseTree(path);
+              final JimpleParser parser = getParser(path);
+              ParseTree parseTree = parser.file();
               if (parseTree == null) {
+
+                // FIXME: try to recover from a syntax error to help the user editing
+
                 return null;
               }
               return SyntaxHighlightingProvider.paintbrush(parseTree);
             });
   }
 
-
-    public ParseTree getDocParseTree(Path path) {
-        return docParseTree.computeIfAbsent( path, p -> {
-            try {
-                analyzeFile( Util.pathToUri(path), Files.readAllBytes(path).toString() );
-                return docParseTree.get(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
+  public JimpleParser getDocParseTree(Path path) {
+    return docParseTree.computeIfAbsent(
+        path,
+        p -> {
+          try {
+            analyzeFile(Util.pathToUri(path), Arrays.toString(Files.readAllBytes(path)));
+            return docParseTree.get(path);
+          } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+          }
         });
-    }
+  }
 
-    @Override
+  @Override
   protected String inferLanguage(String uri) {
     if (uri.endsWith(".jimple")) {
       return "jimple";

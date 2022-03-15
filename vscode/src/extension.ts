@@ -136,14 +136,14 @@ function showWelcomeMessage(context: ExtensionContext) {
 	let previousVersionArray = previousVersion ? previousVersion.split('.').map((s: string) => Number(s)) : [0, 0, 0];
 	let currentVersionArray = currentVersion.split('.').map((s: string) => Number(s));
 	if (previousVersion === undefined || previousVersion.length === 0) {
-		message = "Thanks for using JimpleLSP.";
+		message = "Thanks for using JimpleLSP!\n";
 	} else if (currentVersion !== previousVersion && (
 		(previousVersionArray[0] === currentVersionArray[0] && previousVersionArray[1] === currentVersionArray[1] && previousVersionArray[2] < currentVersionArray[2]) ||
 		(previousVersionArray[0] === currentVersionArray[0] && previousVersionArray[1] < currentVersionArray[1]) ||
 		(previousVersionArray[0] < currentVersionArray[0])
 	)
 	) {
-		message = "JimpleLSP Plugin updated to " + currentVersion + ".";
+		message = "JimpleLSP Plugin updated to " + currentVersion + ".\n";
 	}
 	if (message) {
 		window.showInformationMessage(message, 'Settings', '⭐️ Star on Github', '🐞 Report Bug')

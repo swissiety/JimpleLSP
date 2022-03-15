@@ -11,16 +11,17 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.nio.file.Path;
-import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * The LocalResolver handles gathering and queriing for Local Positions in a given File.
@@ -47,7 +48,7 @@ public class LocalPositionResolver {
   private List<Pair<Position, String>> getLocals(SootClass<?> sc, org.eclipse.lsp4j.Position pos) {
     final Optional<? extends SootMethod> surroundingMethod = getSootMethodFromPosition(sc, pos);
     return surroundingMethod
-        .map(sootMethod -> localsOfMethod.get(sootMethod.getSubSignature()))
+        .map(sootMethod -> localsOfMethod.get(sootMethod.getSignature().getSubSignature()))
         .orElse(null);
   }
 
@@ -94,7 +95,7 @@ public class LocalPositionResolver {
       return null;
     }
     final SootMethod sm = surroundingMethod.get();
-    List<Pair<Position, String>> locals = localsOfMethod.get(sm.getSubSignature());
+    List<Pair<Position, String>> locals = localsOfMethod.get(sm.getSignature().getSubSignature());
     if (locals == null) {
       return null;
     }
@@ -105,7 +106,7 @@ public class LocalPositionResolver {
     }
     final String localname = localOpt.get().getRight();
 
-    final Map<String, Type> stringTypeMap = localToType.get(sm.getSubSignature());
+    final Map<String, Type> stringTypeMap = localToType.get(sm.getSignature().getSubSignature());
     if (stringTypeMap != null) {
       return stringTypeMap.get(localname);
     }
