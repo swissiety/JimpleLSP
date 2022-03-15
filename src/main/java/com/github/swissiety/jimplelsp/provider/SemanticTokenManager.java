@@ -1,11 +1,11 @@
 package com.github.swissiety.jimplelsp.provider;
 
+import org.eclipse.lsp4j.SemanticTokensLegend;
+
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import javax.annotation.Nonnull;
-import org.eclipse.lsp4j.SemanticTokenModifiers;
-import org.eclipse.lsp4j.SemanticTokensLegend;
 
 /** @author Markus Schmidt */
 public class SemanticTokenManager {
@@ -19,7 +19,7 @@ public class SemanticTokenManager {
   }
 
   public void paintText(
-      @Nonnull String type, @Nonnull SemanticTokenModifiers mod, int line, int col, int length) {
+          @Nonnull String type, @Nonnull String mod, int line, int col, int length) {
     //    at index 5*i - deltaLine: token line number, relative to the previous token
     encodedSemanticTokens.add(line - lastTokenLine);
 
@@ -40,7 +40,7 @@ public class SemanticTokenManager {
     if (typeIdx < 0) {
       throw new RuntimeException(type + " is not supported in semantic token legend!");
     }
-    encodedSemanticTokens.add(Math.max(typeIdx, 0));
+    encodedSemanticTokens.add(typeIdx);
 
     //    at index 5*i+4 - tokenModifiers: each set bit will be looked up in
     // SemanticTokensLegend.tokenModifiers

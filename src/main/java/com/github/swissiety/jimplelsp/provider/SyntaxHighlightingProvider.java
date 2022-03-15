@@ -2,16 +2,17 @@ package com.github.swissiety.jimplelsp.provider;
 
 import de.upb.swt.soot.jimple.JimpleBaseVisitor;
 import de.upb.swt.soot.jimple.JimpleParser;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import javax.annotation.Nonnull;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.eclipse.lsp4j.SemanticTokenTypes;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
+
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 
 /** @author Markus Schmidt */
 public class SyntaxHighlightingProvider {
@@ -59,7 +60,7 @@ public class SyntaxHighlightingProvider {
       // zero offset line/column
       semanticTokenManager.paintText(
           tokentype,
-          null,
+          "",
           token.getLine() - 1,
           token.getCharPositionInLine(),
           token.getText().length());
@@ -68,9 +69,11 @@ public class SyntaxHighlightingProvider {
     private void paint(@Nonnull String tokentype, @Nonnull ParserRuleContext ctx) {
       // TODO: add tokenModifier
       // zero offset line/column
+      String tokenText = ctx.getText();
+
       semanticTokenManager.paintText(
           tokentype,
-          null,
+          "",
           ctx.start.getLine() - 1,
           ctx.start.getCharPositionInLine(),
           ctx.getText().length());
@@ -174,7 +177,7 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitMethod_signature(JimpleParser.Method_signatureContext ctx) {
-      paint(SemanticTokenTypes.Variable, ctx.identifier());
+      // paint(SemanticTokenTypes.Variable, ctx.identifier());
       paint(SemanticTokenTypes.Type, ctx.class_name);
       visitMethod_subsignature(ctx.method_subsignature());
       return semanticTokenManager;
@@ -204,8 +207,17 @@ public class SyntaxHighlightingProvider {
       JimpleParser.IdentifierContext identifier = ctx.identifier();
       if (identifier != null) {
         paint(SemanticTokenTypes.Variable, identifier);
+        final JimpleParser.Array_descriptorContext arrayDescrCtx = ctx.array_descriptor();
+        if( arrayDescrCtx != null){
+          visitArray_descriptor(arrayDescrCtx);
+        }
       }
-      visitChildren(ctx);
+
+      final JimpleParser.Field_signatureContext ctx1 = ctx.field_signature();
+      if( ctx1 != null){
+        visitField_signature(ctx1);
+      }
+
       return semanticTokenManager;
     }
 
@@ -250,7 +262,6 @@ public class SyntaxHighlightingProvider {
         visitImmediate(ctx.immediate());
         //        paint(SemanticTokenTypes.Keyword, ctx.start);
       }
-      super.visitStmt(ctx);
       return semanticTokenManager;
     }
 
@@ -269,16 +280,22 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitAssignments(JimpleParser.AssignmentsContext ctx) {
-      paint(SemanticTokenTypes.Variable, ctx.start);
-
       JimpleParser.Identity_refContext identity_refContext = ctx.identity_ref();
       if (identity_refContext != null) {
+        paint(SemanticTokenTypes.Variable, ctx.identifier());
         paint(SemanticTokenTypes.Keyword, identity_refContext.start);
         if (identity_refContext.DEC_CONSTANT() != null) {
           paint(SemanticTokenTypes.Keyword, identity_refContext.DEC_CONSTANT().getSymbol());
         }
+      }else {
+
+        if(ctx.reference() != null){
+          visitReference(ctx.reference());
+        }else{
+          paint( SemanticTokenTypes.Variable, ctx.identifier());
+        }
+        visitValue(ctx.value());
       }
-      visitChildren(ctx);
       return semanticTokenManager;
     }
 
@@ -299,16 +316,36 @@ public class SyntaxHighlightingProvider {
     @Override
     public SemanticTokenManager visitInvoke_expr(JimpleParser.Invoke_exprContext ctx) {
       paint(SemanticTokenTypes.Keyword, ctx.start);
-      if (ctx.local_name != null) {
-        paint(SemanticTokenTypes.Variable, ctx.local_name);
+
+      if (ctx.identifier() != null) {
+        paint(SemanticTokenTypes.Variable, ctx.identifier());
       }
-      if (ctx.dyn_args != null) {
-        ctx.dyn_args.immediate().forEach(this::visitImmediate);
+
+      if( ctx.DYNAMICINVOKE() != null ) {
+
+        if (ctx.type() != null) {
+          visitType(ctx.type());
+        }
+        if (ctx.type_list() != null) {
+          visitType_list(ctx.type_list());
+        }
+        if (ctx.dyn_args != null) {
+          ctx.dyn_args.immediate().forEach(this::visitImmediate);
+        }
+
+        visitMethod_signature(ctx.method_signature());
+
+        if (ctx.staticargs != null) {
+          ctx.staticargs.immediate().forEach(this::visitImmediate);
+        }
+      }else{
+        visitMethod_signature(ctx.method_signature());
+
+        if (ctx.arg_list() != null && !ctx.arg_list().isEmpty()){
+          visitArg_list(ctx.arg_list(0));
+        }
       }
-      if (ctx.staticargs != null) {
-        ctx.staticargs.immediate().forEach(this::visitImmediate);
-      }
-      visitChildren(ctx);
+
       return semanticTokenManager;
     }
 
