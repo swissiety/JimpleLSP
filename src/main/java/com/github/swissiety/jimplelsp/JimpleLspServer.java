@@ -63,14 +63,19 @@ public class JimpleLspServer extends MagpieServer {
           try {
             return lambda.call();
           } catch (Throwable e) {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            e.printStackTrace(new PrintStream(bos));
-            String stackStraceString = bos.toString();
-            client.logMessage(new MessageParams(MessageType.Error, stackStraceString));
+            client.logMessage(new MessageParams(MessageType.Error, getStringFrom(e)));
           }
           return null;
         },
-        THREAD_POOL);
+            THREAD_POOL);
+  }
+
+  static String getStringFrom(Throwable e) {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    final PrintStream printStream = new PrintStream(bos);
+    e.printStackTrace(printStream);
+    printStream.flush();
+    return bos.toString();
   }
 
   @Nonnull
@@ -142,10 +147,7 @@ public class JimpleLspServer extends MagpieServer {
       return false;
     } catch (Exception e) {
       // feed error into diagnostics
-
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      e.printStackTrace(new PrintStream(bos));
-      String stackStraceString = bos.toString();
+      String stackStraceString = getStringFrom(e);
 
       final Diagnostic d =
           new Diagnostic(
@@ -465,11 +467,7 @@ public class JimpleLspServer extends MagpieServer {
 
     } catch (Exception e) {
 
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      e.printStackTrace(new PrintStream(bos));
-      String stackStraceString = bos.toString();
-
-      client.showMessage(new MessageParams(MessageType.Error, stackStraceString));
+      client.showMessage(new MessageParams(MessageType.Error, getStringFrom(e)));
       e.printStackTrace();
       return false;
     }
