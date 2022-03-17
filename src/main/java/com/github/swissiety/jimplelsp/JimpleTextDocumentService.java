@@ -883,18 +883,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     }
 
     @Nullable
-    ParserRuleContext tryParse(@Nonnull JimpleParser jp) {
-
-        List<Function<JimpleParser, ParserRuleContext>> levels = new ArrayList<>();
-        levels.add(JimpleParser::file);
-        levels.add(JimpleParser::member);
-        levels.add(JimpleParser::method_body);
-        levels.add(JimpleParser::declaration);
-        levels.add(JimpleParser::statement);
-        levels.add(JimpleParser::field_signature);
-        levels.add(JimpleParser::method_signature);
-        levels.add(JimpleParser::method_subsignature);
-        levels.add(JimpleParser::immediate);
+    ParserRuleContext tryParse(@Nonnull JimpleParser jp, @Nonnull List<Function<JimpleParser, ParserRuleContext>> levels) {
 
         ParserRuleContext tree;
         for (Function<JimpleParser, ParserRuleContext> level : levels) {
@@ -931,7 +920,25 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                                 return null;
                             }
 
-                            final ParserRuleContext parseTree = tryParse(parser);
+
+                            List<Function<JimpleParser, ParserRuleContext>> levels = new ArrayList<>();
+                            levels.add(JimpleParser::file);
+                            levels.add(JimpleParser::member);
+                            levels.add(JimpleParser::method_body);
+
+
+                            // FIXME: enable multiple instances of those.. *
+                            levels.add(JimpleParser::declaration);
+                            levels.add(JimpleParser::statement);
+                            levels.add(JimpleParser::trap_clause);
+
+                            levels.add(JimpleParser::field_signature);
+                            levels.add(JimpleParser::method_signature);
+                            levels.add(JimpleParser::method_subsignature);
+                            levels.add(JimpleParser::immediate);
+
+
+                            final ParserRuleContext parseTree = tryParse(parser, levels);
                             if (parseTree == null) {
                                 return null;
                             }

@@ -171,10 +171,28 @@ public class SemanticTokenTest {
     }
   }
 
-  // @Test
+  @Test
   public void partialValidInputTest_justStmts() {
-    //  JimpleLspServer server = new JimpleLspServer();
-    //  server.getTextDocumentService().semanticTokensFull(new SemanticTokensParams( new
-    // TextDocumentIdentifier("file:///src/test/resources/partial_invalid_inputs/invalid_juststmts.jimple")));
+    JimpleLspServer server = new JimpleLspServer();
+    final Path workspaceFolder = Paths.get("src/test/resources/partial_invalid_inputs/");
+    assertTrue(Files.exists(workspaceFolder));
+
+    LspClient client = new LspClient(Collections.singletonList(workspaceFolder));
+    client.connectTo(server);
+
+    Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmts.jimple");
+    CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
+            server
+                    .getTextDocumentService()
+                    .semanticTokensFull(
+                            new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
+    try {
+      final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
+      assertNotNull(semanticTokens);
+      System.out.println(semanticTokens.getData());
+
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
   }
 }
