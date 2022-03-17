@@ -249,19 +249,31 @@ public class SyntaxHighlightingProvider {
     @Override
     public SemanticTokenManager visitStmt(JimpleParser.StmtContext ctx) {
       if (ctx.IF() != null
-          || ctx.RETURN() != null
-          || ctx.ENTERMONITOR() != null
-          || ctx.EXITMONITOR() != null
-          || ctx.BREAKPOINT() != null
-          || ctx.SWITCH() != null
-          || ctx.THROW() != null
-          || ctx.NOP() != null) {
+              || ctx.RETURN() != null
+              || ctx.ENTERMONITOR() != null
+              || ctx.EXITMONITOR() != null
+              || ctx.BREAKPOINT() != null
+              || ctx.THROW() != null
+              || ctx.NOP() != null) {
         paint(SemanticTokenTypes.Keyword, ctx.start);
+        if (ctx.immediate() != null) {
+          visitImmediate(ctx.immediate());
+        }
+      } else if (ctx.assignments() != null) {
+        visitAssignments(ctx.assignments());
+      } else if (ctx.goto_stmt() != null) {
+        visitGoto_stmt(ctx.goto_stmt());
+      } else if (ctx.SWITCH() != null) {
+        paint(SemanticTokenTypes.Keyword, ctx.start);
+        ctx.case_stmt().forEach(this::visitCase_stmt);
       }
-      if (ctx.immediate() != null) {
-        visitImmediate(ctx.immediate());
-        //        paint(SemanticTokenTypes.Keyword, ctx.start);
-      }
+
+      return semanticTokenManager;
+    }
+
+    @Override
+    public SemanticTokenManager visitCase_stmt(JimpleParser.Case_stmtContext ctx) {
+      paint(SemanticTokenTypes.Keyword, ctx.start);
       return semanticTokenManager;
     }
 

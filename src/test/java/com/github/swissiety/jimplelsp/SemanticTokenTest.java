@@ -98,7 +98,10 @@ public class SemanticTokenTest {
     }
 
     @Override
-    public void logMessage(MessageParams messageParams) {}
+    public void logMessage(MessageParams messageParams) {
+      final String str = messageParams.getType() + ": " + messageParams.getMessage();
+      System.out.println(str);
+    }
 
     @Override
     public CompletableFuture<List<WorkspaceFolder>> workspaceFolders() {
@@ -152,30 +155,12 @@ public class SemanticTokenTest {
     LspClient client = new LspClient(Collections.singletonList(workspaceFolder));
     client.connectTo(server);
 
-    Path path =
-        Paths.get(
-            "src/test/resources/sms_google/com.google.android.gcm.GCMBaseIntentService.jimple");
+    Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmt.jimple");
     CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
-        server
-            .getTextDocumentService()
-            .semanticTokensFull(
-                new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
-
-    try {
-      final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
-      assertNotNull(semanticTokens);
-      System.out.println(semanticTokens.getData());
-
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-
-    path = Paths.get("file:///src/test/resources/partial_invalid_inputs/invalid_juststmt.jimple");
-    semanticTokensCompletableFuture =
-        server
-            .getTextDocumentService()
-            .semanticTokensFull(
-                new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
+            server
+                    .getTextDocumentService()
+                    .semanticTokensFull(
+                            new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
     try {
       final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
       assertNotNull(semanticTokens);
