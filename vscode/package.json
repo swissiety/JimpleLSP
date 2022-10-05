@@ -4,7 +4,7 @@
 	"description": "A Language Server implementation for Soots Jimple powered by FutureSoot & the MagpieBridge framework.",
 	"author": "Markus Schmidt",
 	"license": "MIT",
-	"version": "0.0.11",
+	"version": "0.1.0",
 	"homepage": "https://github.com/swissiety/JimpleLSP/",
 	"bugs": {
 		"url": "https://github.com/swissiety/JimpleLSP/issues"
@@ -18,7 +18,7 @@
 		"Programming Languages"
 	],
 	"keywords": [
-		"Soot, Jimple, Language Server, LSP, .jimple"
+		"Soot, FutureSoot, Jimple, Language Server, LSP, .jimple"
 	],
 	"engines": {
 		"vscode": "^1.56.0"
