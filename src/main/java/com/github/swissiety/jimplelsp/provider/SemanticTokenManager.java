@@ -18,8 +18,7 @@ public class SemanticTokenManager {
     this.legend = legend;
   }
 
-  public void paintText(
-          @Nonnull String type, @Nonnull String mod, int line, int col, int length) {
+  public void paintText(@Nonnull String type, @Nonnull String mod, int line, int col, int length) {
     //    at index 5*i - deltaLine: token line number, relative to the previous token
     encodedSemanticTokens.add(line - lastTokenLine);
 

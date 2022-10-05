@@ -208,13 +208,13 @@ public class SyntaxHighlightingProvider {
       if (identifier != null) {
         paint(SemanticTokenTypes.Variable, identifier);
         final JimpleParser.Array_descriptorContext arrayDescrCtx = ctx.array_descriptor();
-        if( arrayDescrCtx != null){
+        if (arrayDescrCtx != null) {
           visitArray_descriptor(arrayDescrCtx);
         }
       }
 
       final JimpleParser.Field_signatureContext ctx1 = ctx.field_signature();
-      if( ctx1 != null){
+      if (ctx1 != null) {
         visitField_signature(ctx1);
       }
 
@@ -299,12 +299,12 @@ public class SyntaxHighlightingProvider {
         if (identity_refContext.DEC_CONSTANT() != null) {
           paint(SemanticTokenTypes.Keyword, identity_refContext.DEC_CONSTANT().getSymbol());
         }
-      }else {
+      } else {
 
-        if(ctx.reference() != null){
+        if (ctx.reference() != null) {
           visitReference(ctx.reference());
-        }else{
-          paint( SemanticTokenTypes.Variable, ctx.identifier());
+        } else {
+          paint(SemanticTokenTypes.Variable, ctx.identifier());
         }
         visitValue(ctx.value());
       }
@@ -333,7 +333,7 @@ public class SyntaxHighlightingProvider {
         paint(SemanticTokenTypes.Variable, ctx.identifier());
       }
 
-      if( ctx.DYNAMICINVOKE() != null ) {
+      if (ctx.DYNAMICINVOKE() != null) {
 
         if (ctx.type() != null) {
           visitType(ctx.type());
@@ -350,10 +350,10 @@ public class SyntaxHighlightingProvider {
         if (ctx.staticargs != null) {
           ctx.staticargs.immediate().forEach(this::visitImmediate);
         }
-      }else{
+      } else {
         visitMethod_signature(ctx.method_signature());
 
-        if (ctx.arg_list() != null && !ctx.arg_list().isEmpty()){
+        if (ctx.arg_list() != null && !ctx.arg_list().isEmpty()) {
           visitArg_list(ctx.arg_list(0));
         }
       }

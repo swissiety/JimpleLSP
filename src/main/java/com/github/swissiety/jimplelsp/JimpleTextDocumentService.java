@@ -64,11 +64,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         return (JimpleLspServer) server;
     }
 
-    /**
-     * TODO: refactor into magpiebridge
-     */
+    /** TODO: refactor into magpiebridge */
     protected void forwardException(@Nonnull Exception e) {
-        getServer().getClient().logMessage(new MessageParams(MessageType.Error, JimpleLspServer.getStringFrom(e)));
+        getServer()
+                .getClient()
+                .logMessage(new MessageParams(MessageType.Error, JimpleLspServer.getStringFrom(e)));
     }
 
     @Override
@@ -883,7 +883,8 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     }
 
     @Nullable
-    ParserRuleContext tryParse(@Nonnull JimpleParser jp, @Nonnull List<Function<JimpleParser, ParserRuleContext>> levels) {
+    ParserRuleContext tryParse(
+            @Nonnull JimpleParser jp, @Nonnull List<Function<JimpleParser, ParserRuleContext>> levels) {
 
         ParserRuleContext tree;
         for (Function<JimpleParser, ParserRuleContext> level : levels) {
@@ -903,7 +904,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         return null;
     }
 
-
     @Override
     public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
         final TextDocumentIdentifier textDoc = params.getTextDocument();
@@ -920,23 +920,19 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                                 return null;
                             }
 
-
                             List<Function<JimpleParser, ParserRuleContext>> levels = new ArrayList<>();
                             levels.add(JimpleParser::file);
                             levels.add(JimpleParser::member);
                             levels.add(JimpleParser::method_body);
 
-
-                            // FIXME: enable multiple instances of those.. *
-                            levels.add(JimpleParser::declaration);
-                            levels.add(JimpleParser::statement);
-                            levels.add(JimpleParser::trap_clause);
+                            levels.add(JimpleParser::declarations);
+                            levels.add(JimpleParser::statements);
+                            levels.add(JimpleParser::trap_clauses);
 
                             levels.add(JimpleParser::field_signature);
                             levels.add(JimpleParser::method_signature);
                             levels.add(JimpleParser::method_subsignature);
                             levels.add(JimpleParser::immediate);
-
 
                             final ParserRuleContext parseTree = tryParse(parser, levels);
                             if (parseTree == null) {
@@ -968,5 +964,4 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         }
         return super.inferLanguage(uri);
     }
-
 }
