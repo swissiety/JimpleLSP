@@ -22,6 +22,7 @@ jobs:
         with:
           java-version: 1.8
           cache: maven
+          distribution: temurin
 
       - name: Check Format
         run: mvn com.coveo:fmt-maven-plugin:check -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
