@@ -9,7 +9,7 @@ A LSP Server implementation allows an IDE, which supports the LSP, to provide we
 **Or:** Compile from source.
 You need a fresh build of FutureSoot in your local Maven Repository.
 1. If you have access to FutureSoot run `git clone https://github.com/secure-software-engineering/soot-reloaded.git && cd soot-reloaded && mvn install`
-(Latest working commit is #509c31a7c3d42781e7009058dbf7e57593795acc). 
+(Latest working commit is #). 
 Otherwise download the FutureSoot Snapshot and install it to your local repository via
    `mvn install:install-file -Dfile=<path-to-file> -DgroupId=de.upb.swt -DartifactId=soot -Dversion=4.0.0-SNAPSHOT -Dpackaging=jar`
 

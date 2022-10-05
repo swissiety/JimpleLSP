@@ -249,12 +249,12 @@ public class SyntaxHighlightingProvider {
     @Override
     public SemanticTokenManager visitStmt(JimpleParser.StmtContext ctx) {
       if (ctx.IF() != null
-              || ctx.RETURN() != null
-              || ctx.ENTERMONITOR() != null
-              || ctx.EXITMONITOR() != null
-              || ctx.BREAKPOINT() != null
-              || ctx.THROW() != null
-              || ctx.NOP() != null) {
+          || ctx.RETURN() != null
+          || ctx.ENTERMONITOR() != null
+          || ctx.EXITMONITOR() != null
+          || ctx.BREAKPOINT() != null
+          || ctx.THROW() != null
+          || ctx.NOP() != null) {
         paint(SemanticTokenTypes.Keyword, ctx.start);
         if (ctx.immediate() != null) {
           visitImmediate(ctx.immediate());

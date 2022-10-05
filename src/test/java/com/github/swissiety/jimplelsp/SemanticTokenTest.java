@@ -157,10 +157,10 @@ public class SemanticTokenTest {
 
     Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmt.jimple");
     CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
-            server
-                    .getTextDocumentService()
-                    .semanticTokensFull(
-                            new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
+        server
+            .getTextDocumentService()
+            .semanticTokensFull(
+                new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
     try {
       final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
       assertNotNull(semanticTokens);
@@ -182,10 +182,10 @@ public class SemanticTokenTest {
 
     Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmts.jimple");
     CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
-            server
-                    .getTextDocumentService()
-                    .semanticTokensFull(
-                            new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
+        server
+            .getTextDocumentService()
+            .semanticTokensFull(
+                new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
     try {
       final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
       assertNotNull(semanticTokens);

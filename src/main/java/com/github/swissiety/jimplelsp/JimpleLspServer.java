@@ -59,15 +59,15 @@ public class JimpleLspServer extends MagpieServer {
   @Nonnull
   public <T> CompletableFuture<T> pool(Callable<T> lambda) {
     return CompletableFuture.supplyAsync(
-            () -> {
-              try {
-                return lambda.call();
-              } catch (Throwable e) {
-                client.logMessage(new MessageParams(MessageType.Error, getStringFrom(e)));
-              }
-              return null;
-            },
-            THREAD_POOL);
+        () -> {
+          try {
+            return lambda.call();
+          } catch (Throwable e) {
+            client.logMessage(new MessageParams(MessageType.Error, getStringFrom(e)));
+          }
+          return null;
+        },
+        THREAD_POOL);
   }
 
   static String getStringFrom(Throwable e) {
