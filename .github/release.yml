@@ -9,10 +9,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      #      - name: Generate Changelog
-      #        run: echo "# Good things have arrived" > ${{ github.workspace }}-CHANGELOG.txt
+      - name: checkout
+        uses: actions/checkout@v3
 
       - name: build jimplelsp
         run: mvn verify -B
@@ -22,7 +20,7 @@ jobs:
 
       - name: create Release info
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        # if: startsWith(github.ref, 'refs/tags/')
         with:
           draft: true
           body: |
@@ -30,7 +28,7 @@ jobs:
             **Bugfixes**
             - [ ] something
             **Features**
-            - [ ] else
+            - [ ] sth else
 
           files: |
             **/jimplelsp-*.jar
