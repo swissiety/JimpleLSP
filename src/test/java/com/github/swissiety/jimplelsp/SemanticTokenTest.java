@@ -1,8 +1,7 @@
 package com.github.swissiety.jimplelsp;
 
-import magpiebridge.core.MagpieClient;
-import org.eclipse.lsp4j.*;
-import org.junit.Test;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,9 +13,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import magpiebridge.core.MagpieClient;
+import org.eclipse.lsp4j.*;
+import org.junit.Test;
 
 public class SemanticTokenTest {
 

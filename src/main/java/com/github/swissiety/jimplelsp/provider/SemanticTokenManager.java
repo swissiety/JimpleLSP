@@ -1,11 +1,10 @@
 package com.github.swissiety.jimplelsp.provider;
 
-import org.eclipse.lsp4j.SemanticTokensLegend;
-
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import javax.annotation.Nonnull;
+import org.eclipse.lsp4j.SemanticTokensLegend;
 
 /** @author Markus Schmidt */
 public class SemanticTokenManager {

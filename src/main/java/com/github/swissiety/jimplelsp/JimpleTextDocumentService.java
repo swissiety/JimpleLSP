@@ -19,18 +19,6 @@ import de.upb.swt.soot.core.views.View;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
 import de.upb.swt.soot.jimple.parser.JimpleView;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -41,6 +29,17 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieTextDocumentService;
+import magpiebridge.file.SourceFileManager;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /** @author Markus Schmidt */
 public class JimpleTextDocumentService extends MagpieTextDocumentService {

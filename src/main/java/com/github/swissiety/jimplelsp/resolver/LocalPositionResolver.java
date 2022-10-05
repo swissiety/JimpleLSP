@@ -11,17 +11,16 @@ import de.upb.swt.soot.core.types.Type;
 import de.upb.swt.soot.jimple.JimpleBaseListener;
 import de.upb.swt.soot.jimple.JimpleParser;
 import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
+import java.nio.file.Path;
+import java.util.*;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * The LocalResolver handles gathering and queriing for Local Positions in a given File.
