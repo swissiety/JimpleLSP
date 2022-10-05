@@ -1,0 +1,35 @@
+name: distribute Artifact to marketplace
+
+on:
+  release:
+    type: released
+
+jobs:
+  distribute-release:
+    runs-on: ubuntu-latest
+    steps:
+      - id: download-release-asset
+        name: Download release asset
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: github.ref       #defaults to latest - but this is not necessarily the released draft
+          regex: true
+          file: "**.vsix"
+          target: './'
+
+      - name: "Check .vsix file existence"
+        uses: andstor/file-existence-action@v1
+        with:
+          files: "./**.vsix"
+
+      #    - name: Publish to Open VSX Registry
+      #      uses: HaaLeo/publish-vscode-extension@v1
+      #      id: publishToOpenVSX
+      #      with:
+      #        pat: ${{ secrets.OPEN_VSX_TOKEN }}
+      - name: Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v1
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: "./**.vsix"
