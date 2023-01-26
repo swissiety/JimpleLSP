@@ -1,26 +1,27 @@
 package com.github.swissiety.jimplelsp.resolver;
 
 import com.github.swissiety.jimplelsp.Util;
-import de.upb.swt.soot.core.frontend.ResolveException;
-import de.upb.swt.soot.core.jimple.Jimple;
-import de.upb.swt.soot.core.model.Position;
-import de.upb.swt.soot.core.model.SootClass;
-import de.upb.swt.soot.core.model.SootMethod;
-import de.upb.swt.soot.core.signatures.MethodSubSignature;
-import de.upb.swt.soot.core.types.Type;
-import de.upb.swt.soot.jimple.JimpleBaseListener;
-import de.upb.swt.soot.jimple.JimpleParser;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.nio.file.Path;
-import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import sootup.core.frontend.ResolveException;
+import sootup.core.jimple.Jimple;
+import sootup.core.model.Position;
+import sootup.core.model.SootClass;
+import sootup.core.model.SootMethod;
+import sootup.core.signatures.MethodSubSignature;
+import sootup.core.types.Type;
+import sootup.jimple.JimpleBaseListener;
+import sootup.jimple.JimpleParser;
+import sootup.jimple.parser.JimpleConverterUtil;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * The LocalResolver handles gathering and queriing for Local Positions in a given File.

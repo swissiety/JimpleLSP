@@ -1,15 +1,16 @@
 package com.github.swissiety.jimplelsp.resolver;
 
-import de.upb.swt.soot.core.signatures.Signature;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import junit.framework.TestCase;
 import org.antlr.v4.runtime.CharStreams;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import sootup.core.signatures.Signature;
+import sootup.jimple.parser.JimpleConverterUtil;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class SignaturePositionResolverTest extends TestCase {
 

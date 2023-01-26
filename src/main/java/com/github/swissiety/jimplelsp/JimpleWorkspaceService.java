@@ -2,13 +2,17 @@ package com.github.swissiety.jimplelsp;
 
 import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
 import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
-import de.upb.swt.soot.core.model.SootClass;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.MagpieWorkspaceService;
+import org.eclipse.lsp4j.SymbolCapabilities;
+import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.SymbolKindCapabilities;
+import org.eclipse.lsp4j.WorkspaceSymbolParams;
+import sootup.core.model.SootClass;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieWorkspaceService;
-import org.eclipse.lsp4j.*;
 
 /** @author Markus Schmidt */
 public class JimpleWorkspaceService extends MagpieWorkspaceService {

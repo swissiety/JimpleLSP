@@ -1,19 +1,20 @@
 package com.github.swissiety.jimplelsp;
 
-import de.upb.swt.soot.core.model.Position;
-import de.upb.swt.soot.core.model.SootClass;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nonnull;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import sootup.core.model.Position;
+import sootup.core.model.SootClass;
+import sootup.jimple.parser.JimpleConverterUtil;
+
+import javax.annotation.Nonnull;
+import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 
 /** @author Markus Schmidt */
 public class Util {

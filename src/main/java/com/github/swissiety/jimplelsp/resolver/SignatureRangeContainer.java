@@ -1,15 +1,16 @@
 package com.github.swissiety.jimplelsp.resolver;
 
-import de.upb.swt.soot.core.signatures.Signature;
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import sootup.core.signatures.Signature;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 
 /**
  * The Datastructure holds information about Signatures of Soot and their Range positions in a File.
@@ -24,7 +25,7 @@ class SignatureRangeContainer {
 
   Comparator<Position> comparator = new PositionComparator();
 
-  void add(de.upb.swt.soot.core.model.Position position, Signature sig) {
+  void add( sootup.core.model.Position position, Signature sig) {
     // insert sorted to be accessed via binary search
     final Position startPos = new Position(position.getFirstLine(), position.getFirstCol());
     int idx = Collections.binarySearch(startPositions, startPos, new PositionComparator());
@@ -90,7 +91,7 @@ class SignatureRangeContainer {
 
   @Nullable
   public Range findFirstMatchingSignature(
-      Signature signature, de.upb.swt.soot.core.model.Position position) {
+      Signature signature, sootup.core.model.Position position) {
 
     int idx = getStartingIndex(new Position(position.getFirstLine(), position.getFirstCol()));
 

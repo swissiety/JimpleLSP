@@ -1,18 +1,19 @@
 package com.github.swissiety.jimplelsp.provider;
 
 import com.github.swissiety.jimplelsp.Util;
-import de.upb.swt.soot.core.model.SootClass;
-import de.upb.swt.soot.jimple.JimpleBaseListener;
-import de.upb.swt.soot.jimple.JimpleParser;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.jheaps.annotations.Beta;
+import sootup.core.model.SootClass;
+import sootup.jimple.JimpleBaseListener;
+import sootup.jimple.JimpleParser;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This listener implementation lists all label usage positions when its passed into the Jimple
@@ -25,7 +26,6 @@ public class JimpleLabelProvider extends JimpleBaseListener {
   @Nonnull private final Map<String, Range> labelTargets = new HashMap<>();
   @Nonnull private final List<Pair<String, Range>> labelUsage = new ArrayList<>();
 
-  @Nonnull
   public void resolve(@Nonnull SootClass sc, @Nonnull TextDocumentPositionParams pos) {
     // TODO: implement label indexing
   }

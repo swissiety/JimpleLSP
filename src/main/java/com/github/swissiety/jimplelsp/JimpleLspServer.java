@@ -2,14 +2,22 @@ package com.github.swissiety.jimplelsp;
 
 import com.github.swissiety.jimplelsp.provider.SyntaxHighlightingProvider;
 import com.google.gson.JsonObject;
-import de.upb.swt.soot.core.frontend.ResolveException;
-import de.upb.swt.soot.core.frontend.SootClassSource;
-import de.upb.swt.soot.core.inputlocation.EagerInputLocation;
-import de.upb.swt.soot.core.model.SootClass;
-import de.upb.swt.soot.core.types.ClassType;
-import de.upb.swt.soot.jimple.parser.JimpleConverter;
-import de.upb.swt.soot.jimple.parser.JimpleProject;
-import de.upb.swt.soot.jimple.parser.JimpleView;
+import magpiebridge.core.MagpieServer;
+import magpiebridge.core.ServerConfiguration;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.eclipse.lsp4j.*;
+import sootup.core.frontend.ResolveException;
+import sootup.core.frontend.SootClassSource;
+import sootup.core.inputlocation.EagerInputLocation;
+import sootup.core.model.SootClass;
+import sootup.core.types.ClassType;
+import sootup.jimple.parser.JimpleConverter;
+import sootup.jimple.parser.JimpleProject;
+import sootup.jimple.parser.JimpleView;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -23,13 +31,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerConfiguration;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.eclipse.lsp4j.*;
 
 /** @author Markus Schmidt */
 public class JimpleLspServer extends MagpieServer {

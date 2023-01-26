@@ -7,14 +7,8 @@ A LSP Server implementation allows an IDE, which supports the LSP, to provide we
 **Either:** download the JimpleLSP Server Release and extract it to any Location.
   
 **Or:** Compile from source.
-You need a fresh build of FutureSoot in your local Maven Repository.
-1. If you have access to FutureSoot run `git clone https://github.com/secure-software-engineering/soot-reloaded.git && cd soot-reloaded && mvn install`
-(Latest working commit is #). 
-Otherwise download the FutureSoot Snapshot and install it to your local repository via
-   `mvn install:install-file -Dfile=<path-to-file> -DgroupId=de.upb.swt -DartifactId=soot -Dversion=4.0.0-SNAPSHOT -Dpackaging=jar`
-
-2. run `git clone https://github.com/swissiety/JimpleLSP` to clone this Repository.
-3. run `mvn package` to build a Jar. The generated Jar can be found in target/jimplelsp-0.0.1-SNAPSHOT-jar-with-dependencies.jar.
+1. run `git clone https://github.com/swissiety/JimpleLSP` to clone this Repository.
+2. run `mvn package` to build a Jar. The generated Jar can be found in target/jimplelsp-0.0.1-SNAPSHOT-jar-with-dependencies.jar.
 
 
 ## IntelliJ Idea

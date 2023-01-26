@@ -1,27 +1,28 @@
 package com.github.swissiety.jimplelsp.resolver;
 
 import com.github.swissiety.jimplelsp.Util;
-import de.upb.swt.soot.core.frontend.ResolveException;
-import de.upb.swt.soot.core.jimple.Jimple;
-import de.upb.swt.soot.core.model.Position;
-import de.upb.swt.soot.core.signatures.FieldSignature;
-import de.upb.swt.soot.core.signatures.MethodSignature;
-import de.upb.swt.soot.core.signatures.Signature;
-import de.upb.swt.soot.core.types.ClassType;
-import de.upb.swt.soot.core.types.Type;
-import de.upb.swt.soot.jimple.JimpleBaseListener;
-import de.upb.swt.soot.jimple.JimpleParser;
-import de.upb.swt.soot.jimple.parser.JimpleConverterUtil;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
+import sootup.core.frontend.ResolveException;
+import sootup.core.jimple.Jimple;
+import sootup.core.model.Position;
+import sootup.core.signatures.FieldSignature;
+import sootup.core.signatures.MethodSignature;
+import sootup.core.signatures.Signature;
+import sootup.core.types.ClassType;
+import sootup.core.types.Type;
+import sootup.jimple.JimpleBaseListener;
+import sootup.jimple.JimpleParser;
+import sootup.jimple.parser.JimpleConverterUtil;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This Class organizes information about (open) jimple files. Especially range information about
@@ -124,7 +125,7 @@ public class SignaturePositionResolver {
       List<Type> params = util.getTypeList(ctx.method_subsignature().type_list());
       MethodSignature methodSignature =
           util.getIdentifierFactory()
-              .getMethodSignature(Jimple.unescape(methodname), clazz, type, params);
+              .getMethodSignature(clazz, Jimple.unescape(methodname), type, params);
 
       positionContainer.add(
           JimpleConverterUtil.buildPositionFromCtx(ctx.method_subsignature().method_name()),

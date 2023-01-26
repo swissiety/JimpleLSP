@@ -1,8 +1,12 @@
 package com.github.swissiety.jimplelsp;
 
-import static org.junit.Assert.assertEquals;
+import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import sootup.core.model.SootClass;
 
-import de.upb.swt.soot.core.model.SootClass;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -10,11 +14,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import org.eclipse.lsp4j.*;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 @Ignore
 public class sms_googleTest {
