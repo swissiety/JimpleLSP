@@ -2,18 +2,21 @@ package com.github.swissiety.jimplelsp;
 
 import com.github.swissiety.jimplelsp.provider.SyntaxHighlightingProvider;
 import com.google.gson.JsonObject;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.ServerConfiguration;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.services.LanguageClient;
+import org.eclipse.lsp4j.services.LanguageServer;
+import org.eclipse.lsp4j.services.TextDocumentService;
+import org.eclipse.lsp4j.services.WorkspaceService;
+import sootup.core.cache.provider.MutableFullCacheProvider;
 import sootup.core.frontend.ResolveException;
 import sootup.core.frontend.SootClassSource;
 import sootup.core.inputlocation.EagerInputLocation;
 import sootup.core.model.SootClass;
+import sootup.core.model.SourceType;
 import sootup.core.types.ClassType;
 import sootup.jimple.parser.JimpleConverter;
-import sootup.jimple.parser.JimpleProject;
 import sootup.jimple.parser.JimpleView;
 
 import javax.annotation.Nonnull;
@@ -33,7 +36,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** @author Markus Schmidt */
-public class JimpleLspServer extends MagpieServer {
+public class JimpleLspServer implements LanguageServer {
+
+  private final JimpleTextDocumentService textDocumentService;
+  private final WorkspaceService workspaceService;
+  LanguageClient client = null;
+  private ClientCapabilities clientCapabilities;
 
   @Nonnull
   private final Map<Path, SootClassSource<? extends SootClass<?>>> textDocumentClassMapping =
@@ -47,11 +55,6 @@ public class JimpleLspServer extends MagpieServer {
   private String androidplatform = "";
 
   public JimpleLspServer() {
-    this(new ServerConfiguration());
-  }
-
-  public JimpleLspServer(ServerConfiguration config) {
-    super(config);
     this.textDocumentService = new JimpleTextDocumentService(this);
     this.workspaceService = new JimpleWorkspaceService(this);
   }
@@ -66,8 +69,7 @@ public class JimpleLspServer extends MagpieServer {
             client.logMessage(new MessageParams(MessageType.Error, getStringFrom(e)));
           }
           return null;
-        },
-        THREAD_POOL);
+        });
   }
 
   static String getStringFrom(Throwable e) {
@@ -80,7 +82,7 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
   ClientCapabilities getClientCapabilities() {
-    return clientConfig;
+    return clientCapabilities;
   }
 
   @Nonnull
@@ -94,10 +96,13 @@ public class JimpleLspServer extends MagpieServer {
 
   @Nonnull
   private JimpleView recreateView() {
-    HashMap<ClassType, SootClassSource<? extends SootClass<?>>> map = new HashMap<>();
+    HashMap<ClassType, SootClassSource> map = new HashMap<>();
     textDocumentClassMapping.forEach((key, value) -> map.put(value.getClassType(), value));
-    final JimpleProject project = new JimpleProject(new EagerInputLocation(map));
-    return project.createFullView();
+    JimpleView jimpleView = new JimpleView(Collections.singletonList(new EagerInputLocation()), new MutableFullCacheProvider<>());
+
+    // FIXME: set list of modified jimple files
+
+    return jimpleView;
   }
 
   public boolean quarantineInputOrUpdate(@Nonnull String uri) throws ResolveException, IOException {
@@ -163,9 +168,17 @@ public class JimpleLspServer extends MagpieServer {
 
   @Override
   public void exit() {
-    // FIXME: don't die in development
-    logger.cleanUp();
-    MagpieServer.ExceptionLogger.cleanUp();
+
+  }
+
+  @Override
+  public TextDocumentService getTextDocumentService() {
+    return null;
+  }
+
+  @Override
+  public WorkspaceService getWorkspaceService() {
+    return null;
   }
 
   List<WorkspaceFolder> workspaceFolders = Collections.emptyList();
@@ -178,10 +191,9 @@ public class JimpleLspServer extends MagpieServer {
       workspaceFolders = params.getWorkspaceFolders();
     }
 
-    final CompletableFuture<InitializeResult> initialize = super.initialize(params);
+    final InitializeResult initialize = new InitializeResult();
 
-    try {
-      final ServerCapabilities capabilities = initialize.get().getCapabilities();
+      final ServerCapabilities capabilities = initialize.getCapabilities();
       capabilities.setWorkspaceSymbolProvider(true);
       capabilities.setDocumentSymbolProvider(true);
 
@@ -203,18 +215,12 @@ public class JimpleLspServer extends MagpieServer {
                   SyntaxHighlightingProvider.getLegend(), true));
         }
       }
-      // check: capabilities.setDocumentFormattingProvider(true);
+      // TODO: check capabilities.setDocumentFormattingProvider(true);
 
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-      return null;
-    }
-
-    long startNanos = System.nanoTime();
+      long startNanos = System.nanoTime();
     pool(
         () -> {
           List<Path> rootpaths = new ArrayList<>(workspaceFolders.size() + 1);
-          rootPath.ifPresent(rootpaths::add);
 
           workspaceFolders.forEach(
               f -> {
@@ -234,12 +240,11 @@ public class JimpleLspServer extends MagpieServer {
           return null;
         });
 
-    return initialize;
+    return CompletableFuture.completedFuture(initialize);
   }
 
   @Override
   public void initialized(InitializedParams params) {
-    super.initialized(params);
 
     if (!jimpleFound) {
       extractFromAPKJAR(
@@ -251,9 +256,14 @@ public class JimpleLspServer extends MagpieServer {
     }
   }
 
+  @Override
+  public CompletableFuture<Object> shutdown() {
+    return null;
+  }
+
   private void extractFromAPKJAR(List<Path> rootpaths) {
     // find apk in top levels/first level subdir
-    if (clientConfig.getWorkspace().getConfiguration() == Boolean.TRUE) {
+    if (clientCapabilities.getWorkspace().getConfiguration() == Boolean.TRUE) {
 
       List<Path> apkJarFiles = new ArrayList<>();
       // get ANDROIDHOME config from client
@@ -513,5 +523,13 @@ public class JimpleLspServer extends MagpieServer {
       return null;
     }
     return sootClassSource.getClassType();
+  }
+
+  public void connectClient(LanguageClient remoteProxy) {
+    client = remoteProxy;
+  }
+
+  public LanguageClient getClient() {
+    return client;
   }
 }

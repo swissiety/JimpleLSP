@@ -1,6 +1,8 @@
 package com.github.swissiety.jimplelsp.resolver;
 
 import com.github.swissiety.jimplelsp.Util;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 import org.apache.commons.lang3.tuple.Pair;
@@ -8,6 +10,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import sootup.core.frontend.ResolveException;
 import sootup.core.jimple.Jimple;
+import sootup.core.model.FullPosition;
 import sootup.core.model.Position;
 import sootup.core.signatures.FieldSignature;
 import sootup.core.signatures.MethodSignature;
@@ -86,6 +89,23 @@ public class SignaturePositionResolver {
       return positionContainer.findFirstMatchingSignature(signature, position);
     }
 
+    @Nonnull
+    public Position buildPositionFromToken(@Nonnull Token token) {
+      //  TODO: refactor to SootUp
+      String tokenstr = token.getText();
+      int lineCount = -1;
+      int fromIdx = 0;
+
+      int lastLineBreakIdx;
+      for(lastLineBreakIdx = 0; (fromIdx = tokenstr.indexOf("\n", fromIdx)) != -1; ++fromIdx) {
+        lastLineBreakIdx = fromIdx;
+        ++lineCount;
+      }
+
+      int endCharLength = tokenstr.length() - lastLineBreakIdx;
+      return new FullPosition(token.getLine() - 1, token.getCharPositionInLine(), token.getLine() + lineCount, token.getCharPositionInLine() + endCharLength);
+    }
+
     @Override
     public void enterFile(JimpleParser.FileContext ctx) {
       if (ctx.classname == null) {
@@ -97,7 +117,7 @@ public class SignaturePositionResolver {
       String classname = Jimple.unescape(ctx.classname.getText());
       clazz = util.getClassType(classname);
 
-      positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.classname), clazz);
+      positionContainer.add(buildPositionFromToken(ctx.classname), clazz);
 
       if (ctx.extends_clause() != null) {
         ClassType superclass = util.getClassType(ctx.extends_clause().classname.getText());
@@ -173,9 +193,7 @@ public class SignaturePositionResolver {
     @Override
     public void enterConstant(JimpleParser.ConstantContext ctx) {
       if (ctx.CLASS() != null) {
-        positionContainer.add(
-            JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()),
-            util.getClassType(ctx.identifier().getText()));
+        // FIXME what is this now: positionContainer.add(JimpleConverterUtil.buildPositionFromCtx(ctx.identifier()),util.getClassType(ctx.identifier().getText()));
       }
       super.enterConstant(ctx);
     }

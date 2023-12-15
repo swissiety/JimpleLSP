@@ -48,7 +48,7 @@ public class Main {
                   .traceMessages(new PrintWriter(System.out))
                   .create();
           launcher.startListening();
-          server.connect(launcher.getRemoteProxy());
+          server.connectClient(launcher.getRemoteProxy());
         }
 
       } catch (IOException exception) {
@@ -61,7 +61,7 @@ public class Main {
           LSPLauncher.createServerLauncher(
               server, logStream(System.in, "serverOut"), logStream(System.out, "serverIn"));
       l.startListening();
-      server.connect(l.getRemoteProxy());
+      server.connectClient(l.getRemoteProxy());
     }
   }
 

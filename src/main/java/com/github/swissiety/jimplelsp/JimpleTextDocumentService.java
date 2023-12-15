@@ -4,19 +4,16 @@ import com.github.swissiety.jimplelsp.provider.JimpleSymbolProvider;
 import com.github.swissiety.jimplelsp.provider.SyntaxHighlightingProvider;
 import com.github.swissiety.jimplelsp.resolver.LocalPositionResolver;
 import com.github.swissiety.jimplelsp.resolver.SignaturePositionResolver;
-import magpiebridge.core.MagpieServer;
-import magpiebridge.core.MagpieTextDocumentService;
-import magpiebridge.file.SourceFileManager;
+import com.github.swissiety.jimplelsp.workingtree.WorkingTree;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import sootup.core.model.Modifier;
-import sootup.core.model.SootClass;
-import sootup.core.model.SootField;
-import sootup.core.model.SootMethod;
+import org.eclipse.lsp4j.services.TextDocumentService;
+import sootup.core.model.*;
 import sootup.core.signatures.FieldSignature;
 import sootup.core.signatures.MethodSignature;
 import sootup.core.signatures.Signature;
@@ -43,23 +40,28 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** @author Markus Schmidt */
-public class JimpleTextDocumentService extends MagpieTextDocumentService {
+public class JimpleTextDocumentService implements TextDocumentService {
+
+  WorkingTree workingTree = new WorkingTree("jimple");
+
   private final Map<Path, SignaturePositionResolver> docSignaturePositionResolver = new HashMap<>();
 
   private final Map<Path, JimpleParser> docParseTree = new HashMap<>();
+  @Nonnull
+  private final JimpleLspServer server;
 
   /**
    * Instantiates a new magpie text document service.
    *
    * @param server the server
    */
-  public JimpleTextDocumentService(@Nonnull MagpieServer server) {
-    super(server);
+  public JimpleTextDocumentService(@Nonnull JimpleLspServer server) {
+    this.server = server;
   }
 
   @Nonnull
   JimpleLspServer getServer() {
-    return (JimpleLspServer) server;
+    return server;
   }
 
   /** TODO: refactor into magpiebridge */
@@ -71,9 +73,6 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didOpen(DidOpenTextDocumentParams params) {
-    // FIXME: [ms] make magpiebridge:SourceFileModule.getSuffix() protected or create a central/open
-    // language->suffix allocation
-    super.didOpen(params);
     if (params == null || params.getTextDocument() == null) {
       return;
     }
@@ -85,25 +84,20 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (text == null) {
       return;
     }
-
+    workingTree.didOpen(params);
     analyzeFile(uri, text);
   }
 
   @Override
   public void didChange(DidChangeTextDocumentParams params) {
-    super.didChange(params);
-
     final String uri = params.getTextDocument().getUri();
-    String language = inferLanguage(uri);
-    SourceFileManager fileManager = server.getSourceFileManager(language);
-    analyzeFile(
-        params.getTextDocument().getUri(),
-        fileManager.getVersionedFiles().get(URI.create(uri)).getText());
+
+    workingTree.didChange(params);
+    analyzeFile(params.getTextDocument().getUri(), workingTree.get(uri).getContent());
   }
 
   @Override
   public void didSave(DidSaveTextDocumentParams params) {
-    // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
     if (params == null || params.getTextDocument() == null) {
       return;
     }
@@ -115,6 +109,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
     if (text == null) {
       return;
     }
+    workingTree.didSave(params);
 
     // update classes
     analyzeFile(uri, text);
@@ -122,12 +117,11 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
 
   @Override
   public void didClose(DidCloseTextDocumentParams params) {
-    // FIXME: [ms] magpiebridge getsuffix() super.didSave(params);
-    super.didClose(params);
     TextDocumentIdentifier textDocument = params.getTextDocument();
     if (textDocument == null || textDocument.getUri() == null) {
       return;
     }
+
     docParseTree.remove(Util.uriToPath(textDocument.getUri()));
   }
 
@@ -659,7 +653,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                     getServer().getView().getClass((ClassType) sig);
                 if (aClass.isPresent()) {
                   SootClass<?> sc = aClass.get();
-                  str = Modifier.toString(sc.getModifiers()) + " " + sc;
+                  str = ClassModifier.toString(sc.getModifiers()) + " " + sc;
                   Optional<? extends ClassType> superclass = sc.getSuperclass();
                   if (superclass.isPresent()) {
                     str += "\n extends " + superclass.get();
@@ -682,7 +676,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       sc.getMethod(((MethodSignature) sig).getSubSignature());
                   if (aMethod.isPresent()) {
                     final SootMethod sootMethod = aMethod.get();
-                    str = Modifier.toString(sootMethod.getModifiers()) + " " + sootMethod;
+                    str = MethodModifier.toString(sootMethod.getModifiers()) + " " + sootMethod;
                   }
                 }
               } else if (sig instanceof FieldSignature) {
@@ -694,7 +688,7 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
                       sc.getField(((FieldSignature) sig).getSubSignature());
                   if (aField.isPresent()) {
                     final SootField sootField = aField.get();
-                    str = Modifier.toString(sootField.getModifiers()) + " " + sootField;
+                    str = FieldModifier.toString(sootField.getModifiers()) + " " + sootField;
                   }
                 }
               }
@@ -955,11 +949,4 @@ public class JimpleTextDocumentService extends MagpieTextDocumentService {
         });
   }
 
-  @Override
-  protected String inferLanguage(String uri) {
-    if (uri.endsWith(".jimple")) {
-      return "jimple";
-    }
-    return super.inferLanguage(uri);
-  }
 }

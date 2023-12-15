@@ -80,7 +80,7 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitFile(JimpleParser.FileContext ctx) {
-      ctx.modifier().forEach(x -> paint(SemanticTokenTypes.Modifier, x));
+      ctx.class_modifier().forEach(x -> paint(SemanticTokenTypes.Modifier, x));
       visitFile_type(ctx.file_type());
       if (ctx.file_type().getText().charAt(0) == 'c') {
         paint(SemanticTokenTypes.Class, ctx.classname);
@@ -132,7 +132,9 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitField(JimpleParser.FieldContext ctx) {
-      ctx.modifier().forEach(this::visitModifier);
+      ctx.field_modifier().forEach( modctx -> {
+        paint(SemanticTokenTypes.Modifier, modctx);
+      });
       paint(SemanticTokenTypes.Type, ctx.type());
       paint(SemanticTokenTypes.Variable, ctx.identifier());
       return semanticTokenManager;
@@ -140,7 +142,9 @@ public class SyntaxHighlightingProvider {
 
     @Override
     public SemanticTokenManager visitMethod(JimpleParser.MethodContext ctx) {
-      ctx.modifier().forEach(this::visitModifier);
+      ctx.method_modifier().forEach( modctx -> {
+        paint(SemanticTokenTypes.Modifier, modctx);
+      });
       visitMethod_subsignature(ctx.method_subsignature());
       JimpleParser.Throws_clauseContext throws_clauseContext = ctx.throws_clause();
       if (throws_clauseContext != null) {
@@ -150,6 +154,7 @@ public class SyntaxHighlightingProvider {
       visitMethod_body(ctx.method_body());
       return semanticTokenManager;
     }
+    //       paint(SemanticTokenTypes.Modifier, ctx);
 
     @Override
     public SemanticTokenManager visitTrap_clause(JimpleParser.Trap_clauseContext ctx) {
@@ -165,12 +170,6 @@ public class SyntaxHighlightingProvider {
     @Override
     public SemanticTokenManager visitType(JimpleParser.TypeContext ctx) {
       paint(SemanticTokenTypes.Type, ctx.start);
-      return semanticTokenManager;
-    }
-
-    @Override
-    public SemanticTokenManager visitModifier(JimpleParser.ModifierContext ctx) {
-      paint(SemanticTokenTypes.Modifier, ctx);
       return semanticTokenManager;
     }
 
@@ -237,7 +236,7 @@ public class SyntaxHighlightingProvider {
         paint(SemanticTokenTypes.String, ctx);
       } else if (ctx.CLASS() != null) {
         paint(SemanticTokenTypes.Keyword, ctx.CLASS().getSymbol());
-        paint(SemanticTokenTypes.Type, ctx.identifier());
+// FIXME: what is this now?        paint(SemanticTokenTypes.Type, ctx.identifier());
       } else {
         // number, boolean, ..
         paint(SemanticTokenTypes.Number, ctx);

@@ -13,24 +13,24 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import magpiebridge.core.MagpieClient;
 import org.eclipse.lsp4j.*;
+import org.eclipse.lsp4j.services.LanguageClient;
 import org.junit.Test;
 
 public class SemanticTokenTest {
 
-  class LspClient implements MagpieClient {
+  class LspClient implements LanguageClient {
     private final List<WorkspaceFolder> worskspaceFolders;
 
     public LspClient(List<Path> worskspaceFolders) {
       this.worskspaceFolders =
-          worskspaceFolders.stream()
-              .map(f -> new WorkspaceFolder(Util.pathToUri(f)))
-              .collect(Collectors.toList());
+              worskspaceFolders.stream()
+                      .map(f -> new WorkspaceFolder(Util.pathToUri(f)))
+                      .collect(Collectors.toList());
     }
 
     public void connectTo(JimpleLspServer server) {
-      server.connect(this);
+      server.connectClient(this);
       server.initialize(getInitializeParams());
       server.initialized(new InitializedParams());
     }
@@ -51,9 +51,9 @@ public class SemanticTokenTest {
 
       WorkspaceClientCapabilities wCaps = new WorkspaceClientCapabilities();
       wCaps.setSymbol(
-          new SymbolCapabilities(
-              new SymbolKindCapabilities(
-                  Arrays.asList(SymbolKind.Class, SymbolKind.Method, SymbolKind.Field))));
+              new SymbolCapabilities(
+                      new SymbolKindCapabilities(
+                              Arrays.asList(SymbolKind.Class, SymbolKind.Method, SymbolKind.Field))));
       clientCaps.setWorkspace(wCaps);
 
       params.setCapabilities(clientCaps);
@@ -62,7 +62,7 @@ public class SemanticTokenTest {
 
     @Override
     public CompletableFuture<ApplyWorkspaceEditResponse> applyEdit(
-        ApplyWorkspaceEditParams params) {
+            ApplyWorkspaceEditParams params) {
       return CompletableFuture.completedFuture(null);
     }
 
@@ -77,17 +77,20 @@ public class SemanticTokenTest {
     }
 
     @Override
-    public void telemetryEvent(Object o) {}
+    public void telemetryEvent(Object o) {
+    }
 
     @Override
-    public void publishDiagnostics(PublishDiagnosticsParams publishDiagnosticsParams) {}
+    public void publishDiagnostics(PublishDiagnosticsParams publishDiagnosticsParams) {
+    }
 
     @Override
-    public void showMessage(MessageParams messageParams) {}
+    public void showMessage(MessageParams messageParams) {
+    }
 
     @Override
     public CompletableFuture<MessageActionItem> showMessageRequest(
-        ShowMessageRequestParams showMessageRequestParams) {
+            ShowMessageRequestParams showMessageRequestParams) {
       return CompletableFuture.completedFuture(null);
     }
 
@@ -118,13 +121,12 @@ public class SemanticTokenTest {
     }
 
     @Override
-    public void notifyProgress(ProgressParams params) {}
+    public void notifyProgress(ProgressParams params) {
+    }
 
     @Override
-    public void logTrace(LogTraceParams params) {}
-
-    @Override
-    public void setTrace(SetTraceParams params) {}
+    public void logTrace(LogTraceParams params) {
+    }
 
     @Override
     public CompletableFuture<Void> refreshSemanticTokens() {
@@ -136,62 +138,55 @@ public class SemanticTokenTest {
       return CompletableFuture.completedFuture(null);
     }
 
-    @Override
-    public void showHTML(String content) {}
+    @Test
+    public void partialValidInputTest_justStmt() {
+      JimpleLspServer server = new JimpleLspServer();
+      final Path workspaceFolder = Paths.get("src/test/resources/partial_invalid_inputs/");
+      assertTrue(Files.exists(workspaceFolder));
 
-    @Override
-    public CompletableFuture<Map<String, String>> showInputBox(List<String> messages) {
-      return null;
+      LspClient client = new LspClient(Collections.singletonList(workspaceFolder));
+      client.connectTo(server);
+
+      Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmt.jimple");
+      CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
+              server
+                      .getTextDocumentService()
+                      .semanticTokensFull(
+                              new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
+      try {
+        final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
+        assertNotNull(semanticTokens);
+        System.out.println(semanticTokens.getData());
+
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    }
+
+    @Test
+    public void partialValidInputTest_justStmts() {
+      JimpleLspServer server = new JimpleLspServer();
+      final Path workspaceFolder = Paths.get("src/test/resources/partial_invalid_inputs/");
+      assertTrue(Files.exists(workspaceFolder));
+
+      LspClient client = new LspClient(Collections.singletonList(workspaceFolder));
+      client.connectTo(server);
+
+      Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmts.jimple");
+      CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
+              server
+                      .getTextDocumentService()
+                      .semanticTokensFull(
+                              new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
+      try {
+        final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
+        assertNotNull(semanticTokens);
+        System.out.println(semanticTokens.getData());
+
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
     }
   }
 
-  @Test
-  public void partialValidInputTest_justStmt() {
-    JimpleLspServer server = new JimpleLspServer();
-    final Path workspaceFolder = Paths.get("src/test/resources/partial_invalid_inputs/");
-    assertTrue(Files.exists(workspaceFolder));
-
-    LspClient client = new LspClient(Collections.singletonList(workspaceFolder));
-    client.connectTo(server);
-
-    Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmt.jimple");
-    CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
-        server
-            .getTextDocumentService()
-            .semanticTokensFull(
-                new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
-    try {
-      final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
-      assertNotNull(semanticTokens);
-      System.out.println(semanticTokens.getData());
-
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-  }
-
-  @Test
-  public void partialValidInputTest_justStmts() {
-    JimpleLspServer server = new JimpleLspServer();
-    final Path workspaceFolder = Paths.get("src/test/resources/partial_invalid_inputs/");
-    assertTrue(Files.exists(workspaceFolder));
-
-    LspClient client = new LspClient(Collections.singletonList(workspaceFolder));
-    client.connectTo(server);
-
-    Path path = Paths.get("src/test/resources/partial_invalid_inputs/invalid_juststmts.jimple");
-    CompletableFuture<SemanticTokens> semanticTokensCompletableFuture =
-        server
-            .getTextDocumentService()
-            .semanticTokensFull(
-                new SemanticTokensParams(new TextDocumentIdentifier(Util.pathToUri(path))));
-    try {
-      final SemanticTokens semanticTokens = semanticTokensCompletableFuture.get();
-      assertNotNull(semanticTokens);
-      System.out.println(semanticTokens.getData());
-
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-  }
 }
